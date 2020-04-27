@@ -1,0 +1,24 @@
+---
+apiVersion: v1
+kind: Template
+labels:
+  template: 'student-profile-saga-api-template'
+metadata:
+  name: 'student-profile-saga-api-template'
+objects:
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      build: student-profile-api-pipeline
+    name: student-profile-api-pipeline
+    namespace: c2mvws-tools
+  spec:
+    source:
+      git:
+        ref: master
+        uri: 'https://github.com/bcgov/EDUC-STUDENT-PROFILE-SAGA-API'
+      type: Git
+    strategy:
+      jenkinsPipelineStrategy:
+        jenkinsfilePath: tools/jenkins/Jenkinsfile
