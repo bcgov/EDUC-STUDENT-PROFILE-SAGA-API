@@ -9,7 +9,7 @@ DB_JDBC_CONNECT_STRING=$(oc -o json get configmaps ${APP_NAME}-${envValue}-confi
 DB_PWD=$(oc -o json get configmaps ${APP_NAME}-${envValue}-config | sed -n "s/.*\"DB_PWD_${APP_NAME}\": \"\(.*\)\",/\1/p")
 DB_USER=$(oc -o json get configmaps ${APP_NAME}-${envValue}-config | sed -n "s/.*\"DB_USER_${APP_NAME}\": \"\(.*\)\"/\1/p")
 SOAM_KC=$OPENSHIFT_NAMESPACE-$envValue.pathfinder.gov.bc.ca
-NATS_CLUSTER=educ_pen_nats_cluster
+NATS_CLUSTER=educ_nats_cluster
 NATS_URL="nats://nats.${OPENSHIFT_NAMESPACE}-${envValue}.svc.cluster.local:4222"
 oc -o json get secret sso-admin-${envValue} | sed -n 's/.*"password": "\(.*\)",/\1/p' | base64 --decode
 
