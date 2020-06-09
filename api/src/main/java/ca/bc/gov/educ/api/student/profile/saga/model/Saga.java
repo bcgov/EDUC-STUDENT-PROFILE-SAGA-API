@@ -19,51 +19,51 @@ import java.util.UUID;
 @NoArgsConstructor
 @Data
 @Entity
-@Table(name = "SAGA")
+@Table(name = "STUDENT_PROFILE_SAGA")
 @DynamicUpdate
 public class Saga {
   @Id
   @GeneratedValue(generator = "UUID")
   @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator", parameters = {
-          @org.hibernate.annotations.Parameter(name = "uuid_gen_strategy_class", value = "org.hibernate.id.uuid.CustomVersionOneStrategy")})
-  @Column(name = "saga_id", unique = true, updatable = false, columnDefinition = "BINARY(16)")
+      @org.hibernate.annotations.Parameter(name = "uuid_gen_strategy_class", value = "org.hibernate.id.uuid.CustomVersionOneStrategy")})
+  @Column(name = "SAGA_ID", unique = true, updatable = false, columnDefinition = "BINARY(16)")
   private UUID sagaId;
 
   @NotNull(message = "saga name cannot be null")
-  @Column(name = "saga_name")
+  @Column(name = "SAGA_NAME")
   private String sagaName;
 
   @NotNull(message = "saga state cannot be null")
-  @Column(name = "saga_state")
+  @Column(name = "SAGA_STATE")
   private String sagaState;
 
   @NotNull(message = "payload cannot be null")
-  @Column(name = "payload")
+  @Column(name = "PAYLOAD", length = 4000)
   private String payload;
 
   @NotNull(message = "status cannot be null")
-  @Column(name = "status")
+  @Column(name = "STATUS")
   private String status;
 
   @NotNull(message = "sagaCompensated cannot be null")
-  @Column(name = "saga_compensated")
+  @Column(name = "SAGA_COMPENSATED")
   private Boolean sagaCompensated;
 
   @NotNull(message = "create user cannot be null")
-  @Column(name = "create_user", updatable = false)
+  @Column(name = "CREATE_USER", updatable = false)
   @Size(max = 32)
   private String createUser;
 
   @NotNull(message = "update user cannot be null")
-  @Column(name = "update_user")
+  @Column(name = "UPDATE_USER")
   @Size(max = 32)
   private String updateUser;
 
   @PastOrPresent
-  @Column(name = "create_date")
+  @Column(name = "CREATE_DATE", updatable = false)
   private LocalDateTime createDate;
 
   @PastOrPresent
-  @Column(name = "update_date")
+  @Column(name = "UPDATE_DATE")
   private LocalDateTime updateDate;
 }

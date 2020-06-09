@@ -56,7 +56,7 @@ public class MessageSubscriber {
 
   public void subscribe(String topic, SagaEventHandler eventHandler) {
     handlers.put(topic, eventHandler);
-    String queue = topic.replaceAll("_", "-");
+    String queue = topic.replace("_", "-");
     SubscriptionOptions options = new SubscriptionOptions.Builder().durableName(queue + "-consumer").build();// ":" is not allowed in durable name by NATS.
     try {
       connection.subscribe(topic, queue, (Message message) -> {

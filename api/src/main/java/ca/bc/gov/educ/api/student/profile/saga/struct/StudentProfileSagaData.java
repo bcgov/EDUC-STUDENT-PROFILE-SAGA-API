@@ -12,30 +12,26 @@ import lombok.NoArgsConstructor;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StudentProfileSagaData {
-  private String penRequestID;
-  private String pen;
+  private String studentRequestID;
   private String digitalID;
-  private String penRequestStatusCode;
+  private String studentRequestStatusCode;
   private String legalFirstName;
   private String legalMiddleNames;
   private String legalLastName;
   private String dob;
   private String genderCode;
-  private String usualFirstName;
-  private String usualMiddleName;
-  private String usualLastName;
   private String email;
-  private String maidenName;
-  private String pastNames;
-  private String lastBCSchool;
-  private String lastBCSchoolStudentNumber;
-  private String currentSchool;
+  private String recordedPen;
+  private String recordedLegalFirstName;
+  private String recordedLegalMiddleNames;
+  private String recordedLegalLastName;
+  private String recordedDob;
+  private String recordedGenderCode;
+  private String recordedEmail;
   private String reviewer;
   private String failureReason;
   private String initialSubmitDate;
   private String statusUpdateDate;
   private String emailVerified;
-  private String bcscAutoMatchOutcome;
-  private String bcscAutoMatchDetails;
-  private String updateUser;
+  private String completeComment;
 }

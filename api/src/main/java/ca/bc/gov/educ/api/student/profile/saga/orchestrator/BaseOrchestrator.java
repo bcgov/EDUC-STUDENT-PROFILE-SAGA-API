@@ -47,9 +47,6 @@ public abstract class BaseOrchestrator<T> {
     return Collections.singletonList(buildSagaEventState(eventOutcome, isCompensating, nextEventType, stepToExecute));
   }
 
-  protected List<SagaEventState<T>> createSingleCollectionEventState(EventOutcome eventOutcome, EventType nextEventType, SagaStep<T> stepToExecute) {
-    return createSingleCollectionEventState(eventOutcome, false, nextEventType, stepToExecute);
-  }
 
   protected SagaEventState<T> buildSagaEventState(EventOutcome eventOutcome, Boolean isCompensating, EventType nextEventType, SagaStep<T> stepToExecute) {
     return SagaEventState.<T>builder().currentEventOutcome(eventOutcome).isCompensating(isCompensating).nextEventType(nextEventType).stepToExecute(stepToExecute).build();
@@ -66,19 +63,27 @@ public abstract class BaseOrchestrator<T> {
     populateNextStepsMap();
   }
 
-  protected void registerStepToExecute(EventType initEvent, EventOutcome outcome, EventType nextEvent, SagaStep<T> stepToExecute) {
-    registerStepToExecute(initEvent, outcome, false, nextEvent, stepToExecute);
-  }
 
-  protected void registerStepToExecute(EventType initEvent, EventOutcome outcome, Boolean isCompensating, EventType nextEvent, SagaStep<T> stepToExecute) {
+  protected BaseOrchestrator<T> registerStepToExecute(EventType initEvent, EventOutcome outcome, Boolean isCompensating, EventType nextEvent, SagaStep<T> stepToExecute) {
     if(this.nextStepsToExecute.containsKey(initEvent)) {
       List<SagaEventState<T>> states = this.nextStepsToExecute.get(initEvent);
       states.add(buildSagaEventState(outcome, isCompensating, nextEvent, stepToExecute));
     } else {
       this.nextStepsToExecute.put(initEvent, createSingleCollectionEventState(outcome, isCompensating, nextEvent, stepToExecute));
     }
+    return this;
   }
-
+  protected BaseOrchestrator<T> step(EventType initEvent, EventOutcome outcome, EventType nextEvent, SagaStep<T> stepToExecute) {
+    return registerStepToExecute(initEvent, outcome, false, nextEvent, stepToExecute);
+  }
+  /**
+   * this is a simple and convenient method to trigger builder pattern in the child classes.
+   *
+   * @return {@link BaseOrchestrator}
+   */
+  protected BaseOrchestrator<T> stepBuilder() {
+    return this;
+  }
 
   protected boolean isNotProcessedEvent(EventType currentEventType, Saga saga, Set<EventType> eventTypes) {
     EventType eventTypeInDB = EventType.valueOf(saga.getSagaState());
@@ -103,6 +108,7 @@ public abstract class BaseOrchestrator<T> {
   }
 
   protected void markSagaComplete(Event event, Saga saga, T sagaData) {
+    log.trace("payload is {}", sagaData);
     SagaEvent sagaEvent = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(COMPLETED.toString());
     saga.setStatus(COMPLETED.toString());
@@ -191,7 +197,6 @@ public abstract class BaseOrchestrator<T> {
     return sagaEventStates.stream().filter(el -> el.getCurrentEventOutcome() == eventOutcome).findFirst();
   }
 
-  // protected abstract void process(@NotNull Event event, PenRequestSaga penRequestSaga, SagaEventState<T> sagaEventState) throws InterruptedException, TimeoutException, IOException;
   protected void process(@NotNull Event event, Saga saga, SagaEventState<T> sagaEventState) throws InterruptedException, TimeoutException, IOException {
     T sagaData = JsonUtil.getJsonObjectFromString(clazz, saga.getPayload());
     if (!saga.getSagaState().equalsIgnoreCase(COMPLETED.toString())
@@ -204,8 +209,8 @@ public abstract class BaseOrchestrator<T> {
   }
 
   protected void invokeNextEvent(Event event, Saga saga, T sagaData, SagaEventState<T> sagaEventState) throws InterruptedException, TimeoutException, IOException {
-    SagaStep<T> setpToExecute = sagaEventState.getStepToExecute();
-    setpToExecute.apply(event, saga, sagaData);
+    SagaStep<T> stepToExecute = sagaEventState.getStepToExecute();
+    stepToExecute.apply(event, saga, sagaData);
   }
 
   protected abstract void populateNextStepsMap();
