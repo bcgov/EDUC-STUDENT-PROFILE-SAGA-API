@@ -5,7 +5,7 @@ import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessageSubscriber;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
-import ca.bc.gov.educ.api.student.profile.saga.poll.EventTaskScheduler;
+import ca.bc.gov.educ.api.student.profile.saga.schedulers.EventTaskScheduler;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.*;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
@@ -31,10 +31,10 @@ public class StudentProfileCommentsSagaOrchestrator extends BaseOrchestrator<Stu
   protected void populateNextStepsMap() {
     stepBuilder()
         .step(INITIATED, INITIATE_SUCCESS, ADD_PROFILE_REQUEST_COMMENT, this::executeAddPenRequestComments)
-        .step(ADD_PROFILE_REQUEST_COMMENT, PROFILE_REQUEST_COMMENT_ADDED, GET_PROFILE_REQUEST, this::executeGetPenRequest)
-        .step(ADD_PROFILE_REQUEST_COMMENT, PROFILE_REQUEST_COMMENT_ALREADY_EXIST, GET_PROFILE_REQUEST, this::executeGetPenRequest)
-        .step(GET_PROFILE_REQUEST, PROFILE_REQUEST_FOUND, UPDATE_PROFILE_REQUEST, this::executeUpdatePenRequest)
-        .step(UPDATE_PROFILE_REQUEST, PROFILE_REQUEST_UPDATED, MARK_SAGA_COMPLETE, this::markSagaComplete);
+        .step(ADD_PROFILE_REQUEST_COMMENT, PROFILE_REQUEST_COMMENT_ADDED, GET_STUDENT_PROFILE, this::executeGetPenRequest)
+        .step(ADD_PROFILE_REQUEST_COMMENT, PROFILE_REQUEST_COMMENT_ALREADY_EXIST, GET_STUDENT_PROFILE, this::executeGetPenRequest)
+        .step(GET_STUDENT_PROFILE, STUDENT_PROFILE_FOUND, UPDATE_STUDENT_PROFILE, this::executeUpdatePenRequest)
+        .step(UPDATE_STUDENT_PROFILE, STUDENT_PROFILE_UPDATED, MARK_SAGA_COMPLETE, this::markSagaComplete);
 
   }
 
@@ -59,10 +59,10 @@ public class StudentProfileCommentsSagaOrchestrator extends BaseOrchestrator<Stu
 
   protected void executeGetPenRequest(Event event, Saga saga, StudentProfileCommentsSagaData studentProfileCommentsSagaData) throws InterruptedException, TimeoutException, IOException {
     SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
-    saga.setSagaState(GET_PROFILE_REQUEST.toString()); // set current event as saga state.
+    saga.setSagaState(GET_STUDENT_PROFILE.toString()); // set current event as saga state.
     getSagaService().updateAttachedSagaWithEvents(saga, eventState);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-        .eventType(GET_PROFILE_REQUEST)
+        .eventType(GET_STUDENT_PROFILE)
         .replyTo(getTopicToSubscribe())
         //.eventPayload(studentProfileCommentsSagaData.getPenRetrievalRequestID())
         .build();
@@ -72,12 +72,12 @@ public class StudentProfileCommentsSagaOrchestrator extends BaseOrchestrator<Stu
 
   protected void executeUpdatePenRequest(Event event, Saga saga, StudentProfileCommentsSagaData studentProfileCommentsSagaData) throws IOException, InterruptedException, TimeoutException {
     SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
-    saga.setSagaState(UPDATE_PROFILE_REQUEST.toString());
+    saga.setSagaState(UPDATE_STUDENT_PROFILE.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventState);
     StudentProfileSagaData penRequestSagaData = JsonUtil.getJsonObjectFromString(StudentProfileSagaData.class, event.getEventPayload());
     updateStudentProfilePayload(penRequestSagaData, studentProfileCommentsSagaData);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-        .eventType(UPDATE_PROFILE_REQUEST)
+        .eventType(UPDATE_STUDENT_PROFILE)
         .replyTo(getTopicToSubscribe())
         .eventPayload(JsonUtil.getJsonStringFromObject(penRequestSagaData))
         .build();

@@ -4,7 +4,7 @@ import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessageSubscriber;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
-import ca.bc.gov.educ.api.student.profile.saga.poll.EventTaskScheduler;
+import ca.bc.gov.educ.api.student.profile.saga.schedulers.EventTaskScheduler;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.Event;
 import ca.bc.gov.educ.api.student.profile.saga.struct.StudentProfileSagaData;
@@ -14,8 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.GET_PROFILE_REQUEST;
-import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.UPDATE_PROFILE_REQUEST;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.GET_STUDENT_PROFILE;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.UPDATE_STUDENT_PROFILE;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.IN_PROGRESS;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.STUDENT_PROFILE_API_TOPIC;
 
 /**
@@ -36,12 +37,12 @@ public abstract class BaseProfileReqSagaOrchestrator<T> extends BaseOrchestrator
 
   protected void executeUpdateProfileRequest(Event event, Saga saga, T t) throws IOException, InterruptedException, TimeoutException {
     SagaEvent eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
-    saga.setSagaState(UPDATE_PROFILE_REQUEST.toString());
+    saga.setSagaState(UPDATE_STUDENT_PROFILE.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     StudentProfileSagaData sagaData = JsonUtil.getJsonObjectFromString(StudentProfileSagaData.class, event.getEventPayload());
     updateProfileRequestPayload(sagaData, t);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-        .eventType(UPDATE_PROFILE_REQUEST)
+        .eventType(UPDATE_STUDENT_PROFILE)
         .replyTo(getTopicToSubscribe())
         .eventPayload(JsonUtil.getJsonStringFromObject(sagaData))
         .build();
@@ -51,10 +52,11 @@ public abstract class BaseProfileReqSagaOrchestrator<T> extends BaseOrchestrator
 
   protected void executeGetProfileRequest(Event event, Saga saga, T t) throws InterruptedException, TimeoutException, IOException {
     SagaEvent eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
-    saga.setSagaState(GET_PROFILE_REQUEST.toString()); // set current event as saga state.
+    saga.setSagaState(GET_STUDENT_PROFILE.toString()); // set current event as saga state.
+    saga.setStatus(IN_PROGRESS.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-        .eventType(GET_PROFILE_REQUEST)
+        .eventType(GET_STUDENT_PROFILE)
         .replyTo(getTopicToSubscribe())
         .eventPayload(updateGetProfileRequestPayload(t))
         .build();

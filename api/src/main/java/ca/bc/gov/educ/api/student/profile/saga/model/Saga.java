@@ -49,6 +49,10 @@ public class Saga {
   @Column(name = "SAGA_COMPENSATED")
   private Boolean sagaCompensated;
 
+  @Column(name = "STUDENT_PROFILE_REQUEST_ID")
+  private String studentProfileRequestId;
+
+
   @NotNull(message = "create user cannot be null")
   @Column(name = "CREATE_USER", updatable = false)
   @Size(max = 32)

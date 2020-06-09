@@ -23,7 +23,7 @@ objects:
     template:
       metadata:
         annotations:
-          openshift.io/generated-by: sagaapi
+          openshift.io/generated-by: "${APP_NAME}-${JOB_NAME}"
           prometheus.io/path: /actuator/prometheus
           prometheus.io/port: '8080'
           prometheus.io/scrape: 'true'
@@ -48,7 +48,7 @@ objects:
             successThreshold: 1
           livenessProbe:
             httpGet:
-              path: /health
+              path: /actuator/health
               port: 8080
             initialDelaySeconds: 600
             periodSeconds: 15
@@ -61,7 +61,7 @@ objects:
             protocol: TCP
           resources:
             requests:
-              cpu: "50m"
+              cpu: "30m"
             limits:
               cpu: "150m"
         volumes:
