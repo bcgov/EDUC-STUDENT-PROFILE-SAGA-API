@@ -43,15 +43,6 @@ public abstract class BaseOrchestrator<T> {
 
   protected final Map<EventType, List<SagaEventState<T>>> nextStepsToExecute = new LinkedHashMap<>();
 
-  protected List<SagaEventState<T>> createSingleCollectionEventState(EventOutcome eventOutcome, Boolean isCompensating, EventType nextEventType, SagaStep<T> stepToExecute) {
-    return Collections.singletonList(buildSagaEventState(eventOutcome, isCompensating, nextEventType, stepToExecute));
-  }
-
-
-  protected SagaEventState<T> buildSagaEventState(EventOutcome eventOutcome, Boolean isCompensating, EventType nextEventType, SagaStep<T> stepToExecute) {
-    return SagaEventState.<T>builder().currentEventOutcome(eventOutcome).isCompensating(isCompensating).nextEventType(nextEventType).stepToExecute(stepToExecute).build();
-  }
-
   public BaseOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, MessageSubscriber messageSubscriber, EventTaskScheduler taskScheduler, Class<T> clazz, String sagaName, String topicToSubscribe) {
     this.sagaService = sagaService;
     this.messagePublisher = messagePublisher;
@@ -62,6 +53,18 @@ public abstract class BaseOrchestrator<T> {
     taskScheduler.registerSagaOrchestrators(sagaName, this);
     populateNextStepsMap();
   }
+  protected List<SagaEventState<T>> createSingleCollectionEventState(EventOutcome eventOutcome, Boolean isCompensating, EventType nextEventType, SagaStep<T> stepToExecute) {
+    List<SagaEventState<T>> eventStates = new ArrayList<>();
+    eventStates.add(buildSagaEventState(eventOutcome, isCompensating, nextEventType, stepToExecute));
+    return eventStates;
+  }
+
+
+  protected SagaEventState<T> buildSagaEventState(EventOutcome eventOutcome, Boolean isCompensating, EventType nextEventType, SagaStep<T> stepToExecute) {
+    return SagaEventState.<T>builder().currentEventOutcome(eventOutcome).isCompensating(isCompensating).nextEventType(nextEventType).stepToExecute(stepToExecute).build();
+  }
+
+
 
 
   protected BaseOrchestrator<T> registerStepToExecute(EventType initEvent, EventOutcome outcome, Boolean isCompensating, EventType nextEvent, SagaStep<T> stepToExecute) {
@@ -73,8 +76,16 @@ public abstract class BaseOrchestrator<T> {
     }
     return this;
   }
-  protected BaseOrchestrator<T> step(EventType initEvent, EventOutcome outcome, EventType nextEvent, SagaStep<T> stepToExecute) {
-    return registerStepToExecute(initEvent, outcome, false, nextEvent, stepToExecute);
+
+  /**
+   * @param currentEvent  the event that has occurred.
+   * @param outcome       outcome of the event.
+   * @param nextEvent     next event that will occur.
+   * @param stepToExecute which method to execute for the next event. it is a lambda function.
+   * @return {@link BaseOrchestrator}
+   */
+  protected BaseOrchestrator<T> step(EventType currentEvent, EventOutcome outcome, EventType nextEvent, SagaStep<T> stepToExecute) {
+    return registerStepToExecute(currentEvent, outcome, false, nextEvent, stepToExecute);
   }
   /**
    * this is a simple and convenient method to trigger builder pattern in the child classes.
@@ -85,6 +96,15 @@ public abstract class BaseOrchestrator<T> {
     return this;
   }
 
+  /**
+   * this method will check if the event is not already processed. this could happen in SAGAs due to duplicate messages.
+   * Application should be able to handle this.
+   *
+   * @param currentEventType current event.
+   * @param saga   the model object.
+   * @param eventTypes       event types stored in the hashmap
+   * @return true or false based on whether the current event with outcome received from the queue is already processed or not.
+   */
   protected boolean isNotProcessedEvent(EventType currentEventType, Saga saga, Set<EventType> eventTypes) {
     EventType eventTypeInDB = EventType.valueOf(saga.getSagaState());
     List<EventType> events = new LinkedList<>(eventTypes);
@@ -93,6 +113,15 @@ public abstract class BaseOrchestrator<T> {
     return currentEventIndex >= dbEventIndex;
   }
 
+  /**
+   * creates the PenRequestSagaEventState object
+   *
+   * @param saga the payload.
+   * @param eventType      event type
+   * @param eventOutcome   outcome
+   * @param eventPayload   payload.
+   * @return {@link SagaEvent}
+   */
   protected SagaEvent createEventState(@NotNull Saga saga, @NotNull EventType eventType, @NotNull EventOutcome eventOutcome, String eventPayload) {
     return SagaEvent.builder()
             .createDate(LocalDateTime.now())
@@ -107,6 +136,13 @@ public abstract class BaseOrchestrator<T> {
             .build();
   }
 
+  /**
+   * This method updates the DB and marks the process as complete.
+   *
+   * @param event          the current event.
+   * @param saga the saga model object.
+   * @param sagaData       the payload string as object.
+   */
   protected void markSagaComplete(Event event, Saga saga, T sagaData) {
     log.trace("payload is {}", sagaData);
     SagaEvent sagaEvent = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
@@ -116,20 +152,49 @@ public abstract class BaseOrchestrator<T> {
     getSagaService().updateAttachedSagaWithEvents(saga, sagaEvent);
   }
 
+  /**
+   * calculate step number
+   *
+   * @param saga the model object.
+   * @return step number that was calculated.
+   */
   private int calculateStep(Saga saga) {
     val sagaStates = getSagaService().findAllSagaStates(saga);
     return (sagaStates.size() + 1);
   }
 
+  /**
+   * convenient method to post message to topic, to be used by child classes.
+   *
+   * @param topicName topic name where the message will be posted.
+   * @param nextEvent the next event object.
+   * @throws InterruptedException if thread is interrupted.
+   * @throws IOException          if there is connectivity problem
+   * @throws TimeoutException     if connection to messaging system times out.
+   */
   protected void postMessageToTopic(String topicName, Event nextEvent) throws InterruptedException, IOException, TimeoutException {
     getMessagePublisher().dispatchMessage(topicName, JsonUtil.getJsonStringFromObject(nextEvent).getBytes());
   }
 
+  /**
+   * it finds the last event that was processed successfully for this saga.
+   *
+   * @param eventStates event states corresponding to the Saga.
+   * @return {@link SagaEvent} if found else null.
+   */
   protected Optional<SagaEvent> findTheLastEventOccurred(List<SagaEvent> eventStates) {
     int step = eventStates.stream().map(SagaEvent::getSagaStepNumber).mapToInt(x -> x).max().orElse(0);
     return eventStates.stream().filter(element -> element.getSagaStepNumber() == step).findFirst();
   }
 
+  /**
+   * this method is called from the cron job , which will replay the saga process based on its current state.
+   *
+   * @param saga the model object.
+   * @throws InterruptedException if thread is interrupted.
+   * @throws IOException          if there is connectivity problem
+   * @throws TimeoutException     if connection to messaging system times out.
+   */
   @Async
   @Transactional
   public void replaySaga(Saga saga) throws IOException, InterruptedException, TimeoutException {
@@ -142,6 +207,16 @@ public abstract class BaseOrchestrator<T> {
     }
   }
 
+  /**
+   * This method will restart the saga process from where it was left the last time. which could occur due to various reasons
+   *
+   * @param saga the model object.
+   * @param eventStates    the event states corresponding to the saga
+   * @param t              the payload string as an object
+   * @throws InterruptedException if thread is interrupted.
+   * @throws IOException          if there is connectivity problem
+   * @throws TimeoutException     if connection to messaging system times out.
+   */
   private void replayFromLastEvent(Saga saga, List<SagaEvent> eventStates, T t) throws InterruptedException, TimeoutException, IOException {
     val sagaEventOptional = findTheLastEventOccurred(eventStates);
     if (sagaEventOptional.isPresent()) {
@@ -162,6 +237,15 @@ public abstract class BaseOrchestrator<T> {
     }
   }
 
+  /**
+   * This method will restart the saga process from the beginning. which could occur due to various reasons
+   *
+   * @param saga the model object.
+   * @param t              the payload string as an object
+   * @throws InterruptedException if thread is interrupted.
+   * @throws IOException          if there is connectivity problem
+   * @throws TimeoutException     if connection to messaging system times out.
+   */
   private void replayFromBeginning(Saga saga, T t) throws InterruptedException, TimeoutException, IOException {
     Event event = Event.builder()
             .eventOutcome(INITIATE_SUCCESS)
@@ -174,6 +258,14 @@ public abstract class BaseOrchestrator<T> {
     }
   }
 
+  /**
+   * this method is called if there is a new message on this specific topic which this service is listening.
+   *
+   * @param event the event in the topic received as a json string and then converted to {@link Event}
+   * @throws InterruptedException if thread is interrupted.
+   * @throws IOException          if there is connectivity problem
+   * @throws TimeoutException     if connection to messaging system times out.
+   */
 
   @Async
   @Transactional
@@ -191,12 +283,27 @@ public abstract class BaseOrchestrator<T> {
       }
     }
   }
-
+  /**
+   * this method finds the next event that needs to be executed.
+   *
+   * @param currentEvent current event
+   * @param eventOutcome event outcome.
+   * @return {@link Optional<SagaEventState>}
+   */
   protected Optional<SagaEventState<T>> findNextSagaEventState(EventType currentEvent, EventOutcome eventOutcome) {
     val sagaEventStates = nextStepsToExecute.get(currentEvent);
     return sagaEventStates.stream().filter(el -> el.getCurrentEventOutcome() == eventOutcome).findFirst();
   }
-
+  /**
+   * this method starts the process of saga event execution.
+   *
+   * @param event          the current event.
+   * @param saga           the model object.
+   * @param sagaEventState the next next event from {@link BaseOrchestrator#nextStepsToExecute}
+   * @throws InterruptedException if thread is interrupted.
+   * @throws IOException          if there is connectivity problem
+   * @throws TimeoutException     if connection to messaging system times out.
+   */
   protected void process(@NotNull Event event, Saga saga, SagaEventState<T> sagaEventState) throws InterruptedException, TimeoutException, IOException {
     T sagaData = JsonUtil.getJsonObjectFromString(clazz, saga.getPayload());
     if (!saga.getSagaState().equalsIgnoreCase(COMPLETED.toString())
@@ -207,7 +314,17 @@ public abstract class BaseOrchestrator<T> {
       log.info("ignoring this message as we have already processed it or it is completed. {}", event.toString()); // it is expected to receive duplicate message in saga pattern, system should be designed to handle duplicates.
     }
   }
-
+  /**
+   * this method will invoke the next event in the {@link BaseOrchestrator#nextStepsToExecute}
+   *
+   * @param event          the current event.
+   * @param saga           the model object.
+   * @param sagaData       the payload string
+   * @param sagaEventState the next next event from {@link BaseOrchestrator#nextStepsToExecute}
+   * @throws InterruptedException if thread is interrupted.
+   * @throws IOException          if there is connectivity problem
+   * @throws TimeoutException     if connection to messaging system times out.
+   */
   protected void invokeNextEvent(Event event, Saga saga, T sagaData, SagaEventState<T> sagaEventState) throws InterruptedException, TimeoutException, IOException {
     SagaStep<T> stepToExecute = sagaEventState.getStepToExecute();
     stepToExecute.apply(event, saga, sagaData);
