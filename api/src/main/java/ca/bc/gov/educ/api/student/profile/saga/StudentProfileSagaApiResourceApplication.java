@@ -49,6 +49,6 @@ public class StudentProfileSagaApiResourceApplication {
   }
   @Bean
   public LockProvider lockProvider(@Autowired JdbcTemplate jdbcTemplate, @Autowired PlatformTransactionManager transactionManager) {
-    return new JdbcTemplateLockProvider(jdbcTemplate, transactionManager, "saga_shedlock");
+    return new JdbcTemplateLockProvider(jdbcTemplate, transactionManager, "STUDENT_PROFILE_SAGA_SHEDLOCK");
   }
 }

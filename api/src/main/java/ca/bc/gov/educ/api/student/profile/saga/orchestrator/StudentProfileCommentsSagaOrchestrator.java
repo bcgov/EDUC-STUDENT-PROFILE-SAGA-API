@@ -29,13 +29,13 @@ public class StudentProfileCommentsSagaOrchestrator extends BaseOrchestrator<Stu
 
   @Override
   protected void populateNextStepsMap() {
-    registerStepToExecute(INITIATED, INITIATE_SUCCESS, ADD_PEN_REQUEST_COMMENT, this::executeAddPenRequestComments);
+    stepBuilder()
+        .step(INITIATED, INITIATE_SUCCESS, ADD_PROFILE_REQUEST_COMMENT, this::executeAddPenRequestComments)
+        .step(ADD_PROFILE_REQUEST_COMMENT, PROFILE_REQUEST_COMMENT_ADDED, GET_PROFILE_REQUEST, this::executeGetPenRequest)
+        .step(ADD_PROFILE_REQUEST_COMMENT, PROFILE_REQUEST_COMMENT_ALREADY_EXIST, GET_PROFILE_REQUEST, this::executeGetPenRequest)
+        .step(GET_PROFILE_REQUEST, PROFILE_REQUEST_FOUND, UPDATE_PROFILE_REQUEST, this::executeUpdatePenRequest)
+        .step(UPDATE_PROFILE_REQUEST, PROFILE_REQUEST_UPDATED, MARK_SAGA_COMPLETE, this::markSagaComplete);
 
-    registerStepToExecute(ADD_PEN_REQUEST_COMMENT, PEN_REQUEST_COMMENT_ADDED, GET_PEN_REQUEST, this::executeGetPenRequest);
-    registerStepToExecute(ADD_PEN_REQUEST_COMMENT, PEN_REQUEST_COMMENT_ALREADY_EXIST, GET_PEN_REQUEST, this::executeGetPenRequest);
-
-    registerStepToExecute(GET_PEN_REQUEST, PEN_REQUEST_FOUND, UPDATE_PEN_REQUEST, this::executeUpdatePenRequest);
-    registerStepToExecute(UPDATE_PEN_REQUEST, PEN_REQUEST_UPDATED, MARK_SAGA_COMPLETE, this::markSagaComplete);
   }
 
   @Autowired
@@ -45,49 +45,48 @@ public class StudentProfileCommentsSagaOrchestrator extends BaseOrchestrator<Stu
 
   private void executeAddPenRequestComments(Event event, Saga saga, StudentProfileCommentsSagaData studentProfileCommentsSagaData) throws IOException, InterruptedException, TimeoutException {
     SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
-    saga.setSagaState(ADD_PEN_REQUEST_COMMENT.toString());
+    saga.setSagaState(ADD_PROFILE_REQUEST_COMMENT.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventState);
-    StudentProfileComments studentProfileComments = mapper.toPenReqComments(studentProfileCommentsSagaData);
+    StudentProfileComments studentProfileComments = mapper.toComments(studentProfileCommentsSagaData);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-            .eventType(ADD_PEN_REQUEST_COMMENT)
-            .replyTo(getTopicToSubscribe())
-            .eventPayload(JsonUtil.getJsonStringFromObject(studentProfileComments))
-            .build();
+        .eventType(ADD_PROFILE_REQUEST_COMMENT)
+        .replyTo(getTopicToSubscribe())
+        .eventPayload(JsonUtil.getJsonStringFromObject(studentProfileComments))
+        .build();
     postMessageToTopic(STUDENT_PROFILE_API_TOPIC.toString(), nextEvent);
     log.info("message sent to STUDENT_PROFILE_API_TOPIC for ADD_PEN_REQUEST_COMMENT Event.");
   }
 
   protected void executeGetPenRequest(Event event, Saga saga, StudentProfileCommentsSagaData studentProfileCommentsSagaData) throws InterruptedException, TimeoutException, IOException {
     SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
-    saga.setSagaState(GET_PEN_REQUEST.toString()); // set current event as saga state.
+    saga.setSagaState(GET_PROFILE_REQUEST.toString()); // set current event as saga state.
     getSagaService().updateAttachedSagaWithEvents(saga, eventState);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-            .eventType(GET_PEN_REQUEST)
-            .replyTo(getTopicToSubscribe())
-            .eventPayload(studentProfileCommentsSagaData.getPenRetrievalRequestID())
-            .build();
+        .eventType(GET_PROFILE_REQUEST)
+        .replyTo(getTopicToSubscribe())
+        //.eventPayload(studentProfileCommentsSagaData.getPenRetrievalRequestID())
+        .build();
     postMessageToTopic(STUDENT_PROFILE_API_TOPIC.toString(), nextEvent);
     log.info("message sent to STUDENT_PROFILE_API_TOPIC for GET_PEN_REQUEST Event.");
   }
 
   protected void executeUpdatePenRequest(Event event, Saga saga, StudentProfileCommentsSagaData studentProfileCommentsSagaData) throws IOException, InterruptedException, TimeoutException {
     SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
-    saga.setSagaState(UPDATE_PEN_REQUEST.toString());
+    saga.setSagaState(UPDATE_PROFILE_REQUEST.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventState);
     StudentProfileSagaData penRequestSagaData = JsonUtil.getJsonObjectFromString(StudentProfileSagaData.class, event.getEventPayload());
     updateStudentProfilePayload(penRequestSagaData, studentProfileCommentsSagaData);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-            .eventType(UPDATE_PEN_REQUEST)
-            .replyTo(getTopicToSubscribe())
-            .eventPayload(JsonUtil.getJsonStringFromObject(penRequestSagaData))
-            .build();
+        .eventType(UPDATE_PROFILE_REQUEST)
+        .replyTo(getTopicToSubscribe())
+        .eventPayload(JsonUtil.getJsonStringFromObject(penRequestSagaData))
+        .build();
     postMessageToTopic(STUDENT_PROFILE_API_TOPIC.toString(), nextEvent);
     log.info("message sent to STUDENT_PROFILE_API_TOPIC for UPDATE_PEN_REQUEST Event.");
   }
 
   protected void updateStudentProfilePayload(StudentProfileSagaData studentProfileSagaData, StudentProfileCommentsSagaData studentProfileCommentsSagaData) {
-    studentProfileSagaData.setPenRequestStatusCode(studentProfileCommentsSagaData.getPenRequestStatusCode());
-    studentProfileSagaData.setUpdateUser(getSagaName());
+
   }
 
 }

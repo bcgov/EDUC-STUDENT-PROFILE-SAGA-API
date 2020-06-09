@@ -15,9 +15,8 @@ import javax.validation.constraints.Size;
 @AllArgsConstructor
 @NoArgsConstructor
 public class StudentProfileCommentsSagaData {
-  String penRetrievalReqCommentID;
-  @NotNull(message = "penRetrievalRequestID content can not be null")
-  String penRetrievalRequestID;
+  @NotNull(message = "studentProfileRequestID content can not be null")
+  String studentProfileRequestID;
   String staffMemberIDIRGUID;
   String staffMemberName;
   @NotNull(message = "Comment content can not be null")
