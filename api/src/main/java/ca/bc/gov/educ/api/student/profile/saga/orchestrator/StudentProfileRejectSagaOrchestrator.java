@@ -31,7 +31,7 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.S
 public class StudentProfileRejectSagaOrchestrator extends BaseProfileReqSagaOrchestrator<StudentProfileRequestRejectActionSagaData> {
 
   @Autowired
-  public StudentProfileRejectSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, MessageSubscriber messageSubscriber, EventTaskScheduler taskScheduler, Class<StudentProfileRequestRejectActionSagaData> clazz, String sagaName, String topicToSubscribe) {
+  public StudentProfileRejectSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, MessageSubscriber messageSubscriber, EventTaskScheduler taskScheduler) {
     super(sagaService, messagePublisher, messageSubscriber, taskScheduler, StudentProfileRequestRejectActionSagaData.class, STUDENT_PROFILE_REQUEST_REJECT_SAGA, STUDENT_PROFILE_REQUEST_REJECT_SAGA_TOPIC.toString());
   }
 

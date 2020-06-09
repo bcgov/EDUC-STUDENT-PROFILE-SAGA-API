@@ -47,7 +47,6 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseOrchestrator<Stu
   @Autowired
   public StudentProfileCompleteSagaOrchestrator(final SagaService sagaService, final MessagePublisher messagePublisher, final MessageSubscriber messageSubscriber, final EventTaskScheduler taskScheduler) {
     super(sagaService, messagePublisher, messageSubscriber, taskScheduler, StudentProfileCompleteSagaData.class, STUDENT_PROFILE_COMPLETE_SAGA.toString(), STUDENT_PROFILE_COMPLETE_SAGA_TOPIC.toString());
-    populateNextStepsMap();
   }
 
   protected void updateStudentProfilePayload(StudentProfileSagaData studentProfileSagaData, StudentProfileCompleteSagaData studentProfileCompleteSagaData) {
