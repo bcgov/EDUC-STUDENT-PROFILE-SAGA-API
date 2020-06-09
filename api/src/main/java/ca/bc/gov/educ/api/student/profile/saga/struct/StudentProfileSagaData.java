@@ -34,4 +34,6 @@ public class StudentProfileSagaData {
   private String statusUpdateDate;
   private String emailVerified;
   private String completeComment;
+  private String createUser;
+  private String updateUser;
 }

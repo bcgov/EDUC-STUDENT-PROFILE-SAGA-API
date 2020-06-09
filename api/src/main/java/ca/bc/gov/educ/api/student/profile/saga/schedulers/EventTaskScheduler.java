@@ -1,4 +1,4 @@
-package ca.bc.gov.educ.api.student.profile.saga.poll;
+package ca.bc.gov.educ.api.student.profile.saga.schedulers;
 
 import ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -25,7 +24,7 @@ import static lombok.AccessLevel.PRIVATE;
 @Slf4j
 public class EventTaskScheduler {
   @Getter(PRIVATE)
-  private final Map<String, BaseOrchestrator<?>>  sagaOrchestrators = new HashMap<>();
+  private final Map<String, BaseOrchestrator<?>> sagaOrchestrators = new HashMap<>();
   @Getter(PRIVATE)
   private final SagaRepository sagaRepository;
 
@@ -41,18 +40,17 @@ public class EventTaskScheduler {
   //Run the job every minute to check how many records are in IN_PROGRESS or STARTED status and has not been updated in last 5 minutes.
   @Scheduled(cron = "1 * * * * *")
   @SchedulerLock(name = "PenRequestSagaTablePoller",
-          lockAtLeastFor = "950ms", lockAtMostFor = "980ms")
+      lockAtLeastFor = "950ms", lockAtMostFor = "980ms")
   public void pollEventTableAndPublish() throws InterruptedException, IOException, TimeoutException {
-    List<String> status = new ArrayList<>();
+    var status = new ArrayList<String>();
     status.add(SagaStatusEnum.IN_PROGRESS.toString());
     status.add(SagaStatusEnum.STARTED.toString());
-    List<Saga> sagas = getSagaRepository().findAllByStatusIn(status);
+    var sagas = getSagaRepository().findAllByStatusIn(status);
     if (!sagas.isEmpty()) {
       for (Saga saga : sagas) {
-        if (saga.getUpdateDate().isBefore(LocalDateTime.now().minusMinutes(5))) {
-          if(getSagaOrchestrators().containsKey(saga.getSagaName())) {
-            getSagaOrchestrators().get(saga.getSagaName()).replaySaga(saga);
-          }
+        if (saga.getUpdateDate().isBefore(LocalDateTime.now().minusMinutes(5))
+            && getSagaOrchestrators().containsKey(saga.getSagaName())) {
+          getSagaOrchestrators().get(saga.getSagaName()).replaySaga(saga);
         }
       }
     }

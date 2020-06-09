@@ -4,7 +4,7 @@ import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessageSubscriber;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
-import ca.bc.gov.educ.api.student.profile.saga.poll.EventTaskScheduler;
+import ca.bc.gov.educ.api.student.profile.saga.schedulers.EventTaskScheduler;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.Event;
 import ca.bc.gov.educ.api.student.profile.saga.struct.StudentProfileEmailSagaData;
@@ -23,7 +23,8 @@ import java.util.concurrent.TimeoutException;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.*;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.*;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.ProfileRequestStatusCode.REJECTED;
-import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.STUDENT_PROFILE_EMAIL_API_TOPIC;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.STUDENT_PROFILE_REJECT_SAGA;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.PROFILE_REQUEST_EMAIL_API_TOPIC;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.STUDENT_PROFILE_REQUEST_REJECT_SAGA_TOPIC;
 
 @Component
@@ -32,16 +33,16 @@ public class StudentProfileRejectSagaOrchestrator extends BaseProfileReqSagaOrch
 
   @Autowired
   public StudentProfileRejectSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, MessageSubscriber messageSubscriber, EventTaskScheduler taskScheduler) {
-    super(sagaService, messagePublisher, messageSubscriber, taskScheduler, StudentProfileRequestRejectActionSagaData.class, STUDENT_PROFILE_REQUEST_REJECT_SAGA, STUDENT_PROFILE_REQUEST_REJECT_SAGA_TOPIC.toString());
+    super(sagaService, messagePublisher, messageSubscriber, taskScheduler, StudentProfileRequestRejectActionSagaData.class, STUDENT_PROFILE_REJECT_SAGA.toString(), STUDENT_PROFILE_REQUEST_REJECT_SAGA_TOPIC.toString());
   }
 
 
   @Override
   protected void populateNextStepsMap() {
     stepBuilder()
-        .step(INITIATED, INITIATE_SUCCESS, GET_PROFILE_REQUEST, this::executeGetProfileRequest)
-        .step(GET_PROFILE_REQUEST, PROFILE_REQUEST_FOUND, UPDATE_PROFILE_REQUEST, this::executeUpdateProfileRequest)
-        .step(UPDATE_PROFILE_REQUEST, PROFILE_REQUEST_UPDATED, NOTIFY_STUDENT_PROFILE_REQUEST_REJECT, this::executeNotifyStudentProfileRequestRejected)
+        .step(INITIATED, INITIATE_SUCCESS, GET_STUDENT_PROFILE, this::executeGetProfileRequest)
+        .step(GET_STUDENT_PROFILE, STUDENT_PROFILE_FOUND, UPDATE_STUDENT_PROFILE, this::executeUpdateProfileRequest)
+        .step(UPDATE_STUDENT_PROFILE, STUDENT_PROFILE_UPDATED, NOTIFY_STUDENT_PROFILE_REQUEST_REJECT, this::executeNotifyStudentProfileRequestRejected)
         .step(NOTIFY_STUDENT_PROFILE_REQUEST_REJECT, STUDENT_NOTIFIED, MARK_SAGA_COMPLETE, this::markSagaComplete);
   }
 
@@ -50,6 +51,7 @@ public class StudentProfileRejectSagaOrchestrator extends BaseProfileReqSagaOrch
     sagaData.setStudentRequestStatusCode(REJECTED.toString());
     sagaData.setFailureReason(studentProfileRequestRejectActionSagaData.getRejectionReason());
     sagaData.setStatusUpdateDate(LocalDateTime.now().toString());
+    sagaData.setUpdateUser(studentProfileRequestRejectActionSagaData.getUpdateUser());
   }
 
   @Override
@@ -74,9 +76,9 @@ public class StudentProfileRejectSagaOrchestrator extends BaseProfileReqSagaOrch
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
         .eventType(NOTIFY_STUDENT_PROFILE_REQUEST_REJECT)
         .replyTo(getTopicToSubscribe())
-        .eventPayload(JsonUtil.getJsonStringFromObject(buildEmailSagaData(studentProfileRequestRejectActionSagaData)))
+        .eventPayload(buildEmailSagaData(studentProfileRequestRejectActionSagaData))
         .build();
-    postMessageToTopic(STUDENT_PROFILE_EMAIL_API_TOPIC.toString(), nextEvent);
+    postMessageToTopic(PROFILE_REQUEST_EMAIL_API_TOPIC.toString(), nextEvent);
     log.info("message sent to STUDENT_PROFILE_EMAIL_API_TOPIC for NOTIFY_STUDENT_PROFILE_REQUEST_REJECT Event.");
   }
 

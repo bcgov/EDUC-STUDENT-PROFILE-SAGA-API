@@ -6,7 +6,7 @@ import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessageSubscriber;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
-import ca.bc.gov.educ.api.student.profile.saga.poll.EventTaskScheduler;
+import ca.bc.gov.educ.api.student.profile.saga.schedulers.EventTaskScheduler;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.*;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
@@ -38,9 +38,9 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseOrchestrator<Stu
         .step(CREATE_STUDENT, STUDENT_CREATED, GET_DIGITAL_ID, this::executeGetDigitalId)
         .step(UPDATE_STUDENT, STUDENT_UPDATED, GET_DIGITAL_ID, this::executeGetDigitalId)
         .step(GET_DIGITAL_ID, DIGITAL_ID_FOUND, UPDATE_DIGITAL_ID, this::executeUpdateDigitalId)
-        .step(UPDATE_DIGITAL_ID, DIGITAL_ID_UPDATED, GET_PROFILE_REQUEST, this::executeGetPenRequest)
-        .step(GET_PROFILE_REQUEST, PROFILE_REQUEST_FOUND, UPDATE_PROFILE_REQUEST, this::executeUpdatePenRequest)
-        .step(UPDATE_PROFILE_REQUEST, PROFILE_REQUEST_UPDATED, NOTIFY_STUDENT_PROFILE_REQUEST_COMPLETE, this::executeNotifyStudentProfileComplete)
+        .step(UPDATE_DIGITAL_ID, DIGITAL_ID_UPDATED, GET_STUDENT_PROFILE, this::executeGetPenRequest)
+        .step(GET_STUDENT_PROFILE, STUDENT_PROFILE_FOUND, UPDATE_STUDENT_PROFILE, this::executeUpdatePenRequest)
+        .step(UPDATE_STUDENT_PROFILE, STUDENT_PROFILE_UPDATED, NOTIFY_STUDENT_PROFILE_REQUEST_COMPLETE, this::executeNotifyStudentProfileComplete)
         .step(NOTIFY_STUDENT_PROFILE_REQUEST_COMPLETE, STUDENT_NOTIFIED, MARK_SAGA_COMPLETE, this::markSagaComplete);
   }
 
@@ -165,7 +165,7 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseOrchestrator<Stu
         .replyTo(getTopicToSubscribe())
         .eventPayload(buildPenReqEmailSagaData(studentProfileCompleteSagaData))
         .build();
-    postMessageToTopic(STUDENT_PROFILE_EMAIL_API_TOPIC.toString(), nextEvent);
+    postMessageToTopic(PROFILE_REQUEST_EMAIL_API_TOPIC.toString(), nextEvent);
     log.info("message sent to PEN_REQUEST_EMAIL_API_TOPIC for NOTIFY_STUDENT_PEN_REQUEST_COMPLETE Event.");
 
   }
@@ -180,10 +180,10 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseOrchestrator<Stu
 
   protected void executeGetPenRequest(Event event, Saga saga, StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws InterruptedException, TimeoutException, IOException {
     SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
-    saga.setSagaState(GET_PROFILE_REQUEST.toString()); // set current event as saga state.
+    saga.setSagaState(GET_STUDENT_PROFILE.toString()); // set current event as saga state.
     getSagaService().updateAttachedSagaWithEvents(saga, eventState);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-        .eventType(GET_PROFILE_REQUEST)
+        .eventType(GET_STUDENT_PROFILE)
         .replyTo(getTopicToSubscribe())
         .eventPayload(studentProfileCompleteSagaData.getPenRequestID())
         .build();
@@ -193,12 +193,12 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseOrchestrator<Stu
 
   protected void executeUpdatePenRequest(Event event, Saga saga, StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
     SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
-    saga.setSagaState(UPDATE_PROFILE_REQUEST.toString());
+    saga.setSagaState(UPDATE_STUDENT_PROFILE.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventState);
     StudentProfileSagaData studentProfileSagaData = JsonUtil.getJsonObjectFromString(StudentProfileSagaData.class, event.getEventPayload());
     updateStudentProfilePayload(studentProfileSagaData, studentProfileCompleteSagaData);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-        .eventType(UPDATE_PROFILE_REQUEST)
+        .eventType(UPDATE_STUDENT_PROFILE)
         .replyTo(getTopicToSubscribe())
         .eventPayload(JsonUtil.getJsonStringFromObject(studentProfileSagaData))
         .build();

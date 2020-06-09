@@ -42,8 +42,8 @@ public class SagaService {
 
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public Saga createSagaRecord(Object sagaData, String sagaName, String apiName) throws JsonProcessingException {
-    Saga saga = getSaga(JsonUtil.getJsonStringFromObject(sagaData), sagaName, apiName);
+  public Saga createSagaRecord(Object sagaData, String sagaName, String apiName, String studentProfileRequestId) throws JsonProcessingException {
+    Saga saga = getSaga(JsonUtil.getJsonStringFromObject(sagaData), sagaName, apiName, studentProfileRequestId);
     return getSagaRepository().save(saga);
   }
 
@@ -60,7 +60,7 @@ public class SagaService {
     saga.setUpdateDate(LocalDateTime.now());
     getSagaRepository().save(saga);
     val result = getSagaEventRepository()
-            .findBySagaAndSagaEventOutcomeAndSagaEventStateAndSagaStepNumber(saga, sagaEvent.getSagaEventOutcome(), sagaEvent.getSagaEventState(), sagaEvent.getSagaStepNumber() - 1); //check if the previous step was same and had same outcome, and it is due to replay.
+        .findBySagaAndSagaEventOutcomeAndSagaEventStateAndSagaStepNumber(saga, sagaEvent.getSagaEventOutcome(), sagaEvent.getSagaEventState(), sagaEvent.getSagaStepNumber() - 1); //check if the previous step was same and had same outcome, and it is due to replay.
     if (result.isEmpty()) {
       getSagaEventRepository().save(sagaEvent);
     }
@@ -81,19 +81,20 @@ public class SagaService {
     return getSagaRepository().save(saga);
   }
 
-  private Saga getSaga(String payload, String sagaName, String apiName) {
+  private Saga getSaga(String payload, String sagaName, String apiName, String studentProfileRequestId) {
     return Saga
-            .builder()
-            .payload(payload)
-            .sagaName(sagaName)
-            .status(STARTED.toString())
-            .sagaState(INITIATED.toString())
-            .sagaCompensated(false)
-            .createDate(LocalDateTime.now())
-            .createUser(apiName)
-            .updateUser(apiName)
-            .updateDate(LocalDateTime.now())
-            .build();
+        .builder()
+        .payload(payload)
+        .sagaName(sagaName)
+        .status(STARTED.toString())
+        .sagaState(INITIATED.toString())
+        .sagaCompensated(false)
+        .studentProfileRequestId(studentProfileRequestId)
+        .createDate(LocalDateTime.now())
+        .createUser(apiName)
+        .updateUser(apiName)
+        .updateDate(LocalDateTime.now())
+        .build();
   }
 
 }
