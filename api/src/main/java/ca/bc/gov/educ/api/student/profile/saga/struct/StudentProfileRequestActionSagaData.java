@@ -20,4 +20,6 @@ public class StudentProfileRequestActionSagaData {
   protected String email;
   @NotNull(message = "identityType can not be null")
   protected String identityType;
+  protected String staffMemberIDIRGUID;
+  protected String staffMemberName;
 }

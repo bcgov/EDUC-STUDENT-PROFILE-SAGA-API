@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @Data
 public class StudentProfileComments {
-  String studentProfileRequestID;
+  String studentRequestID;
   String staffMemberIDIRGUID;
   String staffMemberName;
   String commentContent;

@@ -30,9 +30,9 @@ public class StudentProfileCommentsSagaOrchestrator extends BaseOrchestrator<Stu
   @Override
   protected void populateNextStepsMap() {
     stepBuilder()
-        .step(INITIATED, INITIATE_SUCCESS, ADD_PROFILE_REQUEST_COMMENT, this::executeAddPenRequestComments)
-        .step(ADD_PROFILE_REQUEST_COMMENT, PROFILE_REQUEST_COMMENT_ADDED, GET_STUDENT_PROFILE, this::executeGetPenRequest)
-        .step(ADD_PROFILE_REQUEST_COMMENT, PROFILE_REQUEST_COMMENT_ALREADY_EXIST, GET_STUDENT_PROFILE, this::executeGetPenRequest)
+        .step(INITIATED, INITIATE_SUCCESS, ADD_STUDENT_PROFILE_COMMENT, this::executeAddPenRequestComments)
+        .step(ADD_STUDENT_PROFILE_COMMENT, STUDENT_PROFILE_COMMENT_ADDED, GET_STUDENT_PROFILE, this::executeGetPenRequest)
+        .step(ADD_STUDENT_PROFILE_COMMENT, STUDENT_PROFILE_COMMENT_ALREADY_EXIST, GET_STUDENT_PROFILE, this::executeGetPenRequest)
         .step(GET_STUDENT_PROFILE, STUDENT_PROFILE_FOUND, UPDATE_STUDENT_PROFILE, this::executeUpdatePenRequest)
         .step(UPDATE_STUDENT_PROFILE, STUDENT_PROFILE_UPDATED, MARK_SAGA_COMPLETE, this::markSagaComplete);
 
@@ -45,11 +45,11 @@ public class StudentProfileCommentsSagaOrchestrator extends BaseOrchestrator<Stu
 
   private void executeAddPenRequestComments(Event event, Saga saga, StudentProfileCommentsSagaData studentProfileCommentsSagaData) throws IOException, InterruptedException, TimeoutException {
     SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
-    saga.setSagaState(ADD_PROFILE_REQUEST_COMMENT.toString());
+    saga.setSagaState(ADD_STUDENT_PROFILE_COMMENT.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventState);
     StudentProfileComments studentProfileComments = mapper.toComments(studentProfileCommentsSagaData);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-        .eventType(ADD_PROFILE_REQUEST_COMMENT)
+        .eventType(ADD_STUDENT_PROFILE_COMMENT)
         .replyTo(getTopicToSubscribe())
         .eventPayload(JsonUtil.getJsonStringFromObject(studentProfileComments))
         .build();
@@ -85,6 +85,7 @@ public class StudentProfileCommentsSagaOrchestrator extends BaseOrchestrator<Stu
     log.info("message sent to STUDENT_PROFILE_API_TOPIC for UPDATE_PEN_REQUEST Event.");
   }
 
+  @SuppressWarnings("java:S1186")
   protected void updateStudentProfilePayload(StudentProfileSagaData studentProfileSagaData, StudentProfileCommentsSagaData studentProfileCommentsSagaData) {
 
   }
