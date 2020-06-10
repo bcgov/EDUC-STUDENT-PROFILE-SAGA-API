@@ -9,5 +9,7 @@ import java.util.UUID;
 
 @Repository
 public interface SagaRepository extends CrudRepository<Saga, UUID> {
-List<Saga> findAllByStatusIn(List<String> sagaState);
+  List<Saga> findAllByStatusIn(List<String> sagaState);
+
+  List<Saga> findAll();
 }
