@@ -19,7 +19,7 @@ import java.util.concurrent.TimeoutException;
 
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.*;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.*;
-import static ca.bc.gov.educ.api.student.profile.saga.constants.ProfileRequestStatusCode.SUBSREV;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.ProfileRequestStatusCode.RETURNED;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.STUDENT_PROFILE_RETURN_SAGA;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.IN_PROGRESS;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.*;
@@ -60,7 +60,7 @@ public class StudentProfileReturnSagaOrchestrator extends BaseProfileReqSagaOrch
 
   @Override
   protected void updateProfileRequestPayload(StudentProfileSagaData sagaData, StudentProfileReturnActionSagaData studentProfileReturnActionSagaData) {
-    sagaData.setStudentRequestStatusCode(SUBSREV.toString());
+    sagaData.setStudentRequestStatusCode(RETURNED.toString());
     sagaData.setStatusUpdateDate(LocalDateTime.now().toString());
     sagaData.setUpdateUser(studentProfileReturnActionSagaData.getUpdateUser());
   }
