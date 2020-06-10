@@ -5,6 +5,7 @@ import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.orchestrator.BaseOrchestrator;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -28,6 +30,10 @@ public class EventTaskScheduler {
   @Getter(PRIVATE)
   private final SagaRepository sagaRepository;
 
+
+
+  @Setter
+  private List<String> statusFilters;
   @Autowired
   public EventTaskScheduler(SagaRepository sagaRepository) {
     this.sagaRepository = sagaRepository;
@@ -42,10 +48,7 @@ public class EventTaskScheduler {
   @SchedulerLock(name = "PenRequestSagaTablePoller",
       lockAtLeastFor = "950ms", lockAtMostFor = "980ms")
   public void pollEventTableAndPublish() throws InterruptedException, IOException, TimeoutException {
-    var status = new ArrayList<String>();
-    status.add(SagaStatusEnum.IN_PROGRESS.toString());
-    status.add(SagaStatusEnum.STARTED.toString());
-    var sagas = getSagaRepository().findAllByStatusIn(status);
+    var sagas = getSagaRepository().findAllByStatusIn(getStatusFilters());
     if (!sagas.isEmpty()) {
       for (Saga saga : sagas) {
         if (saga.getUpdateDate().isBefore(LocalDateTime.now().minusMinutes(5))
@@ -55,5 +58,15 @@ public class EventTaskScheduler {
       }
     }
   }
+  public List<String> getStatusFilters() {
+    if(statusFilters !=null && !statusFilters.isEmpty()){
+      return statusFilters;
+    }else {
+      var statuses = new ArrayList<String>();
+      statuses.add(SagaStatusEnum.IN_PROGRESS.toString());
+      statuses.add(SagaStatusEnum.STARTED.toString());
+      return statuses;
+    }
 
+  }
 }
