@@ -45,6 +45,9 @@ soamFullPublicKey="-----BEGIN PUBLIC KEY----- $(getPublicKey) -----END PUBLIC KE
 #STUDENT_PROFILE_REJECT_SAGA
 "$KCADM_FILE_BIN_FOLDER"/kcadm.sh create client-scopes -r $SOAM_KC_REALM_ID --body "{\"description\": \"Access to Reject a student profile request\",\"id\": \"STUDENT_PROFILE_REJECT_SAGA\",\"name\": \"STUDENT_PROFILE_REJECT_SAGA\",\"protocol\": \"openid-connect\",\"attributes\" : {\"include.in.token.scope\" : \"true\",\"display.on.consent.screen\" : \"false\"}}"
 
+#STUDENT_PROFILE_RETURN_SAGA
+"$KCADM_FILE_BIN_FOLDER"/kcadm.sh create client-scopes -r $SOAM_KC_REALM_ID --body "{\"description\": \"Access to Return a student profile request\",\"id\": \"STUDENT_PROFILE_RETURN_SAGA\",\"name\": \"STUDENT_PROFILE_RETURN_SAGA\",\"protocol\": \"openid-connect\",\"attributes\" : {\"include.in.token.scope\" : \"true\",\"display.on.consent.screen\" : \"false\"}}"
+
 
 ###########################################################
 #Setup for config-map

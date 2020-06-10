@@ -294,7 +294,7 @@ public abstract class BaseOrchestrator<T> {
    */
   protected Optional<SagaEventState<T>> findNextSagaEventState(EventType currentEvent, EventOutcome eventOutcome) {
     val sagaEventStates = nextStepsToExecute.get(currentEvent);
-    return sagaEventStates.stream().filter(el -> el.getCurrentEventOutcome() == eventOutcome).findFirst();
+    return sagaEventStates == null ? Optional.empty() : sagaEventStates.stream().filter(el -> el.getCurrentEventOutcome() == eventOutcome).findFirst();
   }
 
   /**
