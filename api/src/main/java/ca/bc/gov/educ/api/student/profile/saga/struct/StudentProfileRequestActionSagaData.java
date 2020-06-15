@@ -14,6 +14,7 @@ public class StudentProfileRequestActionSagaData {
   protected String createUser;
   @NotNull(message = "updateUser can not be null")
   protected String updateUser;
+  protected String reviewer;
   @NotNull(message = "email can not be null")
   @Size(max = 80)
   @Email(message = "Email must be valid email address.")

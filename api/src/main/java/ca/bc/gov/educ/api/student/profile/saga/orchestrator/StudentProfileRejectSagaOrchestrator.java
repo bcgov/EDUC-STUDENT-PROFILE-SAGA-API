@@ -50,6 +50,7 @@ public class StudentProfileRejectSagaOrchestrator extends BaseProfileReqSagaOrch
   protected void updateProfileRequestPayload(StudentProfileSagaData sagaData, StudentProfileRequestRejectActionSagaData studentProfileRequestRejectActionSagaData) {
     sagaData.setStudentRequestStatusCode(REJECTED.toString());
     sagaData.setFailureReason(studentProfileRequestRejectActionSagaData.getRejectionReason());
+    sagaData.setReviewer(studentProfileRequestRejectActionSagaData.getReviewer());
     sagaData.setStatusUpdateDate(LocalDateTime.now().toString());
     sagaData.setUpdateUser(studentProfileRequestRejectActionSagaData.getUpdateUser());
   }

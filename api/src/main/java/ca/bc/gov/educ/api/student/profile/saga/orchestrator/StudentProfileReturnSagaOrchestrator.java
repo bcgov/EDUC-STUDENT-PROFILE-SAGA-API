@@ -61,6 +61,7 @@ public class StudentProfileReturnSagaOrchestrator extends BaseProfileReqSagaOrch
   @Override
   protected void updateProfileRequestPayload(StudentProfileSagaData sagaData, StudentProfileReturnActionSagaData studentProfileReturnActionSagaData) {
     sagaData.setStudentRequestStatusCode(RETURNED.toString());
+    sagaData.setReviewer(studentProfileReturnActionSagaData.getReviewer());
     sagaData.setStatusUpdateDate(LocalDateTime.now().toString());
     sagaData.setUpdateUser(studentProfileReturnActionSagaData.getUpdateUser());
   }
