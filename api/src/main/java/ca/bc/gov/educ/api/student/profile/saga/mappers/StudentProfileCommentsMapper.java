@@ -1,8 +1,8 @@
 package ca.bc.gov.educ.api.student.profile.saga.mappers;
 
-import ca.bc.gov.educ.api.student.profile.saga.struct.StudentProfileComments;
-import ca.bc.gov.educ.api.student.profile.saga.struct.StudentProfileCommentsSagaData;
-import ca.bc.gov.educ.api.student.profile.saga.struct.StudentProfileReturnActionSagaData;
+import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileComments;
+import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileCommentsSagaData;
+import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileReturnActionSagaData;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;

@@ -3,20 +3,28 @@ package ca.bc.gov.educ.api.student.profile.saga.controller;
 import ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome;
 import ca.bc.gov.educ.api.student.profile.saga.constants.EventType;
 import ca.bc.gov.educ.api.student.profile.saga.endpoint.StudentProfileSagaEndpoint;
+import ca.bc.gov.educ.api.student.profile.saga.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.profile.saga.exception.SagaRuntimeException;
+import ca.bc.gov.educ.api.student.profile.saga.mappers.SagaMapper;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
-import ca.bc.gov.educ.api.student.profile.saga.orchestrator.StudentProfileCommentsSagaOrchestrator;
-import ca.bc.gov.educ.api.student.profile.saga.orchestrator.StudentProfileCompleteSagaOrchestrator;
-import ca.bc.gov.educ.api.student.profile.saga.orchestrator.StudentProfileRejectSagaOrchestrator;
-import ca.bc.gov.educ.api.student.profile.saga.orchestrator.StudentProfileReturnSagaOrchestrator;
+import ca.bc.gov.educ.api.student.profile.saga.orchestrator.ump.StudentProfileCommentsSagaOrchestrator;
+import ca.bc.gov.educ.api.student.profile.saga.orchestrator.ump.StudentProfileCompleteSagaOrchestrator;
+import ca.bc.gov.educ.api.student.profile.saga.orchestrator.ump.StudentProfileRejectSagaOrchestrator;
+import ca.bc.gov.educ.api.student.profile.saga.orchestrator.ump.StudentProfileReturnSagaOrchestrator;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
-import ca.bc.gov.educ.api.student.profile.saga.struct.*;
+import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
+import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileCommentsSagaData;
+import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileCompleteSagaData;
+import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileRequestRejectActionSagaData;
+import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileReturnActionSagaData;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
 
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.*;
 import static lombok.AccessLevel.PRIVATE;
@@ -55,7 +63,7 @@ public class StudentProfileSagaController implements StudentProfileSagaEndpoint 
   @Override
   public ResponseEntity<Void> completeStudentProfile(StudentProfileCompleteSagaData studentProfileCompleteSagaData) {
     try {
-      final Saga saga = getSagaService().createSagaRecord(studentProfileCompleteSagaData, STUDENT_PROFILE_COMPLETE_SAGA.toString(), STUDENT_PROFILE_SAGA_API, "");
+      final Saga saga = getSagaService().createSagaRecord(studentProfileCompleteSagaData, STUDENT_PROFILE_COMPLETE_SAGA.toString(), STUDENT_PROFILE_SAGA_API);
       getStudentProfileCompleteSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
@@ -70,7 +78,7 @@ public class StudentProfileSagaController implements StudentProfileSagaEndpoint 
   @Override
   public ResponseEntity<Void> submitStudentProfileComment(StudentProfileCommentsSagaData studentProfileCommentsSagaData) {
     try {
-      final Saga saga = getSagaService().createSagaRecord(studentProfileCommentsSagaData, STUDENT_PROFILE_COMMENTS_SAGA.toString(), STUDENT_PROFILE_SAGA_API, "");
+      final Saga saga = getSagaService().createSagaRecord(studentProfileCommentsSagaData, STUDENT_PROFILE_COMMENTS_SAGA.toString(), STUDENT_PROFILE_SAGA_API);
       getStudentProfileCommentsSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
@@ -85,7 +93,7 @@ public class StudentProfileSagaController implements StudentProfileSagaEndpoint 
   @Override
   public ResponseEntity<Void> rejectStudentProfile(StudentProfileRequestRejectActionSagaData studentProfileRequestRejectActionSagaData) {
     try {
-      final Saga saga = getSagaService().createSagaRecord(studentProfileRequestRejectActionSagaData, STUDENT_PROFILE_REJECT_SAGA.toString(), STUDENT_PROFILE_SAGA_API, studentProfileRequestRejectActionSagaData.getStudentProfileRequestID());
+      final Saga saga = getSagaService().createSagaRecord(studentProfileRequestRejectActionSagaData, STUDENT_PROFILE_REJECT_SAGA.toString(), STUDENT_PROFILE_SAGA_API);
       getStudentProfileRejectSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
@@ -100,7 +108,7 @@ public class StudentProfileSagaController implements StudentProfileSagaEndpoint 
   @Override
   public ResponseEntity<Void> returnStudentProfile(StudentProfileReturnActionSagaData studentProfileReturnActionSagaData) {
     try {
-      final Saga saga = getSagaService().createSagaRecord(studentProfileReturnActionSagaData, STUDENT_PROFILE_RETURN_SAGA.toString(), STUDENT_PROFILE_SAGA_API, studentProfileReturnActionSagaData.getStudentProfileRequestID());
+      final Saga saga = getSagaService().createSagaRecord(studentProfileReturnActionSagaData, STUDENT_PROFILE_RETURN_SAGA.toString(), STUDENT_PROFILE_SAGA_API);
       getStudentProfileReturnSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
@@ -110,6 +118,11 @@ public class StudentProfileSagaController implements StudentProfileSagaEndpoint 
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());
     }
+  }
+
+  @Override
+  public ResponseEntity<ca.bc.gov.educ.api.student.profile.saga.struct.Saga> getSagaBySagaID(UUID sagaID) {
+    return getSagaService().findSagaById(sagaID).map(SagaMapper.mapper::toStruct).map(ResponseEntity::ok).orElseThrow(() -> new EntityNotFoundException(Saga.class, "sagaID", sagaID.toString()));
   }
 
 

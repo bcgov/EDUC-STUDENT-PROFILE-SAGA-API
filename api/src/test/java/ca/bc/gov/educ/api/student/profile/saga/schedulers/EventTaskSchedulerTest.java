@@ -2,8 +2,8 @@ package ca.bc.gov.educ.api.student.profile.saga.schedulers;
 
 import ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
-import ca.bc.gov.educ.api.student.profile.saga.orchestrator.StudentProfileRejectSagaOrchestrator;
-import ca.bc.gov.educ.api.student.profile.saga.orchestrator.StudentProfileReturnSagaOrchestrator;
+import ca.bc.gov.educ.api.student.profile.saga.orchestrator.ump.StudentProfileRejectSagaOrchestrator;
+import ca.bc.gov.educ.api.student.profile.saga.orchestrator.ump.StudentProfileReturnSagaOrchestrator;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaEventRepository;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
 import org.junit.After;
@@ -34,7 +34,6 @@ import static org.mockito.Mockito.*;
 @SuppressWarnings("java:S100")
 public class EventTaskSchedulerTest {
 
-  public static final String PROF_REQ_ID = "ac335214-7252-1946-8172-589e58000004";
   public static final String REJECTION_REASON_REJECTED = "  \"rejectionReason\": \"rejected\"\n";
   @MockBean
   private StudentProfileReturnSagaOrchestrator returnSagaOrchestrator;
@@ -71,7 +70,7 @@ public class EventTaskSchedulerTest {
     String payload = "{\n" +
         PAYLOAD_STR +
         "}";
-    Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString(), PROF_REQ_ID);
+    Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString());
     var dummyList = new ArrayList<Saga>();
     dummyList.add(dummyRecord);
     var statuses = new ArrayList<String>();
@@ -91,7 +90,7 @@ public class EventTaskSchedulerTest {
     String payload = "{\n" +
         PAYLOAD_STR +
         "}";
-    Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString(), PROF_REQ_ID);
+    Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString());
     dummyRecord.setStatus(IN_PROGRESS.toString());
     var dummyList = new ArrayList<Saga>();
     dummyList.add(dummyRecord);
@@ -112,7 +111,7 @@ public class EventTaskSchedulerTest {
     String payload = "{\n" +
         PAYLOAD_STR +
         "}";
-    Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString(), PROF_REQ_ID);
+    Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString());
     dummyRecord.setStatus(IN_PROGRESS.toString());
     dummyRecord.setUpdateDate(LocalDateTime.now());
     var dummyList = new ArrayList<Saga>();
@@ -135,7 +134,7 @@ public class EventTaskSchedulerTest {
         PAYLOAD_STR +
         REJECTION_REASON_REJECTED +
         "}";
-    Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_REJECT_SAGA.toString(), PROF_REQ_ID);
+    Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_REJECT_SAGA.toString());
     var dummyList = new ArrayList<Saga>();
     dummyList.add(dummyRecord);
     var statuses = new ArrayList<String>();
@@ -156,7 +155,7 @@ public class EventTaskSchedulerTest {
         PAYLOAD_STR +
         REJECTION_REASON_REJECTED +
         "}";
-    Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_REJECT_SAGA.toString(), PROF_REQ_ID);
+    Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_REJECT_SAGA.toString());
     dummyRecord.setStatus(IN_PROGRESS.toString());
     var dummyList = new ArrayList<Saga>();
     dummyList.add(dummyRecord);
@@ -178,7 +177,7 @@ public class EventTaskSchedulerTest {
         PAYLOAD_STR +
         REJECTION_REASON_REJECTED +
         "}";
-    Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_REJECT_SAGA.toString(), PROF_REQ_ID);
+    Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_REJECT_SAGA.toString());
     dummyRecord.setStatus(IN_PROGRESS.toString());
     dummyRecord.setUpdateDate(LocalDateTime.now());
     var dummyList = new ArrayList<Saga>();
@@ -195,7 +194,7 @@ public class EventTaskSchedulerTest {
     verify(rejectSagaOrchestrator, never()).replaySaga(dummyRecord);
   }
 
-  private Saga createDummySagaRecord(String payload, String sagaName, String profReqId) {
+  private Saga createDummySagaRecord(String payload, String sagaName) {
     return Saga
         .builder()
         .payload(payload)
@@ -203,7 +202,6 @@ public class EventTaskSchedulerTest {
         .status(STARTED.toString())
         .sagaState(INITIATED.toString())
         .sagaCompensated(false)
-        .studentProfileRequestId(profReqId)
         .createDate(LocalDateTime.now())
         .createUser("test")
         .updateUser("test")

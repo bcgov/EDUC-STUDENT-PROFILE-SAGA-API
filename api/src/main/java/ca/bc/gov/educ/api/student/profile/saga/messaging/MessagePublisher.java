@@ -21,15 +21,14 @@ import java.util.concurrent.TimeoutException;
 public class MessagePublisher {
   private final ExecutorService executorService = Executors.newFixedThreadPool(2);
   private StreamingConnection connection;
-  private StreamingConnectionFactory connectionFactory;
+  private final StreamingConnectionFactory connectionFactory;
 
   @Autowired
   public MessagePublisher(final ApplicationProperties applicationProperties) throws IOException, InterruptedException {
     Options.Builder builder = new Options.Builder();
-    builder.maxPingsOut(100);
     builder.natsUrl(applicationProperties.getNatsUrl());
     builder.clusterId(applicationProperties.getNatsClusterId());
-    builder.clientId(applicationProperties.getNatsClientId() + "-publisher" + UUID.randomUUID().toString());
+    builder.clientId("student-profile-saga-publisher" + UUID.randomUUID().toString());
     builder.connectionLostHandler(this::connectionLostHandler);
     Options options = builder.build();
     connectionFactory = new StreamingConnectionFactory(options);
