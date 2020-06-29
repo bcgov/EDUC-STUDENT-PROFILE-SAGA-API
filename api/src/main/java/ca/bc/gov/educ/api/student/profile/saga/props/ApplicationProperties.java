@@ -5,17 +5,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
+@Getter
 public class ApplicationProperties {
 
   @Value("${nats.streaming.server.url}")
-  @Getter
   private String natsUrl;
 
   @Value("${nats.streaming.server.clusterId}")
-  @Getter
   private String natsClusterId;
-
-  @Value("${nats.streaming.server.clientId}")
-  @Getter
-  private String natsClientId;
 }

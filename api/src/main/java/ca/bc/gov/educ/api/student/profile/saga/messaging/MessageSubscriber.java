@@ -1,9 +1,9 @@
 package ca.bc.gov.educ.api.student.profile.saga.messaging;
 
 import ca.bc.gov.educ.api.student.profile.saga.exception.SagaRuntimeException;
-import ca.bc.gov.educ.api.student.profile.saga.orchestrator.SagaEventHandler;
+import ca.bc.gov.educ.api.student.profile.saga.orchestrator.base.SagaEventHandler;
 import ca.bc.gov.educ.api.student.profile.saga.props.ApplicationProperties;
-import ca.bc.gov.educ.api.student.profile.saga.struct.Event;
+import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import io.nats.streaming.*;
 import lombok.Getter;
@@ -37,50 +37,56 @@ import static lombok.AccessLevel.PRIVATE;
  */
 @Component
 @Slf4j
+@SuppressWarnings("java:S2142")
 public class MessageSubscriber {
 
   private StreamingConnection connection;
-  private StreamingConnectionFactory connectionFactory;
+  private final StreamingConnectionFactory connectionFactory;
   @Getter(PRIVATE)
   private final Map<String, SagaEventHandler> handlers = new HashMap<>();
 
   @Autowired
   public MessageSubscriber(final ApplicationProperties applicationProperties) throws IOException, InterruptedException {
-    Options options = new Options.Builder().maxPingsOut(100).natsUrl(applicationProperties.getNatsUrl())
+    Options options = new Options.Builder().natsUrl(applicationProperties.getNatsUrl())
         .clusterId(applicationProperties.getNatsClusterId())
-        .clientId(applicationProperties.getNatsClientId() + "-subscriber" + UUID.randomUUID().toString())
+        .clientId("student-profile-saga-subscriber-" + UUID.randomUUID().toString())
         .connectionLostHandler(this::connectionLostHandler).build();
     connectionFactory = new StreamingConnectionFactory(options);
     connection = connectionFactory.createConnection();
   }
 
   public void subscribe(String topic, SagaEventHandler eventHandler) {
-    handlers.put(topic, eventHandler);
+    if(!handlers.containsKey(topic)){
+      handlers.put(topic, eventHandler);
+    }
+
     String queue = topic.replace("_", "-");
     SubscriptionOptions options = new SubscriptionOptions.Builder().durableName(queue + "-consumer").build();// ":" is not allowed in durable name by NATS.
     try {
-      connection.subscribe(topic, queue, (Message message) -> {
-        if (message != null) {
-          log.trace("Message received is :: {} ", message);
-          try {
-            String eventString = new String(message.getData());
-            Event event = JsonUtil.getJsonObjectFromString(Event.class, eventString);
-            eventHandler.onSagaEvent(event);
-          } catch (final Exception e) {
-            log.error("Exception ", e);
-          }
-        }
-      }, options);
+      connection.subscribe(topic, queue, onMessage(eventHandler), options);
     } catch (IOException | InterruptedException | TimeoutException e) {
       throw new SagaRuntimeException(e);
     }
-    // connection.subscribe(STUDENT_PROFILE_COMMENTS_SAGA_TOPIC.toString(), "student-profile-comments-saga", this::onStudentProfileCommentsSagaTopicMessage, options);
+  }
+
+  private MessageHandler onMessage(SagaEventHandler eventHandler) {
+    return (Message message) -> {
+      if (message != null) {
+        log.trace("Message received is :: {} ", message);
+        try {
+          var eventString = new String(message.getData());
+          var event = JsonUtil.getJsonObjectFromString(Event.class, eventString);
+          eventHandler.onSagaEvent(event);
+        } catch (final Exception e) {
+          log.error("Exception ", e);
+        }
+      }
+    };
   }
 
   /**
    * This method will keep retrying for a connection.
    */
-  @SuppressWarnings("java:S2142")
   private void connectionLostHandler(StreamingConnection streamingConnection, Exception e) {
     if (e != null) {
       int numOfRetries = 1;

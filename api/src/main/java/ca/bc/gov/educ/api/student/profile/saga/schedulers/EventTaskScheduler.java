@@ -2,11 +2,12 @@ package ca.bc.gov.educ.api.student.profile.saga.schedulers;
 
 import ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
-import ca.bc.gov.educ.api.student.profile.saga.orchestrator.BaseOrchestrator;
+import ca.bc.gov.educ.api.student.profile.saga.orchestrator.base.BaseOrchestrator;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -45,12 +46,12 @@ public class EventTaskScheduler {
 
   //Run the job every minute to check how many records are in IN_PROGRESS or STARTED status and has not been updated in last 5 minutes.
   @Scheduled(cron = "1 * * * * *")
-  @SchedulerLock(name = "PenRequestSagaTablePoller",
-      lockAtLeastFor = "950ms", lockAtMostFor = "980ms")
+  @SchedulerLock(name = "ProfileRequestSagaTablePoller",
+      lockAtLeastFor = "55s", lockAtMostFor = "57s")
   public void pollEventTableAndPublish() throws InterruptedException, IOException, TimeoutException {
     var sagas = getSagaRepository().findAllByStatusIn(getStatusFilters());
     if (!sagas.isEmpty()) {
-      for (Saga saga : sagas) {
+      for (val saga : sagas) {
         if (saga.getUpdateDate().isBefore(LocalDateTime.now().minusMinutes(5))
             && getSagaOrchestrators().containsKey(saga.getSagaName())) {
           getSagaOrchestrators().get(saga.getSagaName()).replaySaga(saga);

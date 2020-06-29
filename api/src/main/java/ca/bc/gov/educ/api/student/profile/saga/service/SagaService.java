@@ -42,8 +42,8 @@ public class SagaService {
 
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public Saga createSagaRecord(Object sagaData, String sagaName, String apiName, String studentProfileRequestId) throws JsonProcessingException {
-    Saga saga = getSaga(JsonUtil.getJsonStringFromObject(sagaData), sagaName, apiName, studentProfileRequestId);
+  public Saga createSagaRecord(Object sagaData, String sagaName, String apiName) throws JsonProcessingException {
+    Saga saga = getSaga(JsonUtil.getJsonStringFromObject(sagaData), sagaName, apiName);
     return getSagaRepository().save(saga);
   }
 
@@ -81,7 +81,7 @@ public class SagaService {
     return getSagaRepository().save(saga);
   }
 
-  private Saga getSaga(String payload, String sagaName, String apiName, String studentProfileRequestId) {
+  private Saga getSaga(String payload, String sagaName, String apiName) {
     return Saga
         .builder()
         .payload(payload)
@@ -89,7 +89,6 @@ public class SagaService {
         .status(STARTED.toString())
         .sagaState(INITIATED.toString())
         .sagaCompensated(false)
-        .studentProfileRequestId(studentProfileRequestId)
         .createDate(LocalDateTime.now())
         .createUser(apiName)
         .updateUser(apiName)

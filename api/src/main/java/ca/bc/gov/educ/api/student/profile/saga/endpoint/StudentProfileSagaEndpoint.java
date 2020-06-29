@@ -1,9 +1,9 @@
 package ca.bc.gov.educ.api.student.profile.saga.endpoint;
 
-import ca.bc.gov.educ.api.student.profile.saga.struct.StudentProfileCommentsSagaData;
-import ca.bc.gov.educ.api.student.profile.saga.struct.StudentProfileCompleteSagaData;
-import ca.bc.gov.educ.api.student.profile.saga.struct.StudentProfileRequestRejectActionSagaData;
-import ca.bc.gov.educ.api.student.profile.saga.struct.StudentProfileReturnActionSagaData;
+import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileCommentsSagaData;
+import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileCompleteSagaData;
+import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileRequestRejectActionSagaData;
+import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileReturnActionSagaData;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
