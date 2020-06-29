@@ -3,7 +3,9 @@ package ca.bc.gov.educ.api.student.profile.saga.controller;
 import ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome;
 import ca.bc.gov.educ.api.student.profile.saga.constants.EventType;
 import ca.bc.gov.educ.api.student.profile.saga.endpoint.StudentProfileSagaEndpoint;
+import ca.bc.gov.educ.api.student.profile.saga.exception.EntityNotFoundException;
 import ca.bc.gov.educ.api.student.profile.saga.exception.SagaRuntimeException;
+import ca.bc.gov.educ.api.student.profile.saga.mappers.SagaMapper;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.orchestrator.ump.StudentProfileCommentsSagaOrchestrator;
 import ca.bc.gov.educ.api.student.profile.saga.orchestrator.ump.StudentProfileCompleteSagaOrchestrator;
@@ -21,6 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
 
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.*;
 import static lombok.AccessLevel.PRIVATE;
@@ -114,6 +118,11 @@ public class StudentProfileSagaController implements StudentProfileSagaEndpoint 
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());
     }
+  }
+
+  @Override
+  public ResponseEntity<ca.bc.gov.educ.api.student.profile.saga.struct.Saga> getSagaBySagaID(UUID sagaID) {
+    return getSagaService().findSagaById(sagaID).map(SagaMapper.mapper::toStruct).map(ResponseEntity::ok).orElseThrow(() -> new EntityNotFoundException(Saga.class, "sagaID", sagaID.toString()));
   }
 
 
