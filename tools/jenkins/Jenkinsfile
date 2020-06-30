@@ -127,9 +127,6 @@ pipeline{
             }
         }
         stage('Create/Update Config Maps'){
-            environment {
-                APP_NAME = "pen-request-email-api"
-            }
             steps{
                 script{
                     dir('tools/jenkins'){
