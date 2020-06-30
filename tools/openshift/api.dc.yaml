@@ -68,6 +68,18 @@ objects:
                 limits:
                   cpu: "${MAX_CPU}"
                   memory: "${MAX_MEM}"
+              env:
+              - name: DB_HOST_NAME
+                value: "${APP_NAME}-${JOB_NAME}.${NAMESPACE}.svc.cluster.local"
+              - name: APP_DB_NAME
+                value: "PROFILESAGA"
+              - name: DB_USERNAME_STUDENT_PROFILE_SAGA
+                value: "API_PROFILE_SAGA"
+              - name: DB_PASSWORD_STUDENT_PROFILE_SAGA
+                valueFrom:
+                  secretKeyRef:
+                    name: "${APP_NAME}-pgsql-${ENV}"
+                    key: "app-db-password"
             - image: fluent/fluent-bit
               name: "${APP_NAME}-${JOB_NAME}-fluent-bit-sidecar"
               imagePullPolicy: IfNotPresent
@@ -221,4 +233,7 @@ parameters:
     required: true
   - name: MAX_MEM
     description: The maximum amount of memory
+    required: true
+  - name: ENV
+    description: The environment where it is being deployed
     required: true
