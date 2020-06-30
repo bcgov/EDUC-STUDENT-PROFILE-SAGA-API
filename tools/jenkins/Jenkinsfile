@@ -89,27 +89,27 @@ pipeline{
         }
         stage('Deploy Patroni Secrets to DEV') {
           steps{
-            deployPatroniSecrets('Dev', DEV)
+            deployPatroniSecrets('dev', DEV)
           }
           post{
             success{
               echo 'Deployment of patroni secrets to Dev was successful'
             }
             failure{
-              echo 'Deployment to Dev failed'
+              echo 'Deployment  of patroni secrets to to Dev failed'
             }
           }
         }
         stage('Deploy Patroni to DEV') {
           steps{
-            deployPatroni('Dev', DEV)
+            deployPatroni('dev', DEV)
           }
           post{
             success{
               echo 'Deployment of patroni to Dev was successful'
             }
             failure{
-              echo 'Deployment to Dev failed'
+              echo 'Deployment of patroni to Dev failed'
             }
           }
         }
@@ -210,8 +210,8 @@ def deployPatroniSecrets(String stageEnv, String projectEnv) {
         'tools/openshift/patroni/patroni-postgresql-secrets.yaml',
         "NAME=${APP_NAME}-pgsql",
         "SUFFIX=${stageEnv}",
-        "APP_DB_NAME=STUDENT_PROFILE_SAGA",
-        "APP_DB_USERNAME=API_STUDENT_PROFILE_SAGA"
+        "APP_DB_NAME=student_profile_saga",
+        "APP_DB_USERNAME=api_student_profile_saga"
       )
 
       echo "Applying Deployment Patroni secrets"

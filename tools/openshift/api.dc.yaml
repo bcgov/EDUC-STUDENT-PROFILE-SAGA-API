@@ -72,9 +72,9 @@ objects:
               - name: DB_HOST_NAME
                 value: "${APP_NAME}-${JOB_NAME}.${NAMESPACE}.svc.cluster.local"
               - name: APP_DB_NAME
-                value: "STUDENT_PROFILE_SAGA"
+                value: "student_profile_saga"
               - name: DB_USERNAME_STUDENT_PROFILE_SAGA
-                value: "API_STUDENT_PROFILE_SAGA"
+                value: "api_student_profile_saga"
               - name: DB_PASSWORD_STUDENT_PROFILE_SAGA
                 valueFrom:
                   secretKeyRef:
