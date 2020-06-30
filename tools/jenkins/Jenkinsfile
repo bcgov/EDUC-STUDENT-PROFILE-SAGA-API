@@ -210,8 +210,8 @@ def deployPatroniSecrets(String stageEnv, String projectEnv) {
         'tools/openshift/patroni/patroni-postgresql-secrets.yaml',
         "NAME=${APP_NAME}-pgsql",
         "SUFFIX=${stageEnv}",
-        "APP_DB_NAME=PROFILESAGA",
-        "APP_DB_USERNAME=API_PROFILE_SAGA"
+        "APP_DB_NAME=STUDENT_PROFILE_SAGA",
+        "APP_DB_USERNAME=API_STUDENT_PROFILE_SAGA"
       )
 
       echo "Applying Deployment Patroni secrets"
