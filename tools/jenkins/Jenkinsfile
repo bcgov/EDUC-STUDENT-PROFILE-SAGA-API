@@ -87,6 +87,32 @@ pipeline{
                 }
             }
         }
+        stage('Deploy Patroni Secrets to DEV') {
+          steps{
+            deployPatroniSecrets('Dev', DEV)
+          }
+          post{
+            success{
+              echo 'Deployment of patroni secrets to Dev was successful'
+            }
+            failure{
+              echo 'Deployment to Dev failed'
+            }
+          }
+        }
+        stage('Deploy Patroni to DEV') {
+          steps{
+            deployPatroni('Dev', DEV)
+          }
+          post{
+            success{
+              echo 'Deployment of patroni to Dev was successful'
+            }
+            failure{
+              echo 'Deployment to Dev failed'
+            }
+          }
+        }
         stage('Promote to DEV') {
             steps{
                 deployStage('Dev', DEV, DEV_HOST_ROUTE, 'dev')
@@ -131,19 +157,10 @@ def configMapSetup(String appName,String appNameUpper, String namespace){
             sh( script: "oc describe configmaps ${appName}-dev-setup-config", returnStdout: true)
             sh( script: "oc project ${namespace}-tools", returnStdout: true)
             echo 'Config map already exists. Moving to next stage...'
-        } catch(e){
+        } catch(ignored){
             configProperties = input(
                     id: 'configProperties', message: "Please enter the required credentials to allow ${appName} to run:",
                     parameters: [
-                      string(defaultValue: "",
-                        description: 'JDBC connect string for database',
-                        name: 'DB_JDBC_CONNECT_STRING'),
-                      string(defaultValue: "",
-                        description: "Username for ${appName} to connect to the database",
-                        name: "DB_USER"),
-                      password(defaultValue: "",
-                        description: "Password for ${appName} to connect to the database",
-                        name: "DB_PWD"),
                       string(defaultValue: "",
                         description: "Token for ${appName} FluentBit sidecar to connect to the Splunk",
                         name: "SPLUNK_TOKEN"),
@@ -151,7 +168,7 @@ def configMapSetup(String appName,String appNameUpper, String namespace){
             sh """
 		  set +x
 		  echo Running curl command...
-		  oc create -n ${namespace}-dev configmap ${appName}-dev-setup-config --from-literal=SPLUNK_TOKEN_${appNameUpper}=${configProperties.SPLUNK_TOKEN} --from-literal=DB_JDBC_CONNECT_STRING=${configProperties.DB_JDBC_CONNECT_STRING} --from-literal=DB_USER_${appNameUpper}=${configProperties.DB_USER} --from-literal=DB_PWD_${appNameUpper}=${configProperties.DB_PWD} --dry-run -o yaml | oc apply -f -
+		  oc create -n ${namespace}-dev configmap ${appName}-dev-setup-config --from-literal=SPLUNK_TOKEN_${appNameUpper}=${configProperties} --dry-run -o yaml | oc apply -f -
 		  oc project ${namespace}-tools
 		"""
         }
@@ -177,7 +194,8 @@ def deployStage(String stageEnv, String projectEnv, String hostRouteEnv, String 
                     "MIN_CPU=${MIN_CPU}",
                     "MAX_CPU=${MAX_CPU}",
                     "MIN_MEM=${MIN_MEM}",
-                    "MAX_MEM=${MAX_MEM}"
+                    "MAX_MEM=${MAX_MEM}",
+                    "ENV=${stageEnv}"
             )
 
             echo "Applying Deployment ${REPO_NAME}"
@@ -185,7 +203,48 @@ def deployStage(String stageEnv, String projectEnv, String hostRouteEnv, String 
         }
     }
 }
+def deployPatroniSecrets(String stageEnv, String projectEnv) {
+  openshift.withCluster() {
+    openshift.withProject(projectEnv) {
+      def dcTemplate = openshift.process('-f',
+        'tools/openshift/patroni/patroni-postgresql-secrets.yaml',
+        "NAME=${APP_NAME}-pgsql",
+        "SUFFIX=${stageEnv}",
+        "APP_DB_NAME=STUDENT_PROFILE_SAGA",
+        "APP_DB_USERNAME=API_STUDENT_PROFILE_SAGA"
+      )
 
+      echo "Applying Deployment Patroni secrets"
+      def dc = openshift.apply(dcTemplate).narrow('dc')
+      // Wait for deployments to roll out
+      timeout(10) {
+        Backend: {
+          dc.rollout().status('--watch=true')
+        }
+      }
+    }
+  }
+}
+def deployPatroni(String stageEnv, String projectEnv) {
+  openshift.withCluster() {
+    openshift.withProject(projectEnv) {
+      def dcTemplate = openshift.process('-f',
+        'tools/openshift/patroni/patroni-postgresql.yaml',
+        "NAME=${APP_NAME}-pgsql",
+        "SUFFIX=${stageEnv}",
+        "INSTANCE=${APP_NAME}-pgsql-${stageEnv}"
+      )
+
+      echo "Applying Deployment patroni"
+      def dc = openshift.apply(dcTemplate).narrow('dc')
+      timeout(10) {
+        Backend: {
+          dc.rollout().status('--watch=true')
+        }
+      }
+    }
+  }
+}
 def deployStageNoTag(String stageEnv, String projectEnv, String hostRouteEnv) {
     openshift.withCluster() {
         openshift.withProject(projectEnv) {
@@ -202,7 +261,8 @@ def deployStageNoTag(String stageEnv, String projectEnv, String hostRouteEnv) {
                     "MIN_CPU=${MIN_CPU}",
                     "MAX_CPU=${MAX_CPU}",
                     "MIN_MEM=${MIN_MEM}",
-                    "MAX_MEM=${MAX_MEM}"
+                    "MAX_MEM=${MAX_MEM}",
+                    "ENV=${stageEnv}"
             )
 
             echo "Applying Deployment ${REPO_NAME}"
