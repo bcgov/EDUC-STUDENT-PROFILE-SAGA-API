@@ -78,7 +78,7 @@ objects:
               - name: DB_PASSWORD_STUDENT_PROFILE_SAGA
                 valueFrom:
                   secretKeyRef:
-                    name: "${APP_NAME}-pgsql-${ENV}"
+                    name: "${APP_NAME}-pgsql${ENV}"
                     key: "app-db-password"
             - image: fluent/fluent-bit
               name: "${APP_NAME}-${JOB_NAME}-fluent-bit-sidecar"

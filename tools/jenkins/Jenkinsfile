@@ -195,7 +195,7 @@ def deployStage(String stageEnv, String projectEnv, String hostRouteEnv, String 
                     "MAX_CPU=${MAX_CPU}",
                     "MIN_MEM=${MIN_MEM}",
                     "MAX_MEM=${MAX_MEM}",
-                    "ENV=${stageEnv}"
+                    "ENV=${stageEnv.toLowerCase()}"
             )
 
             echo "Applying Deployment ${REPO_NAME}"
@@ -262,7 +262,7 @@ def deployStageNoTag(String stageEnv, String projectEnv, String hostRouteEnv) {
                     "MAX_CPU=${MAX_CPU}",
                     "MIN_MEM=${MIN_MEM}",
                     "MAX_MEM=${MAX_MEM}",
-                    "ENV=${stageEnv}"
+                    "ENV=${stageEnv.toLowerCase()}"
             )
 
             echo "Applying Deployment ${REPO_NAME}"
