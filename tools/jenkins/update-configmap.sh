@@ -28,7 +28,7 @@ echo SOAM PASS: "$SOAM_KC_LOAD_USER_PASS"
 ###########################################################
 "$KCADM_FILE_BIN_FOLDER"/kcadm.sh config credentials --server https://"$SOAM_KC"/auth --realm $SOAM_KC_REALM_ID --user "$SOAM_KC_LOAD_USER_ADMIN" --password "$SOAM_KC_LOAD_USER_PASS"
 getPublicKey(){
-    executorID="$KCADM_FILE_BIN_FOLDER"/kcadm.sh get keys -r $SOAM_KC_REALM_ID | grep -Po 'publicKey" : "\K([^"]*)'
+    executorID= "$KCADM_FILE_BIN_FOLDER"/kcadm.sh get keys -r $SOAM_KC_REALM_ID | grep -Po 'publicKey" : "\K([^"]*)'
 }
 
 echo Fetching public key from SOAM
