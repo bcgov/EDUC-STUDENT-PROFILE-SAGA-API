@@ -2,19 +2,19 @@
 apiVersion: v1
 kind: Template
 labels: 
-  template: pen-request-api-pipeline
+  template: student-profile-saga-api-pipeline
 metadata: 
-  name: pen-request-api-pipeline
+  name: student-profile-saga-api-pipeline
 objects:
 - apiVersion: v1
   kind: BuildConfig
   metadata: 
-    name: "pen-request-api-pipeline"
+    name: "student-profile-saga-api-pipeline"
   spec:
     source:
       git:
         ref: master
-        uri: 'https://github.com/bcgov/EDUC-STUDENT-PROFILE-EMAIL-API'
+        uri: 'https://github.com/bcgov/EDUC-STUDENT-PROFILE-SAGA-API'
     strategy:
       jenkinsPipelineStrategy:
         jenkinsfilePath: tools/jenkins/Jenkinsfile
