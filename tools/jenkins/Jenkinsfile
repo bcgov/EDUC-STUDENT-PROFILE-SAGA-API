@@ -9,12 +9,12 @@ pipeline{
         TEST = "${NAMESPACE}-test"
         PROD = "${NAMESPACE}-prod"
 
-        REPO_NAME = 'educ-student-profile-email-api'
+        REPO_NAME = 'educ-student-profile-saga-api'
         OWNER = 'bcgov'
         JOB_NAME = 'master'
         TAG = 'dev'
 
-        APP_NAME = 'student-profile-email-api'
+        APP_NAME = 'student-profile-saga-api'
         APP_DOMAIN = 'pathfinder.gov.bc.ca'
 
         SOURCE_REPO_RAW = 'https://github.com/${OWNER}/${REPO_NAME}/master'
