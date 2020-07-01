@@ -25,7 +25,7 @@ objects:
     creationTimestamp: null
     labels:
       cluster-name: ${NAME}${SUFFIX}
-    name: ${NAME}-master${SUFFIX}
+    name: "${NAME}-master"
   spec:
     ports:
     - port: 5432
