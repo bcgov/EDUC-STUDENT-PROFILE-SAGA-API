@@ -113,7 +113,7 @@ pipeline{
             }
           }
         }
-        /*stage('Promote to DEV') {
+        stage('Promote to DEV') {
             steps{
                 deployStage('Dev', DEV, DEV_HOST_ROUTE, 'dev')
             }
@@ -142,7 +142,7 @@ pipeline{
                 }
                 deployStageNoTag('Dev', DEV, DEV_HOST_ROUTE);
             }
-        }*/
+        }
     }
 }
 
