@@ -212,7 +212,7 @@ def deployPatroniSecrets(String stageEnv, String projectEnv) {
       )
 
       echo "Applying Deployment Patroni secrets"
-      def template = openshift.apply(dcTemplate).narrow('dc')
+      def template = openshift.apply(dcTemplate).narrow('secret')
       // Wait for deployments to roll out
       timeout(5) {
         template.rollout().status('--watch=true')
