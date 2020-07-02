@@ -231,7 +231,7 @@ def deployPatroni(String stageEnv, String projectEnv) {
       )
 
       echo "Applying Deployment patroni"
-      def template = openshift.apply(dcTemplate).narrow('statefulset')
+      def template = openshift.apply(dcTemplate).narrow('template')
       timeout(5) {
         template.rollout().status('--watch=true')
       }
