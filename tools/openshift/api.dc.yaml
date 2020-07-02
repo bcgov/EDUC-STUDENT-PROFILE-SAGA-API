@@ -76,10 +76,7 @@ objects:
               - name: DB_USERNAME_STUDENT_PROFILE_SAGA
                 value: "api_student_profile_saga"
               - name: DB_PASSWORD_STUDENT_PROFILE_SAGA
-                valueFrom:
-                  secretKeyRef:
-                    name: "${APP_NAME}-pgsql-${ENV}"
-                    key: "app-db-password"
+                value: ""
             - image: fluent/fluent-bit
               name: "${APP_NAME}-${JOB_NAME}-fluent-bit-sidecar"
               imagePullPolicy: IfNotPresent
