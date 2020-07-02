@@ -206,7 +206,7 @@ def deployPatroniSecrets(String stageEnv, String projectEnv) {
       def dcTemplate = openshift.process('-f',
         'tools/openshift/patroni/patroni-postgresql-secrets.yaml',
         "NAME=${APP_NAME}-pgsql",
-        "SUFFIX=${stageEnv}",
+        "SUFFIX=-${stageEnv}",
         "APP_DB_NAME=student_profile_saga",
         "APP_DB_USERNAME=api_student_profile_saga"
       )
@@ -226,7 +226,7 @@ def deployPatroni(String stageEnv, String projectEnv) {
       def dcTemplate = openshift.process('-f',
         'tools/openshift/patroni/patroni-postgresql.yaml',
         "NAME=${APP_NAME}-pgsql",
-        "SUFFIX=${stageEnv}",
+        "SUFFIX=-${stageEnv}",
         "INSTANCE=${APP_NAME}-pgsql-${stageEnv}"
       )
 
