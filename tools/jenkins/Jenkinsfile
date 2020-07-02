@@ -47,7 +47,7 @@ pipeline{
                 }
             }
         }
-        stage('Build App') {
+        /*stage('Build App') {
             steps {
                 script {
                     openshift.withCluster() {
@@ -86,7 +86,7 @@ pipeline{
                     echo 'Build stage failed'
                 }
             }
-        }
+        }*/
         stage('Deploy Patroni Secrets to DEV') {
           steps{
             deployPatroniSecrets('dev', DEV)
@@ -113,7 +113,7 @@ pipeline{
             }
           }
         }
-        stage('Promote to DEV') {
+        /*stage('Promote to DEV') {
             steps{
                 deployStage('Dev', DEV, DEV_HOST_ROUTE, 'dev')
             }
@@ -142,7 +142,7 @@ pipeline{
                 }
                 deployStageNoTag('Dev', DEV, DEV_HOST_ROUTE);
             }
-        }
+        }*/
     }
 }
 
@@ -212,10 +212,10 @@ def deployPatroniSecrets(String stageEnv, String projectEnv) {
       )
 
       echo "Applying Deployment Patroni secrets"
-      def dc = openshift.apply(dcTemplate).narrow('dc')
+      def template = openshift.apply(dcTemplate)
       // Wait for deployments to roll out
-      timeout(30) {
-          dc.rollout().status('--watch=true')
+      timeout(5) {
+        template.rollout().status('--watch=true')
       }
     }
   }
@@ -231,9 +231,9 @@ def deployPatroni(String stageEnv, String projectEnv) {
       )
 
       echo "Applying Deployment patroni"
-      def dc = openshift.apply(dcTemplate).narrow('dc')
-      timeout(30) {
-          dc.rollout().status('--watch=true')
+      def template = openshift.apply(dcTemplate)
+      timeout(5) {
+        template.rollout().status('--watch=true')
       }
     }
   }
