@@ -87,7 +87,7 @@ pipeline{
                 }
             }
         }
-        /*stage('Deploy Patroni Secrets to DEV') {
+        stage('Deploy Patroni Secrets to DEV') {
           steps{
             deployPatroniSecrets('dev', DEV)
           }
@@ -112,7 +112,7 @@ pipeline{
               echo 'Deployment of patroni to Dev failed'
             }
           }
-        }*/
+        }
         stage('Promote to DEV') {
             steps{
                 deployStage('Dev', DEV, DEV_HOST_ROUTE, 'dev')

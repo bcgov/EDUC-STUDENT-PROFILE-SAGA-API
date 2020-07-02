@@ -70,7 +70,7 @@ objects:
                   memory: "${MAX_MEM}"
               env:
               - name: DB_HOST_NAME
-                value: "${APP_NAME}-${JOB_NAME}.${NAMESPACE}.svc.cluster.local"
+                value: "${APP_NAME}-pgsql.${NAMESPACE}.svc.cluster.local"
               - name: APP_DB_NAME
                 value: "student_profile_saga"
               - name: DB_USERNAME_STUDENT_PROFILE_SAGA
