@@ -11,7 +11,7 @@ metadata:
     tags: postgresql
   name: patroni-pgsql-persistent
 labels:
-  app: ${INSTANCE}
+  app: ${NAME}${SUFFIX}
   phase: deploy
   app.kubernetes.io/instance: ${INSTANCE}
   app.kubernetes.io/component: database
@@ -25,6 +25,7 @@ objects:
       creationTimestamp: null
       labels:
         cluster-name: ${NAME}${SUFFIX}
+        app: ${NAME}${SUFFIX}
       name: ${NAME}
     spec:
       ports:
@@ -76,6 +77,7 @@ objects:
       generation: 3
       labels:
         cluster-name: ${INSTANCE}
+        app: ${NAME}${SUFFIX}
       name: ${NAME}${SUFFIX}
     spec:
       podManagementPolicy: OrderedReady
@@ -92,6 +94,7 @@ objects:
             statefulset: ${NAME}${SUFFIX}
             cluster-name: ${INSTANCE}
             app.kubernetes.io/name: patroni
+            app: ${NAME}${SUFFIX}
         spec:
           containers:
             - env:
@@ -238,12 +241,14 @@ objects:
     metadata:
       labels:
         cluster-name: ${INSTANCE}
+        app: ${NAME}${SUFFIX}
       name: ${NAME}${SUFFIX}
   - apiVersion: rbac.authorization.k8s.io/v1
     kind: Role
     metadata:
       labels:
         cluster-name: ${INSTANCE}
+        app: ${NAME}${SUFFIX}
       name: ${NAME}${SUFFIX}
     rules:
       - apiGroups:
@@ -297,6 +302,7 @@ objects:
     metadata:
       labels:
         cluster-name: ${INSTANCE}
+        app: ${NAME}${SUFFIX}
       name: ${NAME}${SUFFIX}
     roleRef:
       apiGroup: rbac.authorization.k8s.io
