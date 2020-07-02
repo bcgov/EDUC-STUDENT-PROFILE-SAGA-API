@@ -87,9 +87,20 @@ pipeline{
                 }
             }
         }
-        /*stage('Deploy Patroni Secrets to DEV') {
+        stage('Deploy Patroni Secrets to DEV') {
           steps{
-            deployPatroniSecrets('dev', DEV)
+            script {
+              openshift.withCluster() {
+                openshift.withProject(DEV) {
+                  def patroni = openshift.selector('dc', "${APP_NAME}-pgsql-dev}")
+                  if(!patroni.exists()){
+                    deployPatroniSecrets('dev', DEV)
+                  }else {
+                    echo "Deployment of patroni secrets already exists, so skipping to next step"
+                  }
+                }
+              }
+            }
           }
           post{
             success{
@@ -102,7 +113,18 @@ pipeline{
         }
         stage('Deploy Patroni to DEV') {
           steps{
-            deployPatroni('dev', DEV)
+            script {
+              openshift.withCluster() {
+                openshift.withProject(DEV) {
+                  def patroni = openshift.selector('dc', "${APP_NAME}-pgsql-dev}")
+                  if(!patroni.exists()){
+                    deployPatroni('dev', DEV)
+                  }else {
+                    echo "Deployment of patroni already exists, so skipping to next step"
+                  }
+                }
+              }
+            }
           }
           post{
             success{
@@ -112,7 +134,7 @@ pipeline{
               echo 'Deployment of patroni to Dev failed'
             }
           }
-        }*/
+        }
         stage('Promote to DEV') {
             steps{
                 deployStage('Dev', DEV, DEV_HOST_ROUTE, 'dev')
