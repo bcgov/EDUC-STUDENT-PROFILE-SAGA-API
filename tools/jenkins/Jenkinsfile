@@ -208,7 +208,7 @@ def deployPatroniSecrets(String stageEnv, String projectEnv) {
         "NAME=${APP_NAME}-pgsql",
         "SUFFIX=-${stageEnv}",
         "APP_DB_NAME=student_profile_saga",
-        "APP_DB_USERNAME=api_student_profile_saga"
+        "APP_DB_USERNAME=student_profile_saga"
       )
 
       echo "Applying Deployment Patroni secrets"
