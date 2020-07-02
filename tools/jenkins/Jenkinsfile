@@ -47,7 +47,7 @@ pipeline{
                 }
             }
         }
-        /*stage('Build App') {
+        stage('Build App') {
             steps {
                 script {
                     openshift.withCluster() {
@@ -86,7 +86,7 @@ pipeline{
                     echo 'Build stage failed'
                 }
             }
-        }*/
+        }
         stage('Deploy Patroni Secrets to DEV') {
           steps{
             deployPatroniSecrets('dev', DEV)
