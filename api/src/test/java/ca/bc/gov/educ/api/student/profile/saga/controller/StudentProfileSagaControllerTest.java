@@ -15,7 +15,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -114,6 +113,23 @@ public class StudentProfileSagaControllerTest {
     assertThat (results.isEmpty()).isFalse();
   }
   @Test
+  @WithMockOAuth2Scope(scope = "STUDENT_PROFILE_RETURN_SAGA")
+  @SuppressWarnings("java:S100")
+  public void testReturnStudentProfile_whenPayloadIsValidButAnotherSagaIsInProgress_shouldReturnStatusConflict() throws Exception {
+    String payload = "{\n" +
+        PAYLOAD_STR +
+        "  \"staffMemberIDIRGUID\": \"AC335214725219468172589E58000004\",\n" +
+        "  \"staffMemberName\": \"om\",\n" +
+        "  \"commentContent\": \"please upload recent govt ID.\",\n" +
+        "  \"commentTimestamp\": \"2020-06-10T09:52:00\"\n" +
+        "}";
+
+    repository.save(getSaga(payload,"STUDENT_PROFILE_RETURN_SAGA","STUDENT_PROFILE_SAGA_API", UUID.fromString("ac335214-7252-1946-8172-589e58000004")));
+    var results = repository.findAll();
+    this.mockMvc.perform(post("/student-profile-return-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isConflict());
+    assertThat (results.isEmpty()).isFalse();
+  }
+  @Test
   @WithMockOAuth2Scope(scope = "READ_SAGA")
   @SuppressWarnings("java:S100")
   public void testGetSagaBySagaID_whenSagaIDIsValid_shouldReturnStatusNoContent() throws Exception {
@@ -124,13 +140,13 @@ public class StudentProfileSagaControllerTest {
         "  \"commentContent\": \"please upload recent govt ID.\",\n" +
         "  \"commentTimestamp\": \"2020-06-10T09:52:00\"\n" +
         "}";
-    var entity = getSaga(payload,"STUDENT_PROFILE_RETURN_SAGA","STUDENT_PROFILE_SAGA_API");
+    var entity = getSaga(payload,"STUDENT_PROFILE_RETURN_SAGA","STUDENT_PROFILE_SAGA_API", UUID.fromString("ac335214-7252-1946-8172-589e58000004"));
     repository.save(entity);
     this.mockMvc.perform(get("/" + entity.getSagaId())).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$.sagaId").value(entity.getSagaId().toString()));
   }
 
 
-  private Saga getSaga(String payload, String sagaName, String apiName) {
+  private Saga getSaga(String payload, String sagaName, String apiName, UUID profileRequestId) {
     return Saga
         .builder()
         .payload(payload)
@@ -142,6 +158,7 @@ public class StudentProfileSagaControllerTest {
         .createUser(apiName)
         .updateUser(apiName)
         .updateDate(LocalDateTime.now())
+        .profileRequestId(profileRequestId)
         .build();
   }
 }
