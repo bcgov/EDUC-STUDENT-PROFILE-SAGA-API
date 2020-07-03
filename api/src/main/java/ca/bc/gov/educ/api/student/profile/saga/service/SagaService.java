@@ -42,8 +42,15 @@ public class SagaService {
 
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public Saga createSagaRecord(Object sagaData, String sagaName, String apiName) throws JsonProcessingException {
+  public Saga createProfileRequestSagaRecord(Object sagaData, String sagaName, String apiName, UUID profileRequestId) throws JsonProcessingException {
     Saga saga = getSaga(JsonUtil.getJsonStringFromObject(sagaData), sagaName, apiName);
+    saga.setProfileRequestId(profileRequestId);
+    return getSagaRepository().save(saga);
+  }
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public Saga createPenRequestSagaRecord(Object sagaData, String sagaName, String apiName, UUID penRequestId) throws JsonProcessingException {
+    Saga saga = getSaga(JsonUtil.getJsonStringFromObject(sagaData), sagaName, apiName);
+    saga.setPenRequestId(penRequestId);
     return getSagaRepository().save(saga);
   }
 
@@ -74,13 +81,6 @@ public class SagaService {
     return getSagaEventRepository().findBySaga(saga);
   }
 
-  // this needs to be committed to db before next steps are taken.
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
-  @Retryable(value = {Exception.class}, maxAttempts = 5, backoff = @Backoff(multiplier = 2, delay = 2000))
-  public Saga updateAttachedSaga(Saga saga) {
-    return getSagaRepository().save(saga);
-  }
-
   private Saga getSaga(String payload, String sagaName, String apiName) {
     return Saga
         .builder()
@@ -96,4 +96,11 @@ public class SagaService {
         .build();
   }
 
+  public List<Saga> findAllByPenRequestIdAndStatuses(UUID penRequestId, List<String> statuses){
+    return getSagaRepository().findAllByPenRequestIdAndStatusIn(penRequestId,statuses);
+  }
+
+  public List<Saga> findAllByProfileRequestIdAndStatuses(UUID profileRequestId, List<String> statuses){
+    return getSagaRepository().findAllByProfileRequestIdAndStatusIn(profileRequestId,statuses);
+  }
 }

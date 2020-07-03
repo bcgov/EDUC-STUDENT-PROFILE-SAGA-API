@@ -66,4 +66,10 @@ public class Saga {
   @PastOrPresent
   @Column(name = "UPDATE_DATE")
   private LocalDateTime updateDate;
+
+  @Column(name = "PROFILE_REQUEST_ID", columnDefinition = "BINARY(16)")
+  private UUID profileRequestId;
+
+  @Column(name = "PEN_REQUEST_ID", columnDefinition = "BINARY(16)")
+  private UUID penRequestId;
 }

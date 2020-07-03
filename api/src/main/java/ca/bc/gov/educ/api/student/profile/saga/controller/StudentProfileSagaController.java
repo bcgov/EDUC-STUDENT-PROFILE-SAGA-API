@@ -20,6 +20,7 @@ import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileReturnAc
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,7 +33,7 @@ import static lombok.AccessLevel.PRIVATE;
 @RestController
 @EnableResourceServer
 @Slf4j
-public class StudentProfileSagaController implements StudentProfileSagaEndpoint {
+public class StudentProfileSagaController extends BaseController implements StudentProfileSagaEndpoint {
 
   @Getter(PRIVATE)
   private final SagaService sagaService;
@@ -63,7 +64,12 @@ public class StudentProfileSagaController implements StudentProfileSagaEndpoint 
   @Override
   public ResponseEntity<Void> completeStudentProfile(StudentProfileCompleteSagaData studentProfileCompleteSagaData) {
     try {
-      final Saga saga = getSagaService().createSagaRecord(studentProfileCompleteSagaData, STUDENT_PROFILE_COMPLETE_SAGA.toString(), STUDENT_PROFILE_SAGA_API);
+      var profileRequestId = UUID.fromString(studentProfileCompleteSagaData.getStudentProfileRequestID());
+      var sagaInProgress = getSagaService().findAllByProfileRequestIdAndStatuses(profileRequestId, getStatusesFilter());
+      if (!sagaInProgress.isEmpty()) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).build();
+      }
+      final Saga saga = getSagaService().createProfileRequestSagaRecord(studentProfileCompleteSagaData, STUDENT_PROFILE_COMPLETE_SAGA.toString(), STUDENT_PROFILE_SAGA_API, profileRequestId);
       getStudentProfileCompleteSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
@@ -78,7 +84,12 @@ public class StudentProfileSagaController implements StudentProfileSagaEndpoint 
   @Override
   public ResponseEntity<Void> submitStudentProfileComment(StudentProfileCommentsSagaData studentProfileCommentsSagaData) {
     try {
-      final Saga saga = getSagaService().createSagaRecord(studentProfileCommentsSagaData, STUDENT_PROFILE_COMMENTS_SAGA.toString(), STUDENT_PROFILE_SAGA_API);
+      var profileRequestId = UUID.fromString(studentProfileCommentsSagaData.getStudentProfileRequestID());
+      var sagaInProgress = getSagaService().findAllByProfileRequestIdAndStatuses(profileRequestId, getStatusesFilter());
+      if (!sagaInProgress.isEmpty()) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).build();
+      }
+      final Saga saga = getSagaService().createProfileRequestSagaRecord(studentProfileCommentsSagaData, STUDENT_PROFILE_COMMENTS_SAGA.toString(), STUDENT_PROFILE_SAGA_API, profileRequestId);
       getStudentProfileCommentsSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
@@ -93,7 +104,12 @@ public class StudentProfileSagaController implements StudentProfileSagaEndpoint 
   @Override
   public ResponseEntity<Void> rejectStudentProfile(StudentProfileRequestRejectActionSagaData studentProfileRequestRejectActionSagaData) {
     try {
-      final Saga saga = getSagaService().createSagaRecord(studentProfileRequestRejectActionSagaData, STUDENT_PROFILE_REJECT_SAGA.toString(), STUDENT_PROFILE_SAGA_API);
+      var profileRequestId = UUID.fromString(studentProfileRequestRejectActionSagaData.getStudentProfileRequestID());
+      var sagaInProgress = getSagaService().findAllByProfileRequestIdAndStatuses(profileRequestId, getStatusesFilter());
+      if (!sagaInProgress.isEmpty()) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).build();
+      }
+      final Saga saga = getSagaService().createProfileRequestSagaRecord(studentProfileRequestRejectActionSagaData, STUDENT_PROFILE_REJECT_SAGA.toString(), STUDENT_PROFILE_SAGA_API, profileRequestId);
       getStudentProfileRejectSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
@@ -108,7 +124,12 @@ public class StudentProfileSagaController implements StudentProfileSagaEndpoint 
   @Override
   public ResponseEntity<Void> returnStudentProfile(StudentProfileReturnActionSagaData studentProfileReturnActionSagaData) {
     try {
-      final Saga saga = getSagaService().createSagaRecord(studentProfileReturnActionSagaData, STUDENT_PROFILE_RETURN_SAGA.toString(), STUDENT_PROFILE_SAGA_API);
+      var profileRequestId = UUID.fromString(studentProfileReturnActionSagaData.getStudentProfileRequestID());
+      var sagaInProgress = getSagaService().findAllByProfileRequestIdAndStatuses(profileRequestId, getStatusesFilter());
+      if (!sagaInProgress.isEmpty()) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).build();
+      }
+      final Saga saga = getSagaService().createProfileRequestSagaRecord(studentProfileReturnActionSagaData, STUDENT_PROFILE_RETURN_SAGA.toString(), STUDENT_PROFILE_SAGA_API, profileRequestId);
       getStudentProfileReturnSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)

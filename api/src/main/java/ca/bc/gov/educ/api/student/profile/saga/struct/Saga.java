@@ -3,7 +3,6 @@ package ca.bc.gov.educ.api.student.profile.saga.struct;
 import lombok.Data;
 
 
-
 @Data
 public class Saga {
   private String sagaId;
@@ -12,4 +11,6 @@ public class Saga {
   private String payload;
   private String status;
   private Boolean sagaCompensated;
+  private String profileRequestId;
+  private String penRequestId;
 }

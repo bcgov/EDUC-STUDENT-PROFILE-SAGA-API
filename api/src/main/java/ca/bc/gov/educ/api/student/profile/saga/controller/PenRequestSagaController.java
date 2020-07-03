@@ -12,9 +12,12 @@ import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.*;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
 
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.*;
 import static lombok.AccessLevel.PRIVATE;
@@ -22,7 +25,7 @@ import static lombok.AccessLevel.PRIVATE;
 @RestController
 @EnableResourceServer
 @Slf4j
-public class PenRequestSagaController implements PenRequestSagaEndpoint {
+public class PenRequestSagaController extends BaseController implements PenRequestSagaEndpoint {
   private static final String STUDENT_PROFILE_SAGA_API = "STUDENT_PROFILE_SAGA_API";
   @Getter(PRIVATE)
   private final SagaService sagaService;
@@ -56,7 +59,12 @@ public class PenRequestSagaController implements PenRequestSagaEndpoint {
   @Override
   public ResponseEntity<String> completePENRequest(PenRequestCompleteSagaData penRequestCompleteSagaData) {
     try {
-      final Saga saga = getSagaService().createSagaRecord(penRequestCompleteSagaData, PEN_REQUEST_COMPLETE_SAGA.toString(), STUDENT_PROFILE_SAGA_API);
+      var penRequestId = UUID.fromString(penRequestCompleteSagaData.getPenRequestID());
+      var sagaInProgress = getSagaService().findAllByPenRequestIdAndStatuses(penRequestId, getStatusesFilter());
+      if (!sagaInProgress.isEmpty()) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).build();
+      }
+      var saga = getSagaService().createPenRequestSagaRecord(penRequestCompleteSagaData, PEN_REQUEST_COMPLETE_SAGA.toString(), STUDENT_PROFILE_SAGA_API, penRequestId);
       getPenRequestCompleteSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
@@ -71,7 +79,12 @@ public class PenRequestSagaController implements PenRequestSagaEndpoint {
   @Override
   public ResponseEntity<String> updatePenRequestAndAddComment(PenRequestCommentsSagaData penRequestCommentsSagaData) {
     try {
-      final Saga saga = getSagaService().createSagaRecord(penRequestCommentsSagaData, PEN_REQUEST_COMMENTS_SAGA.toString(), STUDENT_PROFILE_SAGA_API);
+      var penRequestId = UUID.fromString(penRequestCommentsSagaData.getPenRetrievalRequestID());
+      var sagaInProgress = getSagaService().findAllByPenRequestIdAndStatuses(penRequestId, getStatusesFilter());
+      if (!sagaInProgress.isEmpty()) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).build();
+      }
+      final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestCommentsSagaData, PEN_REQUEST_COMMENTS_SAGA.toString(), STUDENT_PROFILE_SAGA_API, penRequestId);
       getPenRequestCommentsSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
@@ -86,7 +99,12 @@ public class PenRequestSagaController implements PenRequestSagaEndpoint {
   @Override
   public ResponseEntity<String> returnPENRequest(final PenRequestReturnSagaData penRequestReturnSagaData) {
     try {
-      final Saga saga = getSagaService().createSagaRecord(penRequestReturnSagaData, PEN_REQUEST_RETURN_SAGA.toString(), STUDENT_PROFILE_SAGA_API);
+      var penRequestId = UUID.fromString(penRequestReturnSagaData.getPenRetrievalRequestID());
+      var sagaInProgress = getSagaService().findAllByPenRequestIdAndStatuses(penRequestId, getStatusesFilter());
+      if (!sagaInProgress.isEmpty()) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).build();
+      }
+      final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestReturnSagaData, PEN_REQUEST_RETURN_SAGA.toString(), STUDENT_PROFILE_SAGA_API, penRequestId);
       getPenRequestReturnSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
@@ -101,7 +119,12 @@ public class PenRequestSagaController implements PenRequestSagaEndpoint {
   @Override
   public ResponseEntity<String> rejectPENRequest(PenRequestRejectSagaData penRequestRejectSagaData) {
     try {
-      final Saga saga = getSagaService().createSagaRecord(penRequestRejectSagaData, PEN_REQUEST_REJECT_SAGA.toString(), STUDENT_PROFILE_SAGA_API);
+      var penRequestId = UUID.fromString(penRequestRejectSagaData.getPenRetrievalRequestID());
+      var sagaInProgress = getSagaService().findAllByPenRequestIdAndStatuses(penRequestId, getStatusesFilter());
+      if (!sagaInProgress.isEmpty()) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).build();
+      }
+      final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestRejectSagaData, PEN_REQUEST_REJECT_SAGA.toString(), STUDENT_PROFILE_SAGA_API, penRequestId);
       getPenRequestRejectSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
@@ -116,7 +139,7 @@ public class PenRequestSagaController implements PenRequestSagaEndpoint {
   @Override
   public ResponseEntity<String> unlinkPenRequest(PenRequestUnlinkSagaData penRequestUnlinkSagaData) {
     try {
-      final Saga saga = getSagaService().createSagaRecord(penRequestUnlinkSagaData, PEN_REQUEST_UNLINK_SAGA.toString(), STUDENT_PROFILE_SAGA_API);
+      final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestUnlinkSagaData, PEN_REQUEST_UNLINK_SAGA.toString(), STUDENT_PROFILE_SAGA_API, UUID.fromString(penRequestUnlinkSagaData.getPenRetrievalRequestID()));
       getPenRequestUnlinkSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)

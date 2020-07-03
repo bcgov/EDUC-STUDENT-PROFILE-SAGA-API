@@ -2,6 +2,7 @@ package ca.bc.gov.educ.api.student.profile.saga.controller;
 
 import ca.bc.gov.educ.api.student.profile.saga.exception.RestExceptionHandler;
 import ca.bc.gov.educ.api.student.profile.saga.exception.SagaRuntimeException;
+import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.support.WithMockOAuth2Scope;
@@ -19,6 +20,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.INITIATED;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.STARTED;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -127,6 +133,32 @@ public class PenRequestSagaControllerTest {
     val result = repository.findAll();
     assertEquals(1, result.size());
   }
+  @Test
+  @WithMockOAuth2Scope(scope = "PEN_REQUEST_REJECT_SAGA")
+  public void test_rejectPENRequest_givenValidPayloadButOtherSagaInFlight_shouldReturnStatusConflict() throws Exception {
+    String payload = "{\n" +
+        "  \"digitalID\": \"ac330603-715f-12b6-8171-6079a6270005\",\n" +
+        "  \"penRetrievalRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
+        "  \"pen\": \"123456789\",\n" +
+        "  \"legalFirstName\": \"eric\",\n" +
+        "  \"legalMiddleNames\": \"mishra\",\n" +
+        "  \"legalLastName\": \"sermon\",\n" +
+        "  \"dob\": \"2000-01-01\",\n" +
+        "  \"sexCode\": \"M\",\n" +
+        "  \"genderCode\": \"M\",\n" +
+        "  \"email\": \"someplace@gmail.com\",\n" +
+        "  \"createUser\": \"marco\",\n" +
+        "  \"updateUser\": \"marco\",\n" +
+        "  \"penRequestStatusCode\": \"REJECTED\",\n" +
+        "  \"identityType\": \"BASIC\",\n" +
+        "  \"rejectionReason\": \"Can't find you\",\n" +
+        "  \"statusUpdateDate\": \"2020-04-17T22:29:00\"\n" +
+        "}";
+    repository.save(getSaga(payload,"PEN_REQUEST_REJECT_SAGA","STUDENT_PROFILE_SAGA_API", UUID.fromString("ac334a38-715f-1340-8171-607a59d0000a")));
+    this.mockMvc.perform(post("/pen-request-reject-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isConflict());
+    val result = repository.findAll();
+    assertEquals(1, result.size());
+  }
 
 
   @Test
@@ -143,6 +175,8 @@ public class PenRequestSagaControllerTest {
             "}";
     this.mockMvc.perform(post("/pen-request-comment-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isBadRequest());
   }
+
+
 
   @Test
   @WithMockOAuth2Scope(scope = "PEN_REQUEST_COMMENT_SAGA")
@@ -192,5 +226,20 @@ public class PenRequestSagaControllerTest {
     } catch (Exception e) {
       throw new SagaRuntimeException(e.getMessage());
     }
+  }
+  private Saga getSaga(String payload, String sagaName, String apiName, UUID penRequestId) {
+    return Saga
+        .builder()
+        .payload(payload)
+        .sagaName(sagaName)
+        .status(STARTED.toString())
+        .sagaState(INITIATED.toString())
+        .sagaCompensated(false)
+        .createDate(LocalDateTime.now())
+        .createUser(apiName)
+        .updateUser(apiName)
+        .updateDate(LocalDateTime.now())
+        .penRequestId(penRequestId)
+        .build();
   }
 }
