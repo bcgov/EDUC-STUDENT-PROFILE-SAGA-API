@@ -92,7 +92,7 @@ pipeline{
             script {
               openshift.withCluster() {
                 openshift.withProject(DEV) {
-                  def patroni = openshift.selector('dc', "${APP_NAME}-pgsql-dev")
+                  def patroni = openshift.selector('statefulset', "${APP_NAME}-pgsql-dev")
                   if(!patroni.exists()){
                     deployPatroniSecrets('dev', DEV)
                   }else {
@@ -116,7 +116,7 @@ pipeline{
             script {
               openshift.withCluster() {
                 openshift.withProject(DEV) {
-                  def patroni = openshift.selector('dc', "${APP_NAME}-pgsql-dev")
+                  def patroni = openshift.selector('statefulset', "${APP_NAME}-pgsql-dev")
                   if(!patroni.exists()){
                     deployPatroni('dev', DEV)
                   }else {
