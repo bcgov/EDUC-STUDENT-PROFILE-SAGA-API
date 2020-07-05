@@ -21,4 +21,6 @@ public class Event {
   private UUID sagaId;
   private String replyTo;
   private String eventPayload; // json string
+  private String profileRequestID;
+  private String penRequestID;
 }

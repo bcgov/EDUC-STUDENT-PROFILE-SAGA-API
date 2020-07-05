@@ -19,6 +19,7 @@ import java.util.concurrent.TimeoutException;
 
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.*;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.*;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.PEN_REQUEST_UNLINK_SAGA;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.DIGITAL_ID_API_TOPIC;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.PEN_REQUEST_UNLINK_SAGA_TOPIC;
 
@@ -27,7 +28,7 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.P
 public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator<PenRequestUnlinkSagaData>{
 
   public PenRequestUnlinkSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, MessageSubscriber messageSubscriber, EventTaskScheduler taskScheduler) {
-    super(sagaService, messagePublisher, messageSubscriber, taskScheduler, PenRequestUnlinkSagaData.class, PEN_REQUEST_UNLINK_SAGA, PEN_REQUEST_UNLINK_SAGA_TOPIC.toString());
+    super(sagaService, messagePublisher, messageSubscriber, taskScheduler, PenRequestUnlinkSagaData.class, PEN_REQUEST_UNLINK_SAGA.toString(), PEN_REQUEST_UNLINK_SAGA_TOPIC.toString());
   }
 
   /**
@@ -46,7 +47,7 @@ public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator
   protected void updatePenRequestPayload(PenRequestSagaData penRequestSagaData, PenRequestUnlinkSagaData penRequestUnlinkSagaData) {
     penRequestSagaData.setReviewer(penRequestUnlinkSagaData.getReviewer());
     penRequestSagaData.setPenRequestStatusCode(penRequestUnlinkSagaData.getPenRequestStatusCode());
-    penRequestSagaData.setUpdateUser(PEN_REQUEST_UNLINK_SAGA);
+    penRequestSagaData.setUpdateUser(PEN_REQUEST_UNLINK_SAGA.toString());
     penRequestSagaData.setStatusUpdateDate(LocalDateTime.now().toString());
     penRequestSagaData.setPen(null);
   }
@@ -94,7 +95,7 @@ public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     var digitalIdSagaData = JsonUtil.getJsonObjectFromString(DigitalIdSagaData.class, event.getEventPayload());
     digitalIdSagaData.setStudentID(null);
-    digitalIdSagaData.setUpdateUser(PEN_REQUEST_UNLINK_SAGA);
+    digitalIdSagaData.setUpdateUser(PEN_REQUEST_UNLINK_SAGA.toString());
     var nextEvent = Event.builder().sagaId(saga.getSagaId())
         .eventType(UPDATE_DIGITAL_ID)
         .replyTo(getTopicToSubscribe())

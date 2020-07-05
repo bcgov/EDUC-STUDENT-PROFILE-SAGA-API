@@ -26,6 +26,7 @@ import java.util.concurrent.TimeoutException;
 
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.*;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.*;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.*;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.IN_PROGRESS;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.*;
 
@@ -37,7 +38,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
 
   @Autowired
   public PenRequestCompleteSagaOrchestrator(final SagaService sagaService, final MessagePublisher messagePublisher, final MessageSubscriber messageSubscriber, final EventTaskScheduler taskScheduler) {
-    super(sagaService, messagePublisher, messageSubscriber, taskScheduler, PenRequestCompleteSagaData.class, PEN_REQUEST_COMPLETE_SAGA, PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString());
+    super(sagaService, messagePublisher, messageSubscriber, taskScheduler, PenRequestCompleteSagaData.class, PEN_REQUEST_COMPLETE_SAGA.toString(), PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString());
   }
 
   /**
@@ -71,7 +72,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     penRequestSagaData.setBcscAutoMatchOutcome(penRequestCompleteSagaData.getBcscAutoMatchOutcome());
     penRequestSagaData.setPenRequestStatusCode(penRequestCompleteSagaData.getPenRequestStatusCode());
     penRequestSagaData.setStatusUpdateDate(penRequestCompleteSagaData.getStatusUpdateDate());
-    penRequestSagaData.setUpdateUser(PEN_REQUEST_COMPLETE_SAGA);
+    penRequestSagaData.setUpdateUser(PEN_REQUEST_COMPLETE_SAGA.toString());
   }
 
   /**
@@ -132,7 +133,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     StudentSagaData studentSagaData = studentSagaDataMapper.toStudentSaga(penRequestCompleteSagaData); // get the student data from saga payload.
     StudentSagaData studentDataFromEventResponse = JsonUtil.getJsonObjectFromString(StudentSagaData.class, event.getEventPayload());
     studentSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); // update the student ID so that update call will have proper identifier.
-    studentSagaData.setUpdateUser(PEN_REQUEST_COMPLETE_SAGA);
+    studentSagaData.setUpdateUser(PEN_REQUEST_COMPLETE_SAGA.toString());
     penRequestCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
     saga.setSagaState(UPDATE_STUDENT.toString());
     saga.setPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData));
@@ -157,8 +158,8 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     saga.setSagaState(CREATE_STUDENT.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     StudentSagaData studentSagaData = studentSagaDataMapper.toStudentSaga(penRequestCompleteSagaData);
-    studentSagaData.setUpdateUser(PEN_REQUEST_COMPLETE_SAGA);
-    studentSagaData.setCreateUser(PEN_REQUEST_COMPLETE_SAGA);
+    studentSagaData.setUpdateUser(PEN_REQUEST_COMPLETE_SAGA.toString());
+    studentSagaData.setCreateUser(PEN_REQUEST_COMPLETE_SAGA.toString());
     log.info("message sent to STUDENT_API_TOPIC for CREATE_STUDENT Event.");
     delegateMessagePostingForStudent(saga, studentSagaData, CREATE_STUDENT);
 
@@ -225,7 +226,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     DigitalIdSagaData digitalIdSagaData = JsonUtil.getJsonObjectFromString(DigitalIdSagaData.class, event.getEventPayload());
     digitalIdSagaData.setStudentID(penRequestCompleteSagaData.getStudentID());
-    digitalIdSagaData.setUpdateUser(PEN_REQUEST_COMPLETE_SAGA);
+    digitalIdSagaData.setUpdateUser(PEN_REQUEST_COMPLETE_SAGA.toString());
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
             .eventType(UPDATE_DIGITAL_ID)
             .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())

@@ -8,7 +8,7 @@ import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
 import ca.bc.gov.educ.api.student.profile.saga.schedulers.EventTaskScheduler;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
-import ca.bc.gov.educ.api.student.profile.saga.struct.base.CompleteEvent;
+import ca.bc.gov.educ.api.student.profile.saga.struct.base.NotificationEvent;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import lombok.Getter;
@@ -149,11 +149,14 @@ public abstract class BaseOrchestrator<T> {
    */
   protected void markSagaComplete(Event event, Saga saga, T sagaData) throws InterruptedException, TimeoutException, IOException {
     log.trace("payload is {}", sagaData);
-    var finalEvent = new CompleteEvent();
+    var finalEvent = new NotificationEvent();
     BeanUtils.copyProperties(event, finalEvent);
     finalEvent.setEventType(MARK_SAGA_COMPLETE);
     finalEvent.setEventOutcome(SAGA_COMPLETED);
     finalEvent.setSagaStatus(COMPLETED.toString());
+    finalEvent.setProfileRequestID(saga.getProfileRequestId() != null ? saga.getProfileRequestId().toString() : "");
+    finalEvent.setPenRequestID(saga.getPenRequestId() != null ? saga.getPenRequestId().toString() : "");
+    finalEvent.setSagaName(getSagaName());
     postMessageToTopic(getTopicToSubscribe(), finalEvent);
     SagaEvent sagaEvent = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(COMPLETED.toString());
@@ -282,6 +285,15 @@ public abstract class BaseOrchestrator<T> {
   @Transactional
   public void executeSagaEvent(@NotNull Event event) throws InterruptedException, IOException, TimeoutException {
     log.trace("executing saga event {}", event);
+    // !event.getReplyTo().equalsIgnoreCase("SELF") this check makes sure it is not broadcast-ed infinitely.
+    if (event.getEventType() == INITIATED && event.getEventOutcome() == INITIATE_SUCCESS && !"SELF".equalsIgnoreCase(event.getReplyTo())) {
+      var notificationEvent = new NotificationEvent();
+      BeanUtils.copyProperties(event, notificationEvent);
+      notificationEvent.setSagaStatus(INITIATED.toString());
+      notificationEvent.setReplyTo("SELF");
+      notificationEvent.setSagaName(getSagaName());
+      postMessageToTopic(getTopicToSubscribe(), notificationEvent);
+    }
     var sagaOptional = getSagaService().findSagaById(event.getSagaId());
     if (sagaOptional.isPresent() && !COMPLETED.toString().equalsIgnoreCase(sagaOptional.get().getStatus())) { //possible duplicate message.
       val saga = sagaOptional.get();
