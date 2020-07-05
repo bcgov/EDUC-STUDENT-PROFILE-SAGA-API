@@ -68,6 +68,7 @@ public class PenRequestSagaController extends BaseController implements PenReque
       getPenRequestCompleteSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+          .penRequestID(penRequestCompleteSagaData.getPenRequestID())
           .sagaId(saga.getSagaId())
           .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
@@ -88,6 +89,7 @@ public class PenRequestSagaController extends BaseController implements PenReque
       getPenRequestCommentsSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+          .penRequestID(penRequestCommentsSagaData.getPenRetrievalRequestID())
           .sagaId(saga.getSagaId())
           .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
@@ -108,6 +110,7 @@ public class PenRequestSagaController extends BaseController implements PenReque
       getPenRequestReturnSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+          .penRequestID(penRequestReturnSagaData.getPenRetrievalRequestID())
           .sagaId(saga.getSagaId())
           .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
@@ -128,6 +131,7 @@ public class PenRequestSagaController extends BaseController implements PenReque
       getPenRequestRejectSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+          .penRequestID(penRequestRejectSagaData.getPenRetrievalRequestID())
           .sagaId(saga.getSagaId())
           .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
@@ -143,6 +147,7 @@ public class PenRequestSagaController extends BaseController implements PenReque
       getPenRequestUnlinkSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+          .penRequestID(penRequestUnlinkSagaData.getPenRetrievalRequestID())
           .sagaId(saga.getSagaId())
           .build());
       return ResponseEntity.ok(saga.getSagaId().toString());

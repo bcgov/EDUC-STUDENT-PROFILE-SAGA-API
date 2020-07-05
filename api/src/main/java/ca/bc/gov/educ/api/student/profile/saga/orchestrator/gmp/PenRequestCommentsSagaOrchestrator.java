@@ -21,6 +21,7 @@ import java.util.concurrent.TimeoutException;
 
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.*;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.*;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.PEN_REQUEST_COMMENTS_SAGA;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.PEN_REQUEST_API_TOPIC;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.PEN_REQUEST_COMMENTS_SAGA_TOPIC;
 
@@ -32,7 +33,7 @@ public class PenRequestCommentsSagaOrchestrator extends BasePenReqSagaOrchestrat
 
   @Autowired
   public PenRequestCommentsSagaOrchestrator(final SagaService sagaService, final MessagePublisher messagePublisher, final MessageSubscriber messageSubscriber, final EventTaskScheduler taskScheduler) {
-    super(sagaService, messagePublisher, messageSubscriber, taskScheduler, PenRequestCommentsSagaData.class, PEN_REQUEST_COMMENT_SAGA, PEN_REQUEST_COMMENTS_SAGA_TOPIC.toString());
+    super(sagaService, messagePublisher, messageSubscriber, taskScheduler, PenRequestCommentsSagaData.class, PEN_REQUEST_COMMENTS_SAGA.toString(), PEN_REQUEST_COMMENTS_SAGA_TOPIC.toString());
   }
 
   /**

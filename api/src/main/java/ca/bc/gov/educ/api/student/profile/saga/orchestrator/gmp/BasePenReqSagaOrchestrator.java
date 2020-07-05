@@ -28,12 +28,6 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.P
 @Slf4j
 public abstract class BasePenReqSagaOrchestrator<T> extends BaseOrchestrator<T> {
 
-  protected static final String PEN_REQUEST_COMPLETE_SAGA = "PEN-REQUEST-COMPLETE-SAGA";
-  protected static final String PEN_REQUEST_COMMENT_SAGA = "PEN-REQUEST-COMMENT-SAGA";
-  protected static final String PEN_REQUEST_RETURN_SAGA = "PEN-REQUEST-RETURN-SAGA";
-  protected static final String PEN_REQUEST_REJECT_SAGA = "PEN-REQUEST-REJECT-SAGA";
-  protected static final String PEN_REQUEST_UNLINK_SAGA = "PEN-REQUEST-UNLINK-SAGA";
-
   public BasePenReqSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, MessageSubscriber messageSubscriber, EventTaskScheduler taskScheduler, Class<T> clazz, String sagaName, String topicToSubscribe) {
     super(sagaService, messagePublisher, messageSubscriber, taskScheduler, clazz, sagaName, topicToSubscribe);
   }

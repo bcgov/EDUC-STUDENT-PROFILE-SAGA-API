@@ -22,6 +22,7 @@ import java.util.concurrent.TimeoutException;
 
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.*;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.*;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.PEN_REQUEST_REJECT_SAGA;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.*;
 
 
@@ -31,7 +32,7 @@ public class PenRequestRejectSagaOrchestrator extends BasePenReqSagaOrchestrator
 
   @Autowired
   public PenRequestRejectSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, MessageSubscriber messageSubscriber, EventTaskScheduler taskScheduler) {
-    super(sagaService, messagePublisher, messageSubscriber, taskScheduler, PenRequestRejectSagaData.class, PEN_REQUEST_REJECT_SAGA, PEN_REQUEST_REJECT_SAGA_TOPIC.toString());
+    super(sagaService, messagePublisher, messageSubscriber, taskScheduler, PenRequestRejectSagaData.class, PEN_REQUEST_REJECT_SAGA.toString(), PEN_REQUEST_REJECT_SAGA_TOPIC.toString());
   }
 
   /**

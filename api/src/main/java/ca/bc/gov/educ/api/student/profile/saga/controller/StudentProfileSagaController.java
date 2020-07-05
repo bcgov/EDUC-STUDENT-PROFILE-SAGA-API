@@ -74,6 +74,7 @@ public class StudentProfileSagaController extends BaseController implements Stud
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
           .sagaId(saga.getSagaId())
+          .profileRequestID(studentProfileCompleteSagaData.getStudentProfileRequestID())
           .build());
       return ResponseEntity.noContent().build();
     } catch (final Exception e) {
@@ -93,6 +94,7 @@ public class StudentProfileSagaController extends BaseController implements Stud
       getStudentProfileCommentsSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+          .profileRequestID(studentProfileCommentsSagaData.getStudentProfileRequestID())
           .sagaId(saga.getSagaId())
           .build());
       return ResponseEntity.noContent().build();
@@ -113,6 +115,7 @@ public class StudentProfileSagaController extends BaseController implements Stud
       getStudentProfileRejectSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+          .profileRequestID(studentProfileRequestRejectActionSagaData.getStudentProfileRequestID())
           .sagaId(saga.getSagaId())
           .build());
       return ResponseEntity.noContent().build();
@@ -133,6 +136,7 @@ public class StudentProfileSagaController extends BaseController implements Stud
       getStudentProfileReturnSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+          .profileRequestID(studentProfileReturnActionSagaData.getStudentProfileRequestID())
           .sagaId(saga.getSagaId())
           .build());
       return ResponseEntity.noContent().build();
