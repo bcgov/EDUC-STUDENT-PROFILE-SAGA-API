@@ -79,7 +79,7 @@ public class PenRequestRejectSagaOrchestrator extends BasePenReqSagaOrchestrator
         .eventPayload(buildPenReqEmailSagaData(penRequestRejectSagaData))
         .build();
     postMessageToTopic(PROFILE_REQUEST_EMAIL_API_TOPIC.toString(), nextEvent);
-    log.info("message sent to PEN_REQUEST_EMAIL_API_TOPIC for NOTIFY_STUDENT_PEN_REQUEST_REJECT Event.");
+    log.info("message sent to PROFILE_REQUEST_EMAIL_API_TOPIC for NOTIFY_STUDENT_PEN_REQUEST_REJECT Event.");
 
   }
 

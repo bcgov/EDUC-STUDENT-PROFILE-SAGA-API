@@ -106,7 +106,7 @@ public class PenRequestReturnSagaOrchestrator extends BasePenReqSagaOrchestrator
         .eventPayload(buildPenReqEmailSagaData(penRequestReturnSagaData))
         .build();
     postMessageToTopic(PROFILE_REQUEST_EMAIL_API_TOPIC.toString(), nextEvent);
-    log.info("message sent to PEN_REQUEST_EMAIL_API_TOPIC for NOTIFY_STUDENT_PEN_REQUEST_RETURN Event.");
+    log.info("message sent to PROFILE_REQUEST_EMAIL_API_TOPIC for NOTIFY_STUDENT_PEN_REQUEST_RETURN Event.");
 
   }
 
