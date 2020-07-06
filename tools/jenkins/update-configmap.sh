@@ -20,9 +20,6 @@ SPLUNK_TOKEN=$(oc -o json get configmaps "${APP_NAME}"-"${envValue}"-setup-confi
 
 oc project $PEN_NAMESPACE-tools
 
-echo SOAM USER: "$SOAM_KC_LOAD_USER_ADMIN"
-echo SOAM PASS: "$SOAM_KC_LOAD_USER_PASS"
-
 ###########################################################
 #Fetch the public key
 ###########################################################
