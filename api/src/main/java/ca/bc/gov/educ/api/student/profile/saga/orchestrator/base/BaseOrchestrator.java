@@ -294,7 +294,7 @@ public abstract class BaseOrchestrator<T> {
     var sagaOptional = getSagaService().findSagaById(event.getSagaId());
     if (sagaOptional.isPresent() ) {
       val saga = sagaOptional.get();
-      if(!COMPLETED.toString().equalsIgnoreCase(sagaOptional.get().getStatus()) || !FORCE_STOPPED.toString().equalsIgnoreCase(sagaOptional.get().getStatus())){//possible duplicate message or force stop scenario check
+      if(!COMPLETED.toString().equalsIgnoreCase(sagaOptional.get().getStatus()) && !FORCE_STOPPED.toString().equalsIgnoreCase(sagaOptional.get().getStatus())){//possible duplicate message or force stop scenario check
         var sagaEventState = findNextSagaEventState(event.getEventType(), event.getEventOutcome());
         log.trace("found next event as {}", sagaEventState);
         if (sagaEventState.isPresent()) {
