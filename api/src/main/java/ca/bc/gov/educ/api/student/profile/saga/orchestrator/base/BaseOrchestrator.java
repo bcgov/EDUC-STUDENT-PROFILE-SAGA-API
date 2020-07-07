@@ -287,6 +287,7 @@ public abstract class BaseOrchestrator<T> {
   public void executeSagaEvent(@NotNull Event event) throws InterruptedException, IOException, TimeoutException {
     log.trace("executing saga event {}", event);
     if (sagaEventExecutionNotRequired(event)) {
+      log.trace("Execution is not required for this message returning EVENT is :: {}", event.toString());
       return;
     }
     broadcastSagaInitiatedMessage(event);
