@@ -10,6 +10,7 @@ import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
 import ca.bc.gov.educ.api.student.profile.saga.schedulers.EventTaskScheduler;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
+import ca.bc.gov.educ.api.student.profile.saga.struct.base.NotificationEvent;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenReqEmailSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestCompleteSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestSagaData;
@@ -20,6 +21,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
@@ -27,7 +29,7 @@ import java.util.concurrent.TimeoutException;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.*;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.*;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.*;
-import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.IN_PROGRESS;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.*;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.*;
 
 
@@ -274,6 +276,26 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
             .firstName(penRequestCompleteSagaData.getLegalFirstName())
             .build();
     return JsonUtil.getJsonStringFromObject(penReqEmailSagaData);
+  }
+
+  /**
+   * this method is called when the complete saga is in progress and staff members clicks on unlink. system will force stop the existing saga and start unlink saga.
+   * @param saga the model object.
+   * @throws InterruptedException if thread is interrupted.
+   * @throws IOException          if there is connectivity problem
+   * @throws TimeoutException     if connection to messaging system times out.
+   */
+  @Transactional
+  public void publishSagaForceStopped(final Saga saga) throws InterruptedException, TimeoutException, IOException {
+
+    var forceStoppedEvent = new NotificationEvent();
+    forceStoppedEvent.setEventType(UNLINK_PEN_REQUEST);
+    forceStoppedEvent.setEventOutcome(SAGA_FORCE_STOPPED);
+    forceStoppedEvent.setSagaStatus(FORCE_STOPPED.toString());
+    forceStoppedEvent.setPenRequestID(saga.getPenRequestId() != null ? saga.getPenRequestId().toString() : "");
+    forceStoppedEvent.setSagaName(getSagaName());
+    forceStoppedEvent.setSagaId(saga.getSagaId());
+    postMessageToTopic(getTopicToSubscribe(), forceStoppedEvent);
   }
 
 }
