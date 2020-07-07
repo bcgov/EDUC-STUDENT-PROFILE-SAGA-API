@@ -24,10 +24,10 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
-import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.INITIATE_SUCCESS;
-import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.SAGA_COMPLETED;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.*;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.*;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.COMPLETED;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.FORCE_STOPPED;
 import static lombok.AccessLevel.PROTECTED;
 
 @Slf4j
@@ -286,10 +286,41 @@ public abstract class BaseOrchestrator<T> {
   @Transactional
   public void executeSagaEvent(@NotNull Event event) throws InterruptedException, IOException, TimeoutException {
     log.trace("executing saga event {}", event);
-    if ((event.getEventType() == INITIATED && event.getEventOutcome() == INITIATE_SUCCESS && SELF.equalsIgnoreCase(event.getReplyTo()))
-        || (event.getEventType() == MARK_SAGA_COMPLETE && event.getEventOutcome() == SAGA_COMPLETED)) {
-      return; // DONT DO ANYTHING the message was broad-casted for the frontend listeners, that a saga process has started or completed.
+    if (sagaEventExecutionNotRequired(event)) {
+      return;
     }
+    broadcastSagaInitiatedMessage(event);
+    var sagaOptional = getSagaService().findSagaById(event.getSagaId());
+    if (sagaOptional.isPresent() ) {
+      val saga = sagaOptional.get();
+      if(!COMPLETED.toString().equalsIgnoreCase(sagaOptional.get().getStatus()) || !FORCE_STOPPED.toString().equalsIgnoreCase(sagaOptional.get().getStatus())){//possible duplicate message or force stop scenario check
+        var sagaEventState = findNextSagaEventState(event.getEventType(), event.getEventOutcome());
+        log.trace("found next event as {}", sagaEventState);
+        if (sagaEventState.isPresent()) {
+          process(event, saga, sagaEventState.get());
+        } else {
+          log.error("This should not have happened, please check that both the saga api and all the participating apis are in sync in terms of events and their outcomes. {}", event.toString()); // more explicit error message,
+        }
+      }else {
+        log.info("got message to process saga for saga ID :: {} but saga is already :: {}", saga.getSagaId() ,saga.getStatus());
+      }
+    }else {
+      log.error("Saga process without DB record is not expected. {}", event);
+    }
+  }
+
+  /**
+   * DONT DO ANYTHING the message was broad-casted for the frontend listeners, that a saga process has started or completed or FORCE_STOPPED.
+   * @param event the event object received from queue.
+   * @return true if this message need not be processed further.
+   */
+  private boolean sagaEventExecutionNotRequired(@NotNull Event event) {
+    return (event.getEventType() == INITIATED && event.getEventOutcome() == INITIATE_SUCCESS && SELF.equalsIgnoreCase(event.getReplyTo()))
+        || (event.getEventType() == MARK_SAGA_COMPLETE && event.getEventOutcome() == SAGA_COMPLETED)
+        || (event.getEventType() == UNLINK_PEN_REQUEST && event.getEventOutcome() == SAGA_FORCE_STOPPED);
+  }
+
+  private void broadcastSagaInitiatedMessage(@NotNull Event event) throws InterruptedException, IOException, TimeoutException {
     // !SELF.equalsIgnoreCase(event.getReplyTo()):- this check makes sure it is not broadcast-ed infinitely.
     if (event.getEventType() == INITIATED && event.getEventOutcome() == INITIATE_SUCCESS && !SELF.equalsIgnoreCase(event.getReplyTo())) {
       var notificationEvent = new NotificationEvent();
@@ -298,17 +329,6 @@ public abstract class BaseOrchestrator<T> {
       notificationEvent.setReplyTo(SELF);
       notificationEvent.setSagaName(getSagaName());
       postMessageToTopic(getTopicToSubscribe(), notificationEvent);
-    }
-    var sagaOptional = getSagaService().findSagaById(event.getSagaId());
-    if (sagaOptional.isPresent() && !COMPLETED.toString().equalsIgnoreCase(sagaOptional.get().getStatus())) { //possible duplicate message.
-      val saga = sagaOptional.get();
-      var sagaEventState = findNextSagaEventState(event.getEventType(), event.getEventOutcome());
-      log.trace("found next event as {}", sagaEventState);
-      if (sagaEventState.isPresent()) {
-        process(event, saga, sagaEventState.get());
-      } else {
-        log.error("This should not have happened, please check that both the saga api and all the participating apis are in sync in terms of events and their outcomes. {}", event.toString()); // more explicit error message,
-      }
     }
   }
 

@@ -15,11 +15,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
+import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.SAGA_FORCE_STOPPED;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.*;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.FORCE_STOPPED;
 import static lombok.AccessLevel.PRIVATE;
 
 @RestController
@@ -141,8 +144,18 @@ public class PenRequestSagaController extends BaseController implements PenReque
   }
 
   @Override
+  @Transactional
   public ResponseEntity<String> unlinkPenRequest(PenRequestUnlinkSagaData penRequestUnlinkSagaData) {
     try {
+      var penRequestId = UUID.fromString(penRequestUnlinkSagaData.getPenRetrievalRequestID());
+      var completeSagaInProgress = getSagaService().findByPenRequestIdAndStatusInAndSagaName(penRequestId, getStatusesFilter(), PEN_REQUEST_COMPLETE_SAGA.toString());
+      if (completeSagaInProgress.isPresent()) { // force stop if a complete saga is in progress and then start the unlink saga.
+        var saga = completeSagaInProgress.get();
+        saga.setStatus(FORCE_STOPPED.toString());
+        saga.setSagaState(SAGA_FORCE_STOPPED.toString());
+        getSagaService().updateSagaRecord(saga);
+        getPenRequestCompleteSagaOrchestrator().publishSagaForceStopped(saga);
+      }
       final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestUnlinkSagaData, PEN_REQUEST_UNLINK_SAGA.toString(), STUDENT_PROFILE_SAGA_API, UUID.fromString(penRequestUnlinkSagaData.getPenRetrievalRequestID()));
       getPenRequestUnlinkSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)

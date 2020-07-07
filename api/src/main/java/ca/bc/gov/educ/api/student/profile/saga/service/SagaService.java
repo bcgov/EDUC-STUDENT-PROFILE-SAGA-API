@@ -103,4 +103,13 @@ public class SagaService {
   public List<Saga> findAllByProfileRequestIdAndStatuses(UUID profileRequestId, List<String> statuses){
     return getSagaRepository().findAllByProfileRequestIdAndStatusIn(profileRequestId,statuses);
   }
+
+  public Optional<Saga> findByPenRequestIdAndStatusInAndSagaName(UUID penRequestId, List<String> statuses, String sagaName) {
+    return getSagaRepository().findByPenRequestIdAndStatusInAndSagaName(penRequestId, statuses, sagaName);
+  }
+
+  @Transactional(propagation = Propagation.MANDATORY)
+  public void updateSagaRecord(Saga saga){ // saga here MUST be an attached entity
+    getSagaRepository().save(saga);
+  }
 }

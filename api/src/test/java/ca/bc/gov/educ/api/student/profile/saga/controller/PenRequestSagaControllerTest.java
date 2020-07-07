@@ -27,6 +27,7 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.INITIA
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.STARTED;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -154,7 +155,7 @@ public class PenRequestSagaControllerTest {
         "  \"rejectionReason\": \"Can't find you\",\n" +
         "  \"statusUpdateDate\": \"2020-04-17T22:29:00\"\n" +
         "}";
-    repository.save(getSaga(payload,"PEN_REQUEST_REJECT_SAGA","STUDENT_PROFILE_SAGA_API", UUID.fromString("ac334a38-715f-1340-8171-607a59d0000a")));
+    repository.save(getSaga(payload,"PEN_REQUEST_REJECT_SAGA", UUID.fromString("ac334a38-715f-1340-8171-607a59d0000a")));
     this.mockMvc.perform(post("/pen-request-reject-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isConflict());
     val result = repository.findAll();
     assertEquals(1, result.size());
@@ -207,7 +208,7 @@ public class PenRequestSagaControllerTest {
 
   @Test
   @WithMockOAuth2Scope(scope = "PEN_REQUEST_UNLINK_SAGA")
-  public void test_commentPENRequest_givenValidPayload_shouldReturnOK() throws Exception {
+  public void test_unlinkPENRequest_givenValidPayload_shouldReturnOK() throws Exception {
     var payload = "{\n" +
         "  \"penRetrievalRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
         "  \"digitalID\": \"2827808f-dfde-4b9b-835c-10cf0130261c\",\n" +
@@ -220,6 +221,26 @@ public class PenRequestSagaControllerTest {
     val result = repository.findAll();
     assertEquals(1, result.size());
   }
+  @Test
+  @WithMockOAuth2Scope(scope = "PEN_REQUEST_UNLINK_SAGA")
+  public void test_unlinkPENRequest_givenValidPayloadAndCompleteSagaInProgress_shouldForceStopCompleteSagaAndReturnOK() throws Exception {
+    var payload = "{\n" +
+        "  \"penRetrievalRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
+        "  \"digitalID\": \"2827808f-dfde-4b9b-835c-10cf0130261c\",\n" +
+        "  \"reviewer\": \"SHFOORD\",\n" +
+        "  \"penRequestStatusCode\": \"SUBSREV\",\n" +
+        "  \"createUser\": \"STAFF_ADMIN\",\n" +
+        "  \"updateUser\": \"STAFF_ADMIN\"\n" +
+        "}";
+    var saga = getSaga(payload,"PEN_REQUEST_COMPLETE_SAGA", UUID.fromString("ac334a38-715f-1340-8171-607a59d0000a"));
+    repository.save(saga);
+    this.mockMvc.perform(post("/pen-request-unlink-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$", notNullValue()));
+    val result = repository.findAll();
+    assertEquals(2, result.size());
+    var updatedSaga = repository.findById(saga.getSagaId());
+    assertTrue(updatedSaga.isPresent());
+    assertEquals("FORCE_STOPPED", updatedSaga.get().getStatus());
+  }
   public static String asJsonString(final Object obj) {
     try {
       return new ObjectMapper().writeValueAsString(obj);
@@ -227,7 +248,7 @@ public class PenRequestSagaControllerTest {
       throw new SagaRuntimeException(e.getMessage());
     }
   }
-  private Saga getSaga(String payload, String sagaName, String apiName, UUID penRequestId) {
+  private Saga getSaga(String payload, String sagaName, UUID penRequestId) {
     return Saga
         .builder()
         .payload(payload)
@@ -236,8 +257,8 @@ public class PenRequestSagaControllerTest {
         .sagaState(INITIATED.toString())
         .sagaCompensated(false)
         .createDate(LocalDateTime.now())
-        .createUser(apiName)
-        .updateUser(apiName)
+        .createUser("STUDENT_PROFILE_SAGA_API")
+        .updateUser("STUDENT_PROFILE_SAGA_API")
         .updateDate(LocalDateTime.now())
         .penRequestId(penRequestId)
         .build();
