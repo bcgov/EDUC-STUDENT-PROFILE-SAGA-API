@@ -33,6 +33,7 @@ import static lombok.AccessLevel.PROTECTED;
 @Slf4j
 public abstract class BaseOrchestrator<T> {
   protected static final String SYSTEM_IS_GOING_TO_EXECUTE_NEXT_EVENT_FOR_CURRENT_EVENT = "system is going to execute next event :: {} for current event {}";
+  public static final String SELF = "SELF";
   @Getter(PROTECTED)
   private final SagaService sagaService;
   @Getter(PROTECTED)
@@ -286,11 +287,14 @@ public abstract class BaseOrchestrator<T> {
   public void executeSagaEvent(@NotNull Event event) throws InterruptedException, IOException, TimeoutException {
     log.trace("executing saga event {}", event);
     // !event.getReplyTo().equalsIgnoreCase("SELF") this check makes sure it is not broadcast-ed infinitely.
-    if (event.getEventType() == INITIATED && event.getEventOutcome() == INITIATE_SUCCESS && !"SELF".equalsIgnoreCase(event.getReplyTo())) {
+    if (event.getEventType() == INITIATED && event.getEventOutcome() == INITIATE_SUCCESS && SELF.equalsIgnoreCase(event.getReplyTo())) {
+      return; // DONT DO ANYTHING the message was broad-casted for the frontend listeners, that a saga process has started.
+    }
+    if (event.getEventType() == INITIATED && event.getEventOutcome() == INITIATE_SUCCESS && !SELF.equalsIgnoreCase(event.getReplyTo())) {
       var notificationEvent = new NotificationEvent();
       BeanUtils.copyProperties(event, notificationEvent);
       notificationEvent.setSagaStatus(INITIATED.toString());
-      notificationEvent.setReplyTo("SELF");
+      notificationEvent.setReplyTo(SELF);
       notificationEvent.setSagaName(getSagaName());
       postMessageToTopic(getTopicToSubscribe(), notificationEvent);
     }
