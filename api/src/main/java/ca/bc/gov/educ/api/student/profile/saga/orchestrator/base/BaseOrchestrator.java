@@ -286,8 +286,9 @@ public abstract class BaseOrchestrator<T> {
   @Transactional
   public void executeSagaEvent(@NotNull Event event) throws InterruptedException, IOException, TimeoutException {
     log.trace("executing saga event {}", event);
-    if (event.getEventType() == INITIATED && event.getEventOutcome() == INITIATE_SUCCESS && SELF.equalsIgnoreCase(event.getReplyTo())) {
-      return; // DONT DO ANYTHING the message was broad-casted for the frontend listeners, that a saga process has started.
+    if ((event.getEventType() == INITIATED && event.getEventOutcome() == INITIATE_SUCCESS && SELF.equalsIgnoreCase(event.getReplyTo()))
+        || (event.getEventType() == MARK_SAGA_COMPLETE && event.getEventOutcome() == SAGA_COMPLETED)) {
+      return; // DONT DO ANYTHING the message was broad-casted for the frontend listeners, that a saga process has started or completed.
     }
     // !SELF.equalsIgnoreCase(event.getReplyTo()):- this check makes sure it is not broadcast-ed infinitely.
     if (event.getEventType() == INITIATED && event.getEventOutcome() == INITIATE_SUCCESS && !SELF.equalsIgnoreCase(event.getReplyTo())) {
