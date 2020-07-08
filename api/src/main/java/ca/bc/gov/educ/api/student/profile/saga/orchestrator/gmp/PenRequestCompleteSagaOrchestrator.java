@@ -70,6 +70,9 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
   @Override
   protected void updatePenRequestPayload(PenRequestSagaData penRequestSagaData, PenRequestCompleteSagaData penRequestCompleteSagaData) {
     penRequestSagaData.setPen(penRequestCompleteSagaData.getPen());
+    penRequestSagaData.setReviewer(penRequestCompleteSagaData.getReviewer());
+    penRequestSagaData.setCompleteComment(penRequestCompleteSagaData.getCompleteComment());
+    penRequestSagaData.setDemogChanged(penRequestCompleteSagaData.getDemogChanged());
     penRequestSagaData.setBcscAutoMatchDetails(penRequestCompleteSagaData.getBcscAutoMatchDetails());
     penRequestSagaData.setBcscAutoMatchOutcome(penRequestCompleteSagaData.getBcscAutoMatchOutcome());
     penRequestSagaData.setPenRequestStatusCode(penRequestCompleteSagaData.getPenRequestStatusCode());

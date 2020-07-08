@@ -38,4 +38,6 @@ public class PenRequestSagaData {
   private String bcscAutoMatchOutcome;
   private String bcscAutoMatchDetails;
   private String updateUser;
+  private String demogChanged;
+  private String completeComment;
 }
