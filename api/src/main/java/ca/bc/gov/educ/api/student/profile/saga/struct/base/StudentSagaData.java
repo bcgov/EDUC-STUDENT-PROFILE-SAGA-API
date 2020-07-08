@@ -27,4 +27,9 @@ public class StudentSagaData {
   private String deceasedDate;
   private String createUser;
   private String updateUser;
+  private String localID;
+  private String postalCode;
+  private String gradeCode;
+  private String mincode;
+  private String emailVerified;
 }

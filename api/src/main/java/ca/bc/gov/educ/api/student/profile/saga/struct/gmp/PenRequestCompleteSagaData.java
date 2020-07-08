@@ -57,4 +57,10 @@ public class PenRequestCompleteSagaData {
   private String penRequestStatusCode;
   @NotNull(message = "statusUpdateDate can not be null.")
   private String statusUpdateDate;
+  @Size(max = 255)
+  private String reviewer;
+  @Size(max = 1)
+  @Pattern(regexp = "[YN]")
+  private String demogChanged;
+  private String completeComment;
 }
