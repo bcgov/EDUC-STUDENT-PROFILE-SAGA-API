@@ -43,6 +43,16 @@ public class PenRequestCompleteSagaData {
   String usualMiddleNames;
   @Size(max = 40)
   String usualLastName;
+  @Size(max = 12)
+  String localID;
+  @Pattern(regexp = "^([A-Z]\\d[A-Z]\\d[A-Z]\\d|)$")
+  String postalCode;
+  @Size(max = 2)
+  String gradeCode;
+  @Size(max = 8)
+  String mincode;
+  @Pattern(regexp = "[YN]")
+  String emailVerified;
   @Size(max = 80)
   @Email(message = "Email must be valid email address.")
   String email;
