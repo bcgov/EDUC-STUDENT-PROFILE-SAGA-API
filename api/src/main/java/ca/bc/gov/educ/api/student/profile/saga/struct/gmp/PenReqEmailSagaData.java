@@ -14,4 +14,5 @@ public class PenReqEmailSagaData {
   private String emailAddress;
   private String identityType;
   private String rejectionReason;
+  private Boolean demographicsChanged;
 }
