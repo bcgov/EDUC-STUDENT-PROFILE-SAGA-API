@@ -103,6 +103,7 @@ public class PenRequestSagaControllerTest {
             "  \"bcscAutoMatchOutcome\": \"ONEMATCH\",\n" +
             "  \"penRequestStatusCode\": \"MANUAL\",\n" +
             "  \"statusUpdateDate\": \"2020-04-17T22:29:00\"\n" +
+            "  \"identityType\": \"BASIC\"\n" +
             "}";
     this.mockMvc.perform(post("/pen-request-complete-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
     val result = repository.findAll();
