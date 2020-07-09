@@ -65,7 +65,6 @@ public class PenRequestCompleteSagaData {
   private String bcscAutoMatchDetails;
   @NotNull(message = "penRequestStatusCode can not be null.")
   private String penRequestStatusCode;
-  @NotNull(message = "statusUpdateDate can not be null.")
   private String statusUpdateDate;
   @Size(max = 255)
   private String reviewer;
@@ -73,4 +72,6 @@ public class PenRequestCompleteSagaData {
   @Pattern(regexp = "[YN]")
   private String demogChanged;
   private String completeComment;
+  @NotNull(message = "identityType can not be null")
+  protected String identityType;
 }
