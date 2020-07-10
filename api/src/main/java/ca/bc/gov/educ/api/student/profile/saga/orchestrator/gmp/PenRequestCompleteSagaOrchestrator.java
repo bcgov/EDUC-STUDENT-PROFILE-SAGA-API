@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.concurrent.TimeoutException;
 
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.*;
@@ -76,7 +77,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     penRequestSagaData.setBcscAutoMatchDetails(penRequestCompleteSagaData.getBcscAutoMatchDetails());
     penRequestSagaData.setBcscAutoMatchOutcome(penRequestCompleteSagaData.getBcscAutoMatchOutcome());
     penRequestSagaData.setPenRequestStatusCode(penRequestCompleteSagaData.getPenRequestStatusCode());
-    penRequestSagaData.setStatusUpdateDate(penRequestCompleteSagaData.getStatusUpdateDate());
+    penRequestSagaData.setStatusUpdateDate(LocalDateTime.now().toString());
     penRequestSagaData.setUpdateUser(PEN_REQUEST_COMPLETE_SAGA.toString());
   }
 
