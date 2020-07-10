@@ -277,7 +277,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     PenReqEmailSagaData penReqEmailSagaData = PenReqEmailSagaData.builder()
             .emailAddress(penRequestCompleteSagaData.getEmail())
             .firstName(penRequestCompleteSagaData.getLegalFirstName())
-            .demographicsChanged(penRequestCompleteSagaData.getDemogChanged().equals("Y"))
+            .demographicsChanged("Y".equalsIgnoreCase(penRequestCompleteSagaData.getDemogChanged()))
             .identityType(penRequestCompleteSagaData.getIdentityType())
             .build();
     return JsonUtil.getJsonStringFromObject(penReqEmailSagaData);
