@@ -87,27 +87,53 @@ public class MessageSubscriber {
   /**
    * This method will keep retrying for a connection.
    */
+
   private void connectionLostHandler(StreamingConnection streamingConnection, Exception e) {
     if (e != null) {
       int numOfRetries = 1;
-      while (true) {
+      numOfRetries = retryConnection(numOfRetries);
+      retrySubscription(numOfRetries);
+    }
+  }
+
+  private void retrySubscription(int numOfRetries) {
+    while (true) {
+      try {
+        log.trace("retrying subscription as connection was lost :: retrying ::" + numOfRetries++);
+        for (Map.Entry<String, SagaEventHandler> entry : handlers.entrySet()) {
+          this.subscribe(entry.getKey(), entry.getValue());
+        }
+        log.info("successfully resubscribed after {} attempts", numOfRetries);
+        break;
+      } catch (SagaRuntimeException exception) {
+        log.error("exception occurred while retrying subscription", exception);
         try {
-          log.trace("retrying connection as connection was lost :: retrying ::" + numOfRetries++);
-          connection = connectionFactory.createConnection();
-          for (Map.Entry<String, SagaEventHandler> entry : handlers.entrySet()) {
-            this.subscribe(entry.getKey(), entry.getValue());
-          }
-          break;
-        } catch (IOException | InterruptedException | SagaRuntimeException ex) {
-          log.error("exception occurred", ex);
-          try {
-            double sleepTime = (2 * numOfRetries);
-            TimeUnit.SECONDS.sleep((long) sleepTime);
-          } catch (InterruptedException exc) {
-            log.error("exception occurred", exc);
-          }
+          double sleepTime = (2 * numOfRetries);
+          TimeUnit.SECONDS.sleep((long) sleepTime);
+        } catch (InterruptedException exc) {
+          log.error("InterruptedException occurred while retrying subscription", exc);
         }
       }
     }
+  }
+
+  private int retryConnection(int numOfRetries) {
+    while (true) {
+      try {
+        log.trace("retrying connection as connection was lost :: retrying ::" + numOfRetries++);
+        connection = connectionFactory.createConnection();
+        log.info("successfully reconnected after {} attempts", numOfRetries);
+        break;
+      } catch (IOException | InterruptedException ex) {
+        log.error("exception occurred", ex);
+        try {
+          double sleepTime = (2 * numOfRetries);
+          TimeUnit.SECONDS.sleep((long) sleepTime);
+        } catch (InterruptedException exc) {
+          log.error("exception occurred", exc);
+        }
+      }
+    }
+    return numOfRetries;
   }
 }
