@@ -15,11 +15,8 @@ import javax.validation.constraints.Size;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PenRequestCommentsSagaData {
-  String penRetrievalReqCommentID;
   @NotNull(message = "penRetrievalRequestID content can not be null")
   String penRetrievalRequestID;
-  String staffMemberIDIRGUID;
-  String staffMemberName;
   @NotNull(message = "Comment content can not be null")
   String commentContent;
   @Pattern(regexp = "(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})")
