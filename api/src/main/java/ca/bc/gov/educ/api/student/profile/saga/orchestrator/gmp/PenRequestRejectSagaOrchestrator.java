@@ -52,6 +52,7 @@ public class PenRequestRejectSagaOrchestrator extends BasePenReqSagaOrchestrator
     penRequestSagaData.setPenRequestStatusCode(penRequestRejectSagaData.getPenRequestStatusCode());
     penRequestSagaData.setFailureReason(penRequestRejectSagaData.getRejectionReason());
     penRequestSagaData.setStatusUpdateDate(LocalDateTime.now().toString());
+    penRequestSagaData.setReviewer(penRequestRejectSagaData.getReviewer());
   }
 
   @Override
