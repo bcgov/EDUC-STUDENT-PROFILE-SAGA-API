@@ -79,6 +79,7 @@ public class PenRequestReturnSagaOrchestrator extends BasePenReqSagaOrchestrator
   protected void updatePenRequestPayload(PenRequestSagaData penRequestSagaData, PenRequestReturnSagaData penRequestReturnSagaData) {
     penRequestSagaData.setPenRequestStatusCode(penRequestReturnSagaData.getPenRequestStatusCode());
     penRequestSagaData.setStatusUpdateDate(LocalDateTime.now().toString());
+    penRequestSagaData.setReviewer(penRequestReturnSagaData.getReviewer());
   }
 
   @Override
