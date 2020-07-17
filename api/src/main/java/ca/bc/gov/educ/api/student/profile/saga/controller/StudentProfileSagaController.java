@@ -62,7 +62,7 @@ public class StudentProfileSagaController extends BaseController implements Stud
   }
 
   @Override
-  public ResponseEntity<Void> completeStudentProfile(StudentProfileCompleteSagaData studentProfileCompleteSagaData) {
+  public ResponseEntity<String> completeStudentProfile(StudentProfileCompleteSagaData studentProfileCompleteSagaData) {
     try {
       var profileRequestId = UUID.fromString(studentProfileCompleteSagaData.getStudentProfileRequestID());
       var sagaInProgress = getSagaService().findAllByProfileRequestIdAndStatuses(profileRequestId, getStatusesFilter());
@@ -76,14 +76,14 @@ public class StudentProfileSagaController extends BaseController implements Stud
           .sagaId(saga.getSagaId())
           .profileRequestID(studentProfileCompleteSagaData.getStudentProfileRequestID())
           .build());
-      return ResponseEntity.noContent().build();
+      return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());
     }
   }
 
   @Override
-  public ResponseEntity<Void> submitStudentProfileComment(StudentProfileCommentsSagaData studentProfileCommentsSagaData) {
+  public ResponseEntity<String> submitStudentProfileComment(StudentProfileCommentsSagaData studentProfileCommentsSagaData) {
     try {
       var profileRequestId = UUID.fromString(studentProfileCommentsSagaData.getStudentProfileRequestID());
       var sagaInProgress = getSagaService().findAllByProfileRequestIdAndStatuses(profileRequestId, getStatusesFilter());
@@ -97,14 +97,14 @@ public class StudentProfileSagaController extends BaseController implements Stud
           .profileRequestID(studentProfileCommentsSagaData.getStudentProfileRequestID())
           .sagaId(saga.getSagaId())
           .build());
-      return ResponseEntity.noContent().build();
+      return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());
     }
   }
 
   @Override
-  public ResponseEntity<Void> rejectStudentProfile(StudentProfileRequestRejectActionSagaData studentProfileRequestRejectActionSagaData) {
+  public ResponseEntity<String> rejectStudentProfile(StudentProfileRequestRejectActionSagaData studentProfileRequestRejectActionSagaData) {
     try {
       var profileRequestId = UUID.fromString(studentProfileRequestRejectActionSagaData.getStudentProfileRequestID());
       var sagaInProgress = getSagaService().findAllByProfileRequestIdAndStatuses(profileRequestId, getStatusesFilter());
@@ -118,14 +118,14 @@ public class StudentProfileSagaController extends BaseController implements Stud
           .profileRequestID(studentProfileRequestRejectActionSagaData.getStudentProfileRequestID())
           .sagaId(saga.getSagaId())
           .build());
-      return ResponseEntity.noContent().build();
+      return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());
     }
   }
 
   @Override
-  public ResponseEntity<Void> returnStudentProfile(StudentProfileReturnActionSagaData studentProfileReturnActionSagaData) {
+  public ResponseEntity<String> returnStudentProfile(StudentProfileReturnActionSagaData studentProfileReturnActionSagaData) {
     try {
       var profileRequestId = UUID.fromString(studentProfileReturnActionSagaData.getStudentProfileRequestID());
       var sagaInProgress = getSagaService().findAllByProfileRequestIdAndStatuses(profileRequestId, getStatusesFilter());
@@ -139,7 +139,7 @@ public class StudentProfileSagaController extends BaseController implements Stud
           .profileRequestID(studentProfileReturnActionSagaData.getStudentProfileRequestID())
           .sagaId(saga.getSagaId())
           .build());
-      return ResponseEntity.noContent().build();
+      return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());
     }

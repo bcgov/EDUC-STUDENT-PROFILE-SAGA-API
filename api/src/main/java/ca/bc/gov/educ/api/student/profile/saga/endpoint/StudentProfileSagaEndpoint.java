@@ -23,23 +23,23 @@ public interface StudentProfileSagaEndpoint {
 
   @PostMapping("/student-profile-complete-saga")
   @PreAuthorize("#oauth2.hasScope('STUDENT_PROFILE_COMPLETE_SAGA')")
-  @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "NO CONTENT.")})
-  ResponseEntity<Void> completeStudentProfile(@Validated @RequestBody StudentProfileCompleteSagaData studentProfileCompleteSagaData);
+  @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK.")})
+  ResponseEntity<String> completeStudentProfile(@Validated @RequestBody StudentProfileCompleteSagaData studentProfileCompleteSagaData);
 
   @PostMapping("/student-profile-comment-saga")
   @PreAuthorize("#oauth2.hasScope('STUDENT_PROFILE_COMMENT_SAGA')")
-  @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "NO CONTENT.")})
-  ResponseEntity<Void> submitStudentProfileComment(@Validated @RequestBody StudentProfileCommentsSagaData studentProfileCommentsSagaData);
+  @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK.")})
+  ResponseEntity<String> submitStudentProfileComment(@Validated @RequestBody StudentProfileCommentsSagaData studentProfileCommentsSagaData);
 
   @PostMapping("/student-profile-reject-saga")
   @PreAuthorize("#oauth2.hasScope('STUDENT_PROFILE_REJECT_SAGA')")
-  @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "NO CONTENT.")})
-  ResponseEntity<Void> rejectStudentProfile(@Validated @RequestBody StudentProfileRequestRejectActionSagaData studentProfileRequestRejectActionSagaData);
+  @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK.")})
+  ResponseEntity<String> rejectStudentProfile(@Validated @RequestBody StudentProfileRequestRejectActionSagaData studentProfileRequestRejectActionSagaData);
 
   @PostMapping("/student-profile-return-saga")
   @PreAuthorize("#oauth2.hasScope('STUDENT_PROFILE_RETURN_SAGA')")
-  @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "NO CONTENT.")})
-  ResponseEntity<Void> returnStudentProfile(@Validated @RequestBody StudentProfileReturnActionSagaData studentProfileReturnActionSagaData);
+  @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK.")})
+  ResponseEntity<String> returnStudentProfile(@Validated @RequestBody StudentProfileReturnActionSagaData studentProfileReturnActionSagaData);
 
   @GetMapping("/{sagaID}")
   @PreAuthorize("#oauth2.hasScope('READ_SAGA')")

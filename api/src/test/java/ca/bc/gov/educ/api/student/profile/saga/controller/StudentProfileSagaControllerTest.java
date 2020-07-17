@@ -75,12 +75,12 @@ public class StudentProfileSagaControllerTest {
   @Test
   @WithMockOAuth2Scope(scope = "STUDENT_PROFILE_REJECT_SAGA")
   @SuppressWarnings("java:S100")
-  public void testRejectStudentProfile_whenPayloadIsValid_shouldReturnStatusNoContent() throws Exception {
+  public void testRejectStudentProfile_whenPayloadIsValid_shouldReturnStatusOk() throws Exception {
     String payload = "{\n" +
         PAYLOAD_STR +
         "  \"rejectionReason\": \"rejected\"\n" +
         "}";
-    this.mockMvc.perform(post("/student-profile-reject-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isNoContent());
+    this.mockMvc.perform(post("/student-profile-reject-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
     var results = repository.findAll();
     assertThat (results.isEmpty()).isFalse();
   }
@@ -100,7 +100,7 @@ public class StudentProfileSagaControllerTest {
   @Test
   @WithMockOAuth2Scope(scope = "STUDENT_PROFILE_RETURN_SAGA")
   @SuppressWarnings("java:S100")
-  public void testReturnStudentProfile_whenPayloadIsValid_shouldReturnStatusNoContent() throws Exception {
+  public void testReturnStudentProfile_whenPayloadIsValid_shouldReturnStatusOk() throws Exception {
     String payload = "{\n" +
         PAYLOAD_STR +
         "  \"staffMemberIDIRGUID\": \"AC335214725219468172589E58000004\",\n" +
@@ -108,7 +108,7 @@ public class StudentProfileSagaControllerTest {
         "  \"commentContent\": \"please upload recent govt ID.\",\n" +
         "  \"commentTimestamp\": \"2020-06-10T09:52:00\"\n" +
         "}";
-    this.mockMvc.perform(post("/student-profile-return-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isNoContent());
+    this.mockMvc.perform(post("/student-profile-return-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
     var results = repository.findAll();
     assertThat (results.isEmpty()).isFalse();
   }
