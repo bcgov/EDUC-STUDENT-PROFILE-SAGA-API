@@ -1,287 +1,107 @@
 pipeline{
-    agent any
-    environment{
-        DEBUG_OUTPUT = 'false'
-        NAMESPACE='c2mvws'
-        COMMON_NAMESPACE='mvubjx'
-        TOOLS = "${NAMESPACE}-tools"
-        DEV = "${NAMESPACE}-dev"
-        TEST = "${NAMESPACE}-test"
-        PROD = "${NAMESPACE}-prod"
+   agent any
+   environment{
+      extJSHelper = '';
+      DEBUG_OUTPUT = 'false'
+      NAMESPACE='c2mvws'
+      COMMON_NAMESPACE='mvubjx'
+      TOOLS = "${NAMESPACE}-tools"
+      DEV = "${NAMESPACE}-dev"
 
-        REPO_NAME = 'educ-student-profile-saga-api'
-        OWNER = 'bcgov'
-        JOB_NAME = 'master'
-        TAG = 'dev'
+      REPO_NAME = 'educ-student-profile-saga-api'
+      OWNER = 'bcgov'
+      JOB_NAME = 'master'
+      TAG = 'latest'
+      TARGET_ENV = 'dev'
+      STAGING_ENV = 'Dev'
+      TARGET_ENVIRONMENT = "${NAMESPACE}-${TARGET_ENV}"
 
-        APP_NAME = 'student-profile-saga-api'
-        APP_DOMAIN = 'pathfinder.gov.bc.ca'
+      APP_NAME = 'student-profile-saga-api'
+      APP_DOMAIN = 'pathfinder.gov.bc.ca'
 
-        SOURCE_REPO_RAW = 'https://github.com/${OWNER}/${REPO_NAME}/master'
-        SOURCE_REPO_REF = 'master'
-        SOURCE_REPO_URL = 'https://github.com/${OWNER}/${REPO_NAME}.git'
+      SOURCE_REPO_REF = 'master'
+      SOURCE_REPO_URL = 'https://github.com/${OWNER}/${REPO_NAME}.git'
+      DC_URL = "https://raw.githubusercontent.com/${OWNER}/${REPO_NAME}/master/tools/openshift/api.dc.yaml"
+      TOOLS_HOST_ROUTE = "${APP_NAME}-${TOOLS}.${APP_DOMAIN}"
+      DEV_HOST_ROUTE = "${APP_NAME}-${DEV}.${APP_DOMAIN}"
+      MIN_REPLICAS = "1"
+      MAX_REPLICAS = "1"
+      MIN_CPU = "30m"
+      MAX_CPU = "300m"
+      MIN_MEM = "650Mi"
+      MAX_MEM = "750Mi"
+  }
+  stages{
+    stage('Initialize') {
+      steps {
+        script {
+          if(DEBUG_OUTPUT.equalsIgnoreCase('true')) {
+            // Force OpenShift Plugin directives to be verbose
+            openshift.logLevel(1)
 
-        TOOLS_HOST_ROUTE = "${APP_NAME}-${TOOLS}.${APP_DOMAIN}"
-        DEV_HOST_ROUTE = "${APP_NAME}-${DEV}.${APP_DOMAIN}"
-        TEST_HOST_ROUTE = "${APP_NAME}-${TEST}.${APP_DOMAIN}"
-        PROD_HOST_ROUTE = "${APP_NAME}-${PROD}.${APP_DOMAIN}"
-        MIN_REPLICAS = "1"
-        MAX_REPLICAS = "1"
-        MIN_CPU = "30m"
-        MAX_CPU = "300m"
-        MIN_MEM = "650Mi"
-        MAX_MEM = "750Mi"
+            // Print all environment variables
+            echo 'DEBUG - All pipeline environment variables:'
+            echo sh(returnStdout: true, script: 'env')
+          }
+          sh "wget -O - https://raw.githubusercontent.com/bcgov/EDUC-INFRA-COMMON/master/openshift/common-deployment/deployHelpers.js > deployHelpers.js"
+          extJSHelper = evaluate readFile('deployHelpers.js')
+        }
+      }
     }
-    stages{
-        stage('Initialize') {
-            steps {
-                script {
-                    if(DEBUG_OUTPUT.equalsIgnoreCase('true')) {
-                        // Force OpenShift Plugin directives to be verbose
-                        openshift.logLevel(1)
+    stage('Build App') {
+      steps {
+        script {
+          openshift.withCluster() {
+            openshift.withProject(TOOLS) {
+              try {
+                echo "Building API..."
+                def bcBackend = openshift.process('-f', 'tools/openshift/api.bc.yaml', "REPO_NAME=${REPO_NAME}-${JOB_NAME}", "JOB_NAME=${JOB_NAME}", "SOURCE_REPO_URL=${SOURCE_REPO_URL}", "SOURCE_REPO_REF=${SOURCE_REPO_REF}")
+                openshift.apply(bcBackend).narrow('bc').startBuild('-w').logs('-f')
 
-                        // Print all environment variables
-                        echo 'DEBUG - All pipeline environment variables:'
-                        echo sh(returnStdout: true, script: 'env')
-                    }
-                }
+                openshift.tag("${REPO_NAME}-${JOB_NAME}:latest", "${REPO_NAME}-${JOB_NAME}:${JOB_NAME}")
+              } catch (e) {
+                echo "API build failed"
+                throw e
+              }
             }
+          }
         }
-        stage('Build App') {
-            steps {
-                script {
-                    openshift.withCluster() {
-                        openshift.withProject(TOOLS) {
-                            try {
-                                echo "Building API..."
-                                def bcBackend = openshift.process('-f', 'tools/openshift/api.bc.yaml', "REPO_NAME=${REPO_NAME}-${JOB_NAME}", "JOB_NAME=${JOB_NAME}", "SOURCE_REPO_URL=${SOURCE_REPO_URL}", "SOURCE_REPO_REF=${SOURCE_REPO_REF}")
-                                openshift.apply(bcBackend).narrow('bc').startBuild('-w').logs('-f')
-
-                                openshift.tag("${REPO_NAME}-${JOB_NAME}:latest", "${REPO_NAME}-${JOB_NAME}:${JOB_NAME}")
-                            } catch (e) {
-                                echo "API build failed"
-                                throw e
-                            }
-                        }
-                    }
-                }
-            }
-            post {
-                success {
-                    echo 'Cleanup BuildConfigs'
-                    script {
-                        openshift.withCluster() {
-                            openshift.withProject(TOOLS) {
-                                def bcApi = openshift.selector('bc', "${REPO_NAME}-${JOB_NAME}")
-
-                                if(bcApi.exists()) {
-                                    echo "Removing BuildConfig ${REPO_NAME}-${JOB_NAME}"
-                                    bcApi.delete()
-                                }
-                            }
-                        }
-                    }
-                }
-                failure {
-                    echo 'Build stage failed'
-                }
-            }
-        }
-        stage('Deploy Patroni Secrets to DEV') {
-          steps{
-            script {
+      }
+      post {
+        success {
+          echo 'Cleanup BuildConfigs'
+          script {
               openshift.withCluster() {
-                openshift.withProject(DEV) {
-                  def patroni = openshift.selector('statefulset', "${APP_NAME}-pgsql-dev")
-                  if(!patroni.exists()){
-                    deployPatroniSecrets('dev', DEV)
-                  }else {
-                    echo "Deployment of patroni secrets already exists, so skipping to next step"
+                openshift.withProject(TOOLS) {
+                  def bcApi = openshift.selector('bc', "${REPO_NAME}-${JOB_NAME}")
+
+                  if(bcApi.exists()) {
+                      echo "Removing BuildConfig ${REPO_NAME}-${JOB_NAME}"
+                      bcApi.delete()
                   }
                 }
               }
             }
-          }
-          post{
-            success{
-              echo 'Deployment of patroni secrets to Dev was successful'
-            }
-            failure{
-              echo 'Deployment  of patroni secrets to to Dev failed'
-            }
-          }
         }
-        stage('Deploy Patroni to DEV') {
-          steps{
-            script {
-              openshift.withCluster() {
-                openshift.withProject(DEV) {
-                  def patroni = openshift.selector('statefulset', "${APP_NAME}-pgsql-dev")
-                  if(!patroni.exists()){
-                    deployPatroni('dev', DEV)
-                  }else {
-                    echo "Deployment of patroni already exists, so skipping to next step"
-                  }
-                }
-              }
-            }
-          }
-          post{
-            success{
-              echo 'Deployment of patroni to Dev was successful'
-            }
-            failure{
-              echo 'Deployment of patroni to Dev failed'
-            }
-          }
+        failure {
+          echo 'Build stage failed'
         }
-        stage('Promote to DEV') {
-            steps{
-                deployStage('Dev', DEV, DEV_HOST_ROUTE, 'dev')
-            }
-            post{
-                success{
-                    echo 'Deployment to Dev was successful'
-                }
-                failure{
-                    echo 'Deployment to Dev failed'
-                }
-            }
-        }
-        stage('Create/Update Config Maps'){
-            steps{
-                script{
-                    dir('tools/jenkins'){
-                        sh "bash ./download-kc.sh \"${NAMESPACE}\""
-                    }
-                }
-                configMapSetup("${APP_NAME}","${APP_NAME}".toUpperCase(), NAMESPACE);
-                script{
-                    dir('tools/jenkins'){
-                        def configVars
-                        sh "bash ./update-configmap.sh \"dev\" ${APP_NAME} ${NAMESPACE} ${COMMON_NAMESPACE}"
-                    }
-                }
-                deployStageNoTag('Dev', DEV, DEV_HOST_ROUTE);
-            }
-        }
+      }
     }
-}
-
-def configMapSetup(String appName,String appNameUpper, String namespace){
-    script {
-
-        try{
-            sh( script: "oc project ${namespace}-dev", returnStdout: true)
-            sh( script: "oc describe configmaps ${appName}-dev-setup-config", returnStdout: true)
-            sh( script: "oc project ${namespace}-tools", returnStdout: true)
-            echo 'Config map already exists. Moving to next stage...'
-        } catch(ignored){
-            configProperties = input(
-                    id: 'configProperties', message: "Please enter the required credentials to allow ${appName} to run:",
-                    parameters: [
-                      string(defaultValue: "",
-                        description: "Token for ${appName} FluentBit sidecar to connect to the Splunk",
-                        name: "SPLUNK_TOKEN"),
-                    ])
-            sh """
-		  set +x
-		  echo Running curl command...
-		  oc create -n ${namespace}-dev configmap ${appName}-dev-setup-config --from-literal=SPLUNK_TOKEN_${appNameUpper}=${configProperties} --dry-run -o yaml | oc apply -f -
-		  oc project ${namespace}-tools
-		"""
+	stage('Promote and configure DEV') {
+      steps{
+        script{
+            extJSHelper.performSagaApiDeploy(STAGING_ENV, TARGET_ENVIRONMENT, REPO_NAME, APP_NAME, JOB_NAME, TAG, TOOLS, TARGET_ENVIRONMENT, APP_DOMAIN, DC_URL, MIN_REPLICAS, MAX_REPLICAS, MIN_CPU, MAX_CPU, MIN_MEM, MAX_MEM, TARGET_ENV, NAMESPACE, COMMON_NAMESPACE)
         }
-    }
-}
-
-
-def deployStage(String stageEnv, String projectEnv, String hostRouteEnv, String tag) {
-    openshift.withCluster() {
-        openshift.withProject(projectEnv) {
-            echo "Tagging image"
-            openshift.tag("${TOOLS}/${REPO_NAME}-${JOB_NAME}:latest", "${REPO_NAME}-${JOB_NAME}:${tag}")
-            def dcTemplate = openshift.process('-f',
-                    'tools/openshift/api.dc.yaml',
-                    "REPO_NAME=${REPO_NAME}",
-                    "JOB_NAME=${JOB_NAME}",
-                    "NAMESPACE=${projectEnv}",
-                    "APP_NAME=${APP_NAME}",
-                    "HOST_ROUTE=${hostRouteEnv}",
-                    "TAG=${tag}",
-                    "MIN_REPLICAS=${MIN_REPLICAS}",
-                    "MAX_REPLICAS=${MAX_REPLICAS}",
-                    "MIN_CPU=${MIN_CPU}",
-                    "MAX_CPU=${MAX_CPU}",
-                    "MIN_MEM=${MIN_MEM}",
-                    "MAX_MEM=${MAX_MEM}",
-                    "ENV=${stageEnv.toLowerCase()}"
-            )
-
-            echo "Applying Deployment ${REPO_NAME}"
-            def dc = openshift.apply(dcTemplate).narrow('dc')
+      }
+      post{
+        success{
+          echo 'Deployment to Dev was successful'
         }
-    }
-}
-def deployPatroniSecrets(String stageEnv, String projectEnv) {
-  openshift.withCluster() {
-    openshift.withProject(projectEnv) {
-      def dcTemplate = openshift.process('-f',
-        'tools/openshift/patroni/patroni-postgresql-secrets.yaml',
-        "NAME=${APP_NAME}-pgsql",
-        "SUFFIX=-${stageEnv}",
-        "APP_DB_NAME=student_profile_saga",
-        "APP_DB_USERNAME=student_profile_saga"
-      )
-
-      echo "Applying Deployment Patroni secrets"
-      def template = openshift.apply(dcTemplate).narrow('dc')
-      // Wait for deployments to roll out
-      timeout(5) {
-        template.rollout().status('--watch=true')
+        failure{
+          echo 'Deployment to Dev failed'
+        }
       }
     }
   }
-}
-def deployPatroni(String stageEnv, String projectEnv) {
-  openshift.withCluster() {
-    openshift.withProject(projectEnv) {
-      def dcTemplate = openshift.process('-f',
-        'tools/openshift/patroni/patroni-postgresql.yaml',
-        "NAME=${APP_NAME}-pgsql",
-        "SUFFIX=-${stageEnv}",
-        "INSTANCE=${APP_NAME}-pgsql-${stageEnv}"
-      )
-
-      echo "Applying Deployment patroni"
-      def template = openshift.apply(dcTemplate).narrow('statefulset')
-      timeout(5) {
-        template.rollout().status('--watch=true')
-      }
-    }
-  }
-}
-def deployStageNoTag(String stageEnv, String projectEnv, String hostRouteEnv) {
-    openshift.withCluster() {
-        openshift.withProject(projectEnv) {
-            def dcTemplate = openshift.process('-f',
-                    'tools/openshift/api.dc.yaml',
-                    "REPO_NAME=${REPO_NAME}",
-                    "JOB_NAME=${JOB_NAME}",
-                    "NAMESPACE=${projectEnv}",
-                    "APP_NAME=${APP_NAME}",
-                    "HOST_ROUTE=${hostRouteEnv}",
-                    "TAG=${tag}",
-                    "MIN_REPLICAS=${MIN_REPLICAS}",
-                    "MAX_REPLICAS=${MAX_REPLICAS}",
-                    "MIN_CPU=${MIN_CPU}",
-                    "MAX_CPU=${MAX_CPU}",
-                    "MIN_MEM=${MIN_MEM}",
-                    "MAX_MEM=${MAX_MEM}",
-                    "ENV=${stageEnv.toLowerCase()}"
-            )
-
-            echo "Applying Deployment ${REPO_NAME}"
-            def dc = openshift.apply(dcTemplate).narrow('dc')
-        }
-    }
 }
