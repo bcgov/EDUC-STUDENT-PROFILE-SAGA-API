@@ -74,7 +74,7 @@ public class StudentProfileSagaController extends BaseController implements Stud
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
           .sagaId(saga.getSagaId())
-          .profileRequestID(studentProfileCompleteSagaData.getStudentProfileRequestID())
+          .studentRequestID(studentProfileCompleteSagaData.getStudentProfileRequestID())
           .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
@@ -94,7 +94,7 @@ public class StudentProfileSagaController extends BaseController implements Stud
       getStudentProfileCommentsSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
-          .profileRequestID(studentProfileCommentsSagaData.getStudentProfileRequestID())
+          .studentRequestID(studentProfileCommentsSagaData.getStudentProfileRequestID())
           .sagaId(saga.getSagaId())
           .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
@@ -115,7 +115,7 @@ public class StudentProfileSagaController extends BaseController implements Stud
       getStudentProfileRejectSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
-          .profileRequestID(studentProfileRequestRejectActionSagaData.getStudentProfileRequestID())
+          .studentRequestID(studentProfileRequestRejectActionSagaData.getStudentProfileRequestID())
           .sagaId(saga.getSagaId())
           .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
@@ -136,7 +136,7 @@ public class StudentProfileSagaController extends BaseController implements Stud
       getStudentProfileReturnSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
-          .profileRequestID(studentProfileReturnActionSagaData.getStudentProfileRequestID())
+          .studentRequestID(studentProfileReturnActionSagaData.getStudentProfileRequestID())
           .sagaId(saga.getSagaId())
           .build());
       return ResponseEntity.ok(saga.getSagaId().toString());

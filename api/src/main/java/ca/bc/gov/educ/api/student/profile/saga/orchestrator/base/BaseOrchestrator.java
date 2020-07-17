@@ -155,7 +155,7 @@ public abstract class BaseOrchestrator<T> {
     finalEvent.setEventType(MARK_SAGA_COMPLETE);
     finalEvent.setEventOutcome(SAGA_COMPLETED);
     finalEvent.setSagaStatus(COMPLETED.toString());
-    finalEvent.setProfileRequestID(saga.getProfileRequestId() != null ? saga.getProfileRequestId().toString() : "");
+    finalEvent.setStudentRequestID(saga.getProfileRequestId() != null ? saga.getProfileRequestId().toString() : "");
     finalEvent.setPenRequestID(saga.getPenRequestId() != null ? saga.getPenRequestId().toString() : "");
     finalEvent.setSagaName(getSagaName());
     finalEvent.setEventPayload(""); // no need to send payload as it is not required by the subscribers.
