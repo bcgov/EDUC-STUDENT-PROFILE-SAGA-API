@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -18,7 +19,8 @@ import java.util.concurrent.TimeoutException;
 
 @Component
 @Slf4j
-public class MessagePublisher {
+@SuppressWarnings("java:S2142")
+public class MessagePublisher implements Closeable {
   private final ExecutorService executorService = Executors.newFixedThreadPool(2);
   private StreamingConnection connection;
   private final StreamingConnectionFactory connectionFactory;
@@ -41,7 +43,7 @@ public class MessagePublisher {
   }
 
 
-  @SuppressWarnings("java:S2142")
+
   private AckHandler getAckHandler() {
     return new AckHandler() {
       @Override
@@ -76,7 +78,6 @@ public class MessagePublisher {
   /**
    * This method will keep retrying for a connection.
    */
-  @SuppressWarnings("java:S2142")
   private void connectionLostHandler(StreamingConnection streamingConnection, Exception e) {
     if (e != null) {
       int numOfRetries = 1;
@@ -100,5 +101,20 @@ public class MessagePublisher {
     }
   }
 
+  @Override
+  public void close() {
+    if (!executorService.isShutdown()) {
+      executorService.shutdown();
+    }
+    if(connection != null){
+      log.info("closing nats connection in the publisher...");
+      try {
+        connection.close();
+      } catch (IOException | TimeoutException | InterruptedException e) {
+        log.error("error while closing nats connection in the publisher...", e);
+      }
+      log.info("nats connection closed in the publisher...");
+    }
+  }
 
 }
