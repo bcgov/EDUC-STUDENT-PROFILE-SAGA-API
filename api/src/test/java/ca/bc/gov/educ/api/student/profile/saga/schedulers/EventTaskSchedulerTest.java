@@ -107,13 +107,13 @@ public class EventTaskSchedulerTest {
   }
 
   @Test
-  public void testPollEventTableAndPublish_givenReturnSagaRecordInPROGRESSStateForLessThan5Minutes_shouldNotBeProcessed() throws InterruptedException, TimeoutException, IOException {
+  public void testPollEventTableAndPublish_givenReturnSagaRecordInPROGRESSStateForLessThan2Minutes_shouldNotBeProcessed() throws InterruptedException, TimeoutException, IOException {
     String payload = "{\n" +
         PAYLOAD_STR +
         "}";
     Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString());
     dummyRecord.setStatus(IN_PROGRESS.toString());
-    dummyRecord.setUpdateDate(LocalDateTime.now());
+    dummyRecord.setCreateDate(LocalDateTime.now());
     var dummyList = new ArrayList<Saga>();
     dummyList.add(dummyRecord);
     var statuses = new ArrayList<String>();
@@ -172,14 +172,14 @@ public class EventTaskSchedulerTest {
   }
 
   @Test
-  public void testPollEventTableAndPublish_givenRejectSagaRecordInPROGRESSStateForLessThan5Minutes_shouldNotBeProcessed() throws InterruptedException, TimeoutException, IOException {
+  public void testPollEventTableAndPublish_givenRejectSagaRecordInPROGRESSStateForLessThan2Minutes_shouldNotBeProcessed() throws InterruptedException, TimeoutException, IOException {
     String payload = "{\n" +
         PAYLOAD_STR +
         REJECTION_REASON_REJECTED +
         "}";
     Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_REJECT_SAGA.toString());
     dummyRecord.setStatus(IN_PROGRESS.toString());
-    dummyRecord.setUpdateDate(LocalDateTime.now());
+    dummyRecord.setCreateDate(LocalDateTime.now());
     var dummyList = new ArrayList<Saga>();
     dummyList.add(dummyRecord);
     var statuses = new ArrayList<String>();
@@ -202,7 +202,7 @@ public class EventTaskSchedulerTest {
         .status(STARTED.toString())
         .sagaState(INITIATED.toString())
         .sagaCompensated(false)
-        .createDate(LocalDateTime.now())
+        .createDate(LocalDateTime.now().minusMinutes(3))
         .createUser("test")
         .updateUser("test")
         .updateDate(LocalDateTime.now().minusMinutes(10))
