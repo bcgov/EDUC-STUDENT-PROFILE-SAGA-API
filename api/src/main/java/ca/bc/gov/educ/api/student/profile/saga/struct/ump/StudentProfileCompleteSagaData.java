@@ -1,14 +1,12 @@
 package ca.bc.gov.educ.api.student.profile.saga.struct.ump;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,8 +17,6 @@ public class StudentProfileCompleteSagaData extends StudentProfileRequestActionS
   @NotNull(message = "digitalID can not be null.")
   private String digitalID;
   //Student Api
-  @NotNull(message = "penRequestID can not be null.")
-  private String penRequestID;
   @NotNull(message = "PEN Number can not be null.")
   private String pen;
   @Size(max = 40)
