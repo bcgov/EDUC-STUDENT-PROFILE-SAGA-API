@@ -51,7 +51,7 @@ public class EventTaskScheduler {
     var sagas = getSagaRepository().findAllByStatusIn(getStatusFilters());
     if (!sagas.isEmpty()) {
       for (val saga : sagas) {
-        if (saga.getUpdateDate().isBefore(LocalDateTime.now().minusMinutes(5))
+        if (saga.getCreateDate().isBefore(LocalDateTime.now().minusMinutes(2))
             && getSagaOrchestrators().containsKey(saga.getSagaName())) {
           getSagaOrchestrators().get(saga.getSagaName()).replaySaga(saga);
         }
