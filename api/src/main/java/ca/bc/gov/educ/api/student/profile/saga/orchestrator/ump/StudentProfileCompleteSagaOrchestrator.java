@@ -181,7 +181,7 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
         .eventPayload(buildPenReqEmailSagaData(studentProfileCompleteSagaData))
         .build();
     postMessageToTopic(PROFILE_REQUEST_EMAIL_API_TOPIC.toString(), nextEvent);
-    log.info("message sent to PEN_REQUEST_EMAIL_API_TOPIC for NOTIFY_STUDENT_PEN_REQUEST_COMPLETE Event.");
+    log.info("message sent to PROFILE_REQUEST_EMAIL_API_TOPIC for NOTIFY_STUDENT_PROFILE_REQUEST_COMPLETE Event.");
 
   }
 
@@ -189,6 +189,7 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
     StudentProfileEmailSagaData penReqEmailSagaData = StudentProfileEmailSagaData.builder()
         .emailAddress(studentProfileCompleteSagaData.getEmail())
         .firstName(studentProfileCompleteSagaData.getLegalFirstName())
+        .identityType(studentProfileCompleteSagaData.getIdentityType())
         .build();
     return JsonUtil.getJsonStringFromObject(penReqEmailSagaData);
   }
