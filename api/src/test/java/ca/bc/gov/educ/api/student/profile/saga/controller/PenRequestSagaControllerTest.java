@@ -3,6 +3,7 @@ package ca.bc.gov.educ.api.student.profile.saga.controller;
 import ca.bc.gov.educ.api.student.profile.saga.exception.RestExceptionHandler;
 import ca.bc.gov.educ.api.student.profile.saga.exception.SagaRuntimeException;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
+import ca.bc.gov.educ.api.student.profile.saga.repository.SagaEventRepository;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.support.WithMockOAuth2Scope;
@@ -44,6 +45,8 @@ public class PenRequestSagaControllerTest {
 
   @Autowired
   SagaRepository repository;
+  @Autowired
+  private SagaEventRepository sagaEventRepository;
 
   @Autowired
   SagaService service;
@@ -59,6 +62,7 @@ public class PenRequestSagaControllerTest {
 
   @After
   public void after() {
+    sagaEventRepository.deleteAll();
     repository.deleteAll();
   }
 

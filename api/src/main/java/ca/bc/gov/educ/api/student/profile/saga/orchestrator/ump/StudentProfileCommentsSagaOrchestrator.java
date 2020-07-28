@@ -5,7 +5,6 @@ import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessageSubscriber;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
-import ca.bc.gov.educ.api.student.profile.saga.orchestrator.base.BaseOrchestrator;
 import ca.bc.gov.educ.api.student.profile.saga.schedulers.EventTaskScheduler;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
@@ -28,26 +27,35 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.STUDENT
 
 @Component
 @Slf4j
-public class StudentProfileCommentsSagaOrchestrator extends BaseOrchestrator<StudentProfileCommentsSagaData> {
+public class StudentProfileCommentsSagaOrchestrator extends BaseProfileReqSagaOrchestrator<StudentProfileCommentsSagaData> {
   private static final StudentProfileCommentsMapper mapper = StudentProfileCommentsMapper.mapper;
-
-  @Override
-  public void populateStepsToExecuteMap() {
-    stepBuilder()
-        .step(INITIATED, INITIATE_SUCCESS, ADD_STUDENT_PROFILE_COMMENT, this::executeAddPenRequestComments)
-        .step(ADD_STUDENT_PROFILE_COMMENT, STUDENT_PROFILE_COMMENT_ADDED, GET_STUDENT_PROFILE, this::executeGetPenRequest)
-        .step(ADD_STUDENT_PROFILE_COMMENT, STUDENT_PROFILE_COMMENT_ALREADY_EXIST, GET_STUDENT_PROFILE, this::executeGetPenRequest)
-        .step(GET_STUDENT_PROFILE, STUDENT_PROFILE_FOUND, UPDATE_STUDENT_PROFILE, this::executeUpdatePenRequest)
-        .step(UPDATE_STUDENT_PROFILE, STUDENT_PROFILE_UPDATED, MARK_SAGA_COMPLETE, this::markSagaComplete);
-
-  }
 
   @Autowired
   public StudentProfileCommentsSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, MessageSubscriber messageSubscriber, EventTaskScheduler taskScheduler) {
     super(sagaService, messagePublisher, messageSubscriber, taskScheduler, StudentProfileCommentsSagaData.class, STUDENT_PROFILE_COMMENTS_SAGA.toString(), STUDENT_PROFILE_COMMENTS_SAGA_TOPIC.toString());
   }
 
-  private void executeAddPenRequestComments(Event event, Saga saga, StudentProfileCommentsSagaData studentProfileCommentsSagaData) throws IOException, InterruptedException, TimeoutException {
+  @Override
+  public void populateStepsToExecuteMap() {
+    stepBuilder()
+        .step(INITIATED, INITIATE_SUCCESS, ADD_STUDENT_PROFILE_COMMENT, this::executeAddStudentProfileRequestComments)
+        .step(ADD_STUDENT_PROFILE_COMMENT, STUDENT_PROFILE_COMMENT_ADDED, GET_STUDENT_PROFILE, this::executeGetProfileRequest)
+        .step(ADD_STUDENT_PROFILE_COMMENT, STUDENT_PROFILE_COMMENT_ALREADY_EXIST, GET_STUDENT_PROFILE, this::executeGetProfileRequest)
+        .step(GET_STUDENT_PROFILE, STUDENT_PROFILE_FOUND, UPDATE_STUDENT_PROFILE, this::executeUpdateProfileRequest)
+        .step(UPDATE_STUDENT_PROFILE, STUDENT_PROFILE_UPDATED, MARK_SAGA_COMPLETE, this::markSagaComplete);
+
+  }
+  /**
+   * it will send a message to student profile request api topic to add a comment.
+   *
+   * @param event                           current event.
+   * @param saga                            the model object.
+   * @param studentProfileCommentsSagaData  the payload as the object.
+   * @throws InterruptedException           if thread is interrupted.
+   * @throws IOException                    if there is connectivity problem
+   * @throws TimeoutException               if connection to messaging system times out.
+   */
+  private void executeAddStudentProfileRequestComments(Event event, Saga saga, StudentProfileCommentsSagaData studentProfileCommentsSagaData) throws IOException, InterruptedException, TimeoutException {
     SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(ADD_STUDENT_PROFILE_COMMENT.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventState);
@@ -61,37 +69,27 @@ public class StudentProfileCommentsSagaOrchestrator extends BaseOrchestrator<Stu
     log.info("message sent to STUDENT_PROFILE_API_TOPIC for ADD_PEN_REQUEST_COMMENT Event.");
   }
 
-  protected void executeGetPenRequest(Event event, Saga saga, StudentProfileCommentsSagaData studentProfileCommentsSagaData) throws InterruptedException, TimeoutException, IOException {
-    SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
-    saga.setSagaState(GET_STUDENT_PROFILE.toString()); // set current event as saga state.
-    getSagaService().updateAttachedSagaWithEvents(saga, eventState);
-    Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-        .eventType(GET_STUDENT_PROFILE)
-        .replyTo(getTopicToSubscribe())
-        //.eventPayload(studentProfileCommentsSagaData.getPenRetrievalRequestID())
-        .build();
-    postMessageToTopic(STUDENT_PROFILE_API_TOPIC.toString(), nextEvent);
-    log.info("message sent to STUDENT_PROFILE_API_TOPIC for GET_PEN_REQUEST Event.");
+  /**
+   * this method will update the payload according the saga type. here it will update for comment saga.
+   *
+   * @param studentProfileSagaData         the model object.
+   * @param studentProfileCommentsSagaData the payload as the object.
+   */
+  @Override
+  protected void updateProfileRequestPayload(StudentProfileSagaData studentProfileSagaData, StudentProfileCommentsSagaData studentProfileCommentsSagaData) {
+    studentProfileSagaData.setStudentRequestStatusCode(studentProfileCommentsSagaData.getStudentProfileRequestStatusCode());
+    studentProfileSagaData.setUpdateUser(studentProfileCommentsSagaData.getUpdateUser());
   }
 
-  protected void executeUpdatePenRequest(Event event, Saga saga, StudentProfileCommentsSagaData studentProfileCommentsSagaData) throws IOException, InterruptedException, TimeoutException {
-    SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
-    saga.setSagaState(UPDATE_STUDENT_PROFILE.toString());
-    getSagaService().updateAttachedSagaWithEvents(saga, eventState);
-    StudentProfileSagaData penRequestSagaData = JsonUtil.getJsonObjectFromString(StudentProfileSagaData.class, event.getEventPayload());
-    updateStudentProfilePayload(penRequestSagaData, studentProfileCommentsSagaData);
-    Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-        .eventType(UPDATE_STUDENT_PROFILE)
-        .replyTo(getTopicToSubscribe())
-        .eventPayload(JsonUtil.getJsonStringFromObject(penRequestSagaData))
-        .build();
-    postMessageToTopic(STUDENT_PROFILE_API_TOPIC.toString(), nextEvent);
-    log.info("message sent to STUDENT_PROFILE_API_TOPIC for UPDATE_PEN_REQUEST Event.");
-  }
-
-  @SuppressWarnings("java:S1186")
-  protected void updateStudentProfilePayload(StudentProfileSagaData studentProfileSagaData, StudentProfileCommentsSagaData studentProfileCommentsSagaData) {
-
+  /**
+   * this method will return the student profile request ID to be sent in the message.
+   *
+   * @param studentProfileCommentsSagaData  the payload as the object.
+   * @return                                student profile request id as string value.
+   */
+  @Override
+  protected String updateGetProfileRequestPayload(StudentProfileCommentsSagaData studentProfileCommentsSagaData) {
+    return studentProfileCommentsSagaData.getStudentProfileRequestID();
   }
 
 }
