@@ -17,16 +17,14 @@ import javax.validation.constraints.Size;
 public class StudentProfileCommentsSagaData {
   @NotNull(message = "studentProfileRequestID content can not be null")
   String studentProfileRequestID;
-  String staffMemberIDIRGUID;
-  String staffMemberName;
   @NotNull(message = "Comment content can not be null")
   String commentContent;
   @Pattern(regexp = "(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})")
   @Size(max = 19)
   @NotNull(message = "commentTimestamp can not be null")
   String commentTimestamp;
-  @NotNull(message = "penRequestStatusCode can not be null")
-  String penRequestStatusCode;
+  @NotNull(message = "studentProfileRequestStatusCode can not be null")
+  String studentProfileRequestStatusCode;
   @NotNull(message = "createUser can not be null")
   String createUser;
   @NotNull(message = "updateUser can not be null")
