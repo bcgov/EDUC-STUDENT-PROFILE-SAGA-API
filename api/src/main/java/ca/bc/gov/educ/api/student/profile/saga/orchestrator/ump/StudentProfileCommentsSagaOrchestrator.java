@@ -66,7 +66,7 @@ public class StudentProfileCommentsSagaOrchestrator extends BaseProfileReqSagaOr
         .eventPayload(JsonUtil.getJsonStringFromObject(studentProfileComments))
         .build();
     postMessageToTopic(STUDENT_PROFILE_API_TOPIC.toString(), nextEvent);
-    log.info("message sent to STUDENT_PROFILE_API_TOPIC for ADD_PEN_REQUEST_COMMENT Event.");
+    log.info("message sent to STUDENT_PROFILE_API_TOPIC for ADD_STUDENT_PROFILE_COMMENT Event.");
   }
 
   /**
