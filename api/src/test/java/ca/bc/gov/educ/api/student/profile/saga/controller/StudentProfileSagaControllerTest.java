@@ -5,6 +5,7 @@ import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaEventRepository;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
 import ca.bc.gov.educ.api.student.profile.saga.support.WithMockOAuth2Scope;
+import lombok.val;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,6 +25,7 @@ import java.util.UUID;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.INITIATED;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -129,6 +131,36 @@ public class StudentProfileSagaControllerTest {
     this.mockMvc.perform(post("/student-profile-return-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isConflict());
     assertThat (results.isEmpty()).isFalse();
   }
+  @Test
+  @WithMockOAuth2Scope(scope = "STUDENT_PROFILE_COMMENT_SAGA")
+  public void test_commentStudentProfile_givenInValidPayload_shouldReturnBadRequest() throws Exception {
+    String payload = "{\n" +
+            "  \"staffMemberIDIRGUID\": \"AC335214725219468172589E58000004\",\n" +
+            "  \"staffMemberName\": \"om\",\n" +
+            "  \"commentContent\": \"please upload recent govt ID.\",\n" +
+            "  \"commentTimestamp\": \"2020-06-10T09:52:00\"\n" +
+            "}";
+    this.mockMvc.perform(post("/student-profile-comment-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isBadRequest());
+  }
+
+
+
+  @Test
+  @WithMockOAuth2Scope(scope = "STUDENT_PROFILE_COMMENT_SAGA")
+  public void test_commentStudentProfile_givenValidPayload_shouldReturnNoContent() throws Exception {
+    String payload = "{\n" +
+            "  \"studentProfileRequestID\": \"ac335214-7252-1946-8172-589e58000004\",\n" +
+            "  \"commentContent\": \"Hi\",\n" +
+            "  \"commentTimestamp\": \"2020-04-18T19:57:00\",\n" +
+            "  \"studentProfileRequestStatusCode\": \"SUBSREV\",\n" +
+            "  \"createUser\": \"STUDENT_PROFILE\",\n" +
+            "  \"updateUser\": \"STUDENT_PROFILE\"\n" +
+            "}";
+    this.mockMvc.perform(post("/student-profile-comment-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
+    val result = repository.findAll();
+    assertEquals(1, result.size());
+  }
+
   @Test
   @WithMockOAuth2Scope(scope = "READ_SAGA")
   @SuppressWarnings("java:S100")
