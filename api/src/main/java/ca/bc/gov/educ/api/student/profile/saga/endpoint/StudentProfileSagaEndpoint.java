@@ -42,7 +42,7 @@ public interface StudentProfileSagaEndpoint {
   ResponseEntity<String> returnStudentProfile(@Validated @RequestBody StudentProfileReturnActionSagaData studentProfileReturnActionSagaData);
 
   @GetMapping("/{sagaID}")
-  @PreAuthorize("#oauth2.hasScope('READ_SAGA')")
+  @PreAuthorize("#oauth2.hasScope('STUDENT_PROFILE_READ_SAGA')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK."), @ApiResponse(responseCode = "404", description = "NOT FOUND.")})
   ResponseEntity<Saga> getSagaBySagaID(@PathVariable UUID sagaID);
 

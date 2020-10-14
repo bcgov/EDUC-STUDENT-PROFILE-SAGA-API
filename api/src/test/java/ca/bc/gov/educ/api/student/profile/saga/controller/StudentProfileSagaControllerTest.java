@@ -162,7 +162,7 @@ public class StudentProfileSagaControllerTest {
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "READ_SAGA")
+  @WithMockOAuth2Scope(scope = "STUDENT_PROFILE_READ_SAGA")
   @SuppressWarnings("java:S100")
   public void testGetSagaBySagaID_whenSagaIDIsValid_shouldReturnStatusNoContent() throws Exception {
     String payload = "{\n" +
