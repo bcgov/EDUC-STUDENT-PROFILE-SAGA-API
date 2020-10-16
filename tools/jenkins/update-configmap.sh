@@ -63,7 +63,7 @@ soamFullPublicKey="-----BEGIN PUBLIC KEY----- $(getPublicKey) -----END PUBLIC KE
 "$KCADM_FILE_BIN_FOLDER"/kcadm.sh create client-scopes -r $SOAM_KC_REALM_ID --body "{\"description\": \"Scope to unlink a PEN request after it is completed\",\"id\": \"PEN_REQUEST_UNLINK_SAGA\",\"name\": \"PEN_REQUEST_UNLINK_SAGA\",\"protocol\": \"openid-connect\",\"attributes\" : {\"include.in.token.scope\" : \"true\",\"display.on.consent.screen\" : \"false\"}}"
 
 #READ_SAGA
-"$KCADM_FILE_BIN_FOLDER"/kcadm.sh create client-scopes -r $SOAM_KC_REALM_ID --body "{\"description\": \"Scope to READ a SAGA record by its ID\",\"id\": \"READ_SAGA\",\"name\": \"READ_SAGA\",\"protocol\": \"openid-connect\",\"attributes\" : {\"include.in.token.scope\" : \"true\",\"display.on.consent.screen\" : \"false\"}}"
+"$KCADM_FILE_BIN_FOLDER"/kcadm.sh create client-scopes -r $SOAM_KC_REALM_ID --body "{\"description\": \"Scope to READ a SAGA record by its ID\",\"id\": \"STUDENT_PROFILE_READ_SAGA\",\"name\": \"STUDENT_PROFILE_READ_SAGA\",\"protocol\": \"openid-connect\",\"attributes\" : {\"include.in.token.scope\" : \"true\",\"display.on.consent.screen\" : \"false\"}}"
 ###########################################################
 #Setup for config-map
 ###########################################################
