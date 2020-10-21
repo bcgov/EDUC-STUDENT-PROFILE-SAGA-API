@@ -20,7 +20,6 @@ public class StudentProfileCompleteSagaData extends StudentProfileRequestActionS
   @NotNull(message = "PEN Number can not be null.")
   private String pen;
   @Size(max = 40)
-  @NotNull(message = "Legal First Name can not be null.")
   private String legalFirstName;
   @Size(max = 60)
   private String legalMiddleNames;
