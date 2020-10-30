@@ -29,7 +29,6 @@ import static lombok.AccessLevel.PRIVATE;
 @EnableResourceServer
 @Slf4j
 public class PenRequestSagaController extends BaseController implements PenRequestSagaEndpoint {
-  private static final String STUDENT_PROFILE_SAGA_API = "STUDENT_PROFILE_SAGA_API";
   @Getter(PRIVATE)
   private final SagaService sagaService;
 
@@ -67,7 +66,7 @@ public class PenRequestSagaController extends BaseController implements PenReque
       if (!sagaInProgress.isEmpty()) {
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
       }
-      var saga = getSagaService().createPenRequestSagaRecord(penRequestCompleteSagaData, PEN_REQUEST_COMPLETE_SAGA.toString(), STUDENT_PROFILE_SAGA_API, penRequestId);
+      var saga = getSagaService().createPenRequestSagaRecord(penRequestCompleteSagaData, PEN_REQUEST_COMPLETE_SAGA.toString(), penRequestCompleteSagaData.getCreateUser(), penRequestId);
       getPenRequestCompleteSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
@@ -88,7 +87,7 @@ public class PenRequestSagaController extends BaseController implements PenReque
       if (!sagaInProgress.isEmpty()) {
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
       }
-      final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestCommentsSagaData, PEN_REQUEST_COMMENTS_SAGA.toString(), STUDENT_PROFILE_SAGA_API, penRequestId);
+      final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestCommentsSagaData, PEN_REQUEST_COMMENTS_SAGA.toString(), penRequestCommentsSagaData.getCreateUser(), penRequestId);
       getPenRequestCommentsSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
@@ -109,7 +108,7 @@ public class PenRequestSagaController extends BaseController implements PenReque
       if (!sagaInProgress.isEmpty()) {
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
       }
-      final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestReturnSagaData, PEN_REQUEST_RETURN_SAGA.toString(), STUDENT_PROFILE_SAGA_API, penRequestId);
+      final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestReturnSagaData, PEN_REQUEST_RETURN_SAGA.toString(), penRequestReturnSagaData.getCreateUser(), penRequestId);
       getPenRequestReturnSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
@@ -130,7 +129,7 @@ public class PenRequestSagaController extends BaseController implements PenReque
       if (!sagaInProgress.isEmpty()) {
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
       }
-      final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestRejectSagaData, PEN_REQUEST_REJECT_SAGA.toString(), STUDENT_PROFILE_SAGA_API, penRequestId);
+      final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestRejectSagaData, PEN_REQUEST_REJECT_SAGA.toString(), penRequestRejectSagaData.getCreateUser(), penRequestId);
       getPenRequestRejectSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)
@@ -156,7 +155,7 @@ public class PenRequestSagaController extends BaseController implements PenReque
         getSagaService().updateSagaRecord(saga);
         getPenRequestCompleteSagaOrchestrator().publishSagaForceStopped(saga);
       }
-      final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestUnlinkSagaData, PEN_REQUEST_UNLINK_SAGA.toString(), STUDENT_PROFILE_SAGA_API, UUID.fromString(penRequestUnlinkSagaData.getPenRetrievalRequestID()));
+      final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestUnlinkSagaData, PEN_REQUEST_UNLINK_SAGA.toString(), penRequestUnlinkSagaData.getCreateUser(), UUID.fromString(penRequestUnlinkSagaData.getPenRetrievalRequestID()));
       getPenRequestUnlinkSagaOrchestrator().executeSagaEvent(Event.builder()
           .eventType(EventType.INITIATED)
           .eventOutcome(EventOutcome.INITIATE_SUCCESS)

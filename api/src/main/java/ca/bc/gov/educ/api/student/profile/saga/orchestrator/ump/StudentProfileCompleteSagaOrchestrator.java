@@ -61,6 +61,7 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
     studentProfileSagaData.setCompleteComment(studentProfileCompleteSagaData.getCompleteComment());
     studentProfileSagaData.setStatusUpdateDate(LocalDateTime.now().toString());
     studentProfileSagaData.setUpdateUser(getSagaName());
+    studentProfileSagaData.setUpdateUser(studentProfileCompleteSagaData.getUpdateUser());
   }
 
   @Override
@@ -101,7 +102,7 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
     StudentSagaData studentSagaData = studentSagaDataMapper.toStudentSaga(studentProfileCompleteSagaData); // get the student data from saga payload.
     StudentSagaData studentDataFromEventResponse = JsonUtil.getJsonObjectFromString(StudentSagaData.class, event.getEventPayload());
     studentSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); // update the student ID so that update call will have proper identifier.
-    studentSagaData.setUpdateUser(getSagaName());
+    studentSagaData.setUpdateUser(studentProfileCompleteSagaData.getUpdateUser());
     studentProfileCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
     saga.setSagaState(UPDATE_STUDENT.toString());
     saga.setPayload(JsonUtil.getJsonStringFromObject(studentProfileCompleteSagaData));
@@ -119,8 +120,8 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
     saga.setSagaState(CREATE_STUDENT.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventState);
     StudentSagaData studentSagaData = studentSagaDataMapper.toStudentSaga(studentProfileCompleteSagaData);
-    studentSagaData.setUpdateUser(getSagaName());
-    studentSagaData.setCreateUser(getSagaName());
+    studentSagaData.setUpdateUser(studentProfileCompleteSagaData.getUpdateUser());
+    studentSagaData.setCreateUser(studentProfileCompleteSagaData.getCreateUser());
     log.info("message sent to STUDENT_API_TOPIC for CREATE_STUDENT Event.");
     delegateMessagePostingForStudent(saga, studentSagaData, CREATE_STUDENT);
   }
@@ -160,7 +161,7 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
     getSagaService().updateAttachedSagaWithEvents(saga, eventState);
     DigitalIdSagaData digitalIdSagaData = JsonUtil.getJsonObjectFromString(DigitalIdSagaData.class, event.getEventPayload());
     digitalIdSagaData.setStudentID(studentProfileCompleteSagaData.getStudentID());
-    digitalIdSagaData.setUpdateUser(getSagaName());
+    digitalIdSagaData.setUpdateUser(studentProfileCompleteSagaData.getUpdateUser());
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
         .eventType(UPDATE_DIGITAL_ID)
         .replyTo(getTopicToSubscribe())

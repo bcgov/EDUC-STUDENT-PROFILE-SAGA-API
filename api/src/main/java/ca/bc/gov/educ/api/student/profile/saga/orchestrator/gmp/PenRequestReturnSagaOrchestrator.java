@@ -80,6 +80,7 @@ public class PenRequestReturnSagaOrchestrator extends BasePenReqSagaOrchestrator
     penRequestSagaData.setPenRequestStatusCode(penRequestReturnSagaData.getPenRequestStatusCode());
     penRequestSagaData.setStatusUpdateDate(LocalDateTime.now().toString());
     penRequestSagaData.setReviewer(penRequestReturnSagaData.getReviewer());
+    penRequestSagaData.setUpdateUser(penRequestReturnSagaData.getUpdateUser());
   }
 
   @Override

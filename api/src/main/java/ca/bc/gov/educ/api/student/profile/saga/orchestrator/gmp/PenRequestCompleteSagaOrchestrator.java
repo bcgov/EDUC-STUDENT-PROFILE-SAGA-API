@@ -78,7 +78,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     penRequestSagaData.setBcscAutoMatchOutcome(penRequestCompleteSagaData.getBcscAutoMatchOutcome());
     penRequestSagaData.setPenRequestStatusCode(penRequestCompleteSagaData.getPenRequestStatusCode());
     penRequestSagaData.setStatusUpdateDate(LocalDateTime.now().toString());
-    penRequestSagaData.setUpdateUser(PEN_REQUEST_COMPLETE_SAGA.toString());
+    penRequestSagaData.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
   }
 
   /**
@@ -139,7 +139,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     StudentSagaData studentSagaData = studentSagaDataMapper.toStudentSaga(penRequestCompleteSagaData); // get the student data from saga payload.
     StudentSagaData studentDataFromEventResponse = JsonUtil.getJsonObjectFromString(StudentSagaData.class, event.getEventPayload());
     studentSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); // update the student ID so that update call will have proper identifier.
-    studentSagaData.setUpdateUser(PEN_REQUEST_COMPLETE_SAGA.toString());
+    studentSagaData.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
     penRequestCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
     saga.setSagaState(UPDATE_STUDENT.toString());
     saga.setPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData));
@@ -164,8 +164,8 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     saga.setSagaState(CREATE_STUDENT.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     StudentSagaData studentSagaData = studentSagaDataMapper.toStudentSaga(penRequestCompleteSagaData);
-    studentSagaData.setUpdateUser(PEN_REQUEST_COMPLETE_SAGA.toString());
-    studentSagaData.setCreateUser(PEN_REQUEST_COMPLETE_SAGA.toString());
+    studentSagaData.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
+    studentSagaData.setCreateUser(penRequestCompleteSagaData.getCreateUser());
     log.info("message sent to STUDENT_API_TOPIC for CREATE_STUDENT Event.");
     delegateMessagePostingForStudent(saga, studentSagaData, CREATE_STUDENT);
 
@@ -232,7 +232,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     DigitalIdSagaData digitalIdSagaData = JsonUtil.getJsonObjectFromString(DigitalIdSagaData.class, event.getEventPayload());
     digitalIdSagaData.setStudentID(penRequestCompleteSagaData.getStudentID());
-    digitalIdSagaData.setUpdateUser(PEN_REQUEST_COMPLETE_SAGA.toString());
+    digitalIdSagaData.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
             .eventType(UPDATE_DIGITAL_ID)
             .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
