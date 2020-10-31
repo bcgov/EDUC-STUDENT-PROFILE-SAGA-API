@@ -155,11 +155,11 @@ public class StudentProfileReturnSagaOrchestratorTest {
     orchestrator.executeNotifyStudentProfileRequestReturned(event, saga, sagaData);
     verify(messagePublisher, atLeastOnce()).dispatchMessage(eq(PROFILE_REQUEST_EMAIL_API_TOPIC.toString()), eventCaptor.capture());
     var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(eventCaptor.getValue()));
-    assertThat(newEvent.getEventType()).isEqualTo(NOTIFY_STUDENT_PROFILE_REQUEST_REJECT);
+    assertThat(newEvent.getEventType()).isEqualTo(NOTIFY_STUDENT_PROFILE_REQUEST_RETURN);
     var sagaFromDB = sagaService.findSagaById(saga.getSagaId()).orElseThrow();
     assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
-    assertThat(sagaFromDB.getSagaState()).isEqualTo(NOTIFY_STUDENT_PROFILE_REQUEST_REJECT.toString());
+    assertThat(sagaFromDB.getSagaState()).isEqualTo(NOTIFY_STUDENT_PROFILE_REQUEST_RETURN.toString());
     var sagaStates = sagaService.findAllSagaStates(saga);
     assertThat(sagaStates.size()).isEqualTo(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(UPDATE_STUDENT_PROFILE.toString());
@@ -170,7 +170,6 @@ public class StudentProfileReturnSagaOrchestratorTest {
         "  \"studentProfileRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
         "  \"email\": \"someplace@gmail.com\",\n" +
         "  \"identityType\": \"BASIC\",\n" +
-        "  \"rejectionReason\": \"Can't find you\",\n" +
         "  \"createUser\": \"OMISHRA\",\n" +
         "  \"updateUser\": \"OMISHRA\"\n" +
         "}";
