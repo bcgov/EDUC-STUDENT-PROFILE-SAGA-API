@@ -33,9 +33,9 @@ jobs:
       - uses: actions/cache@v1
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-10Jun-${{ hashFiles('**/pom.xml') }}
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
-            ${{ runner.os }}-maven-10Jun-
+            ${{ runner.os }}-
       - name: Run unit tests
         run: mvn -f pom.xml clean test
       - name: Cache SonarCloud packages
@@ -44,7 +44,7 @@ jobs:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
       - name: Run Sonar Analysis
-        run: mvn -f pom.xml sonar:sonar
+        run: mvn sonar:sonar
           -Dsonar.login=${{ secrets.SONAR_TOKEN }}
           -Dsonar.host.url=https://sonarcloud.io
           -Dsonar.organization=bcgov-sonarcloud
