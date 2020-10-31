@@ -47,7 +47,7 @@ public class StudentProfileReturnSagaOrchestrator extends BaseProfileReqSagaOrch
         .step(NOTIFY_STUDENT_PROFILE_REQUEST_RETURN, STUDENT_NOTIFIED, MARK_SAGA_COMPLETE, this::markSagaComplete);
   }
 
-  private void executeAddProfileRequestComments(Event event, Saga saga, StudentProfileReturnActionSagaData studentProfileReturnActionSagaData) throws InterruptedException, TimeoutException, IOException {
+  protected void executeAddProfileRequestComments(Event event, Saga saga, StudentProfileReturnActionSagaData studentProfileReturnActionSagaData) throws InterruptedException, TimeoutException, IOException {
     SagaEvent eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(ADD_STUDENT_PROFILE_COMMENT.toString());
     saga.setStatus(IN_PROGRESS.toString());
@@ -85,7 +85,7 @@ public class StudentProfileReturnSagaOrchestrator extends BaseProfileReqSagaOrch
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  private void executeNotifyStudentProfileRequestReturned(Event event, Saga saga, StudentProfileReturnActionSagaData studentProfileReturnActionSagaData) throws IOException, InterruptedException, TimeoutException {
+  protected void executeNotifyStudentProfileRequestReturned(Event event, Saga saga, StudentProfileReturnActionSagaData studentProfileReturnActionSagaData) throws IOException, InterruptedException, TimeoutException {
     SagaEvent eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(NOTIFY_STUDENT_PROFILE_REQUEST_RETURN.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);

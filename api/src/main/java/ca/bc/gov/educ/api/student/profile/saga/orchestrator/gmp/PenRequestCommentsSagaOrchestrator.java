@@ -59,7 +59,7 @@ public class PenRequestCommentsSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  private void executeAddPenRequestComments(Event event, Saga saga, PenRequestCommentsSagaData penRequestCommentsSagaData) throws IOException, InterruptedException, TimeoutException {
+  protected void executeAddPenRequestComments(Event event, Saga saga, PenRequestCommentsSagaData penRequestCommentsSagaData) throws IOException, InterruptedException, TimeoutException {
     SagaEvent eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(ADD_PEN_REQUEST_COMMENT.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);

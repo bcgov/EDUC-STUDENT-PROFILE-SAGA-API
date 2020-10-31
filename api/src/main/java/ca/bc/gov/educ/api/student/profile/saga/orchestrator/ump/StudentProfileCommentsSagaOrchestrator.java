@@ -55,7 +55,7 @@ public class StudentProfileCommentsSagaOrchestrator extends BaseProfileReqSagaOr
    * @throws IOException                    if there is connectivity problem
    * @throws TimeoutException               if connection to messaging system times out.
    */
-  private void executeAddStudentProfileRequestComments(Event event, Saga saga, StudentProfileCommentsSagaData studentProfileCommentsSagaData) throws IOException, InterruptedException, TimeoutException {
+  protected void executeAddStudentProfileRequestComments(Event event, Saga saga, StudentProfileCommentsSagaData studentProfileCommentsSagaData) throws IOException, InterruptedException, TimeoutException {
     SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(ADD_STUDENT_PROFILE_COMMENT.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventState);

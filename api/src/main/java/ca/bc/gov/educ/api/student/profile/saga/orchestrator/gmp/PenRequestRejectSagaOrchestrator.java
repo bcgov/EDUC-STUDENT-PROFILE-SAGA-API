@@ -71,7 +71,7 @@ public class PenRequestRejectSagaOrchestrator extends BasePenReqSagaOrchestrator
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  private void executeNotifyStudentPenRequestReject(Event event, Saga saga, PenRequestRejectSagaData penRequestRejectSagaData) throws IOException, InterruptedException, TimeoutException {
+  protected void executeNotifyStudentPenRequestReject(Event event, Saga saga, PenRequestRejectSagaData penRequestRejectSagaData) throws IOException, InterruptedException, TimeoutException {
     SagaEvent eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(NOTIFY_STUDENT_PEN_REQUEST_REJECT.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
