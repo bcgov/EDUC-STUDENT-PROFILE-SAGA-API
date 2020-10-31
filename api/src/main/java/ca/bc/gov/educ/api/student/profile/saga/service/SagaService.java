@@ -42,14 +42,14 @@ public class SagaService {
 
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public Saga createProfileRequestSagaRecord(Object sagaData, String sagaName, String apiName, UUID profileRequestId) throws JsonProcessingException {
-    Saga saga = getSaga(JsonUtil.getJsonStringFromObject(sagaData), sagaName, apiName);
+  public Saga createProfileRequestSagaRecord(Object sagaData, String sagaName, String user, UUID profileRequestId) throws JsonProcessingException {
+    Saga saga = getSaga(JsonUtil.getJsonStringFromObject(sagaData), sagaName, user);
     saga.setProfileRequestId(profileRequestId);
     return getSagaRepository().save(saga);
   }
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public Saga createPenRequestSagaRecord(Object sagaData, String sagaName, String apiName, UUID penRequestId) throws JsonProcessingException {
-    Saga saga = getSaga(JsonUtil.getJsonStringFromObject(sagaData), sagaName, apiName);
+  public Saga createPenRequestSagaRecord(Object sagaData, String sagaName, String user, UUID penRequestId) throws JsonProcessingException {
+    Saga saga = getSaga(JsonUtil.getJsonStringFromObject(sagaData), sagaName, user);
     saga.setPenRequestId(penRequestId);
     return getSagaRepository().save(saga);
   }
@@ -81,7 +81,7 @@ public class SagaService {
     return getSagaEventRepository().findBySaga(saga);
   }
 
-  private Saga getSaga(String payload, String sagaName, String apiName) {
+  private Saga getSaga(String payload, String sagaName, String user) {
     return Saga
         .builder()
         .payload(payload)
@@ -90,8 +90,8 @@ public class SagaService {
         .sagaState(INITIATED.toString())
         .sagaCompensated(false)
         .createDate(LocalDateTime.now())
-        .createUser(apiName)
-        .updateUser(apiName)
+        .createUser(user)
+        .updateUser(user)
         .updateDate(LocalDateTime.now())
         .build();
   }

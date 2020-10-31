@@ -47,7 +47,7 @@ public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator
   protected void updatePenRequestPayload(PenRequestSagaData penRequestSagaData, PenRequestUnlinkSagaData penRequestUnlinkSagaData) {
     penRequestSagaData.setReviewer(penRequestUnlinkSagaData.getReviewer());
     penRequestSagaData.setPenRequestStatusCode(penRequestUnlinkSagaData.getPenRequestStatusCode());
-    penRequestSagaData.setUpdateUser(PEN_REQUEST_UNLINK_SAGA.toString());
+    penRequestSagaData.setUpdateUser(penRequestUnlinkSagaData.getUpdateUser());
     penRequestSagaData.setStatusUpdateDate(LocalDateTime.now().toString());
     penRequestSagaData.setPen(null);
   }
@@ -66,7 +66,7 @@ public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  private void executeGetDigitalId(Event event, Saga saga, PenRequestUnlinkSagaData penRequestUnlinkSagaData) throws InterruptedException, TimeoutException, IOException {
+  protected void executeGetDigitalId(Event event, Saga saga, PenRequestUnlinkSagaData penRequestUnlinkSagaData) throws InterruptedException, TimeoutException, IOException {
 
     var eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(GET_DIGITAL_ID.toString()); // set current event as saga state.
@@ -89,13 +89,13 @@ public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  private void executeUpdateDigitalId(Event event, Saga saga, PenRequestUnlinkSagaData penRequestUnlinkSagaData) throws IOException, InterruptedException, TimeoutException {
+  protected void executeUpdateDigitalId(Event event, Saga saga, PenRequestUnlinkSagaData penRequestUnlinkSagaData) throws IOException, InterruptedException, TimeoutException {
     var eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(UPDATE_DIGITAL_ID.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     var digitalIdSagaData = JsonUtil.getJsonObjectFromString(DigitalIdSagaData.class, event.getEventPayload());
     digitalIdSagaData.setStudentID(null);
-    digitalIdSagaData.setUpdateUser(PEN_REQUEST_UNLINK_SAGA.toString());
+    digitalIdSagaData.setUpdateUser(penRequestUnlinkSagaData.getUpdateUser());
     var nextEvent = Event.builder().sagaId(saga.getSagaId())
         .eventType(UPDATE_DIGITAL_ID)
         .replyTo(getTopicToSubscribe())
