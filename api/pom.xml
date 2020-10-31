@@ -14,6 +14,7 @@
       , src/main/java/ca/bc/gov/educ/api/student/profile/saga/config/**
       , src/main/java/ca/bc/gov/educ/api/student/profile/saga/exception/**
       , src/main/java/ca/bc/gov/educ/api/student/profile/saga/mappers/**
+      , src/main/java/ca/bc/gov/educ/api/student/profile/saga/messaging/MessageSubscriber.java
       , src/main/java/ca/bc/gov/educ/api/student/profile/saga/model/**
       , src/main/java/ca/bc/gov/educ/api/student/profile/saga/struct/**
     </sonar.exclusions>
