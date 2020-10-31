@@ -30,7 +30,7 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.S
 public abstract class BaseProfileReqSagaOrchestrator<T> extends BaseOrchestrator<T> {
 
 
-  public BaseProfileReqSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, MessageSubscriber messageSubscriber, EventTaskScheduler taskScheduler, Class<T> clazz, String sagaName, String topicToSubscribe) {
+  protected BaseProfileReqSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, MessageSubscriber messageSubscriber, EventTaskScheduler taskScheduler, Class<T> clazz, String sagaName, String topicToSubscribe) {
     super(sagaService, messagePublisher, messageSubscriber, taskScheduler, clazz, sagaName, topicToSubscribe);
   }
 

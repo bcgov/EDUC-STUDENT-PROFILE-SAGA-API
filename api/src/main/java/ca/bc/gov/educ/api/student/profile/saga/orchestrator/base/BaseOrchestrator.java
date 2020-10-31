@@ -47,7 +47,7 @@ public abstract class BaseOrchestrator<T> {
 
   protected final Map<EventType, List<SagaEventState<T>>> nextStepsToExecute = new LinkedHashMap<>();
 
-  public BaseOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, MessageSubscriber messageSubscriber, EventTaskScheduler taskScheduler, Class<T> clazz, String sagaName, String topicToSubscribe) {
+  protected BaseOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, MessageSubscriber messageSubscriber, EventTaskScheduler taskScheduler, Class<T> clazz, String sagaName, String topicToSubscribe) {
     this.sagaService = sagaService;
     this.messagePublisher = messagePublisher;
     this.clazz = clazz;
