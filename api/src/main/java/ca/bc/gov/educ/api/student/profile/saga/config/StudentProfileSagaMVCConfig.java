@@ -20,6 +20,6 @@ public class StudentProfileSagaMVCConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(studentProfileSagaInterceptor).addPathPatterns("/**/**/");
+        registry.addInterceptor(studentProfileSagaInterceptor).addPathPatterns("/**");
     }
 }
