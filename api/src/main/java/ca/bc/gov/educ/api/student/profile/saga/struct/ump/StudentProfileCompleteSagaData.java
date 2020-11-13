@@ -43,4 +43,14 @@ public class StudentProfileCompleteSagaData extends StudentProfileRequestActionS
   private String emailVerified;
   //Student Profile Request
   private String completeComment;
+  @Pattern(regexp = "^([A-Z]\\d[A-Z]\\d[A-Z]\\d|)$")
+  String postalCode;
+  @Size(max = 2)
+  String gradeCode;
+  @Size(max = 8)
+  String mincode;
+  @Size(max = 12)
+  String localID;
+  @NotNull(message = "History Activity Code can not be null.")
+  String historyActivityCode;
 }
