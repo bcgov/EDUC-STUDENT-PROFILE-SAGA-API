@@ -59,7 +59,7 @@ public class PenRequestSagaControllerTest {
   @Before
   public void setUp() {
     mockMvc = MockMvcBuilders.standaloneSetup(controller)
-            .setControllerAdvice(new RestExceptionHandler()).build();
+                             .setControllerAdvice(new RestExceptionHandler()).build();
   }
 
   @After
@@ -72,21 +72,21 @@ public class PenRequestSagaControllerTest {
   @WithMockOAuth2Scope(scope = "PEN_REQUEST_COMPLETE_SAGA")
   public void test_completePENRequest_givenInValidPayload_shouldReturnBadRequest() throws Exception {
     String payload = "{\n" +
-            "  \"digitalID\": \"ac330603-715f-12b6-8171-6079a6270005\",\n" +
-            "  \"penRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
-            "  \"legalFirstName\": \"om\",\n" +
-            "  \"legalMiddleNames\": \"mishra\",\n" +
-            "  \"legalLastName\": \"mishra\",\n" +
-            "  \"dob\": \"2000-01-01\",\n" +
-            "  \"sexCode\": \"M\",\n" +
-            "  \"genderCode\": \"M\",\n" +
-            "  \"email\": \"om@gmail.com\",\n" +
-            "  \"createUser\": \"om\",\n" +
-            "  \"updateUser\": \"om\",\n" +
-            "  \"bcscAutoMatchOutcome\": \"ONEMATCH\",\n" +
-            "  \"penRequestStatusCode\": \"MANUAL\",\n" +
-            "  \"statusUpdateDate\": \"2020-04-17T22:29:00\"\n" +
-            "}";
+        "  \"digitalID\": \"ac330603-715f-12b6-8171-6079a6270005\",\n" +
+        "  \"penRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
+        "  \"legalFirstName\": \"om\",\n" +
+        "  \"legalMiddleNames\": \"mishra\",\n" +
+        "  \"legalLastName\": \"mishra\",\n" +
+        "  \"dob\": \"2000-01-01\",\n" +
+        "  \"sexCode\": \"M\",\n" +
+        "  \"genderCode\": \"M\",\n" +
+        "  \"email\": \"om@gmail.com\",\n" +
+        "  \"createUser\": \"om\",\n" +
+        "  \"updateUser\": \"om\",\n" +
+        "  \"bcscAutoMatchOutcome\": \"ONEMATCH\",\n" +
+        "  \"penRequestStatusCode\": \"MANUAL\",\n" +
+        "  \"statusUpdateDate\": \"2020-04-17T22:29:00\"\n" +
+        "}";
     this.mockMvc.perform(post("/pen-request-complete-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isBadRequest());
   }
 
@@ -94,23 +94,24 @@ public class PenRequestSagaControllerTest {
   @WithMockOAuth2Scope(scope = "PEN_REQUEST_COMPLETE_SAGA")
   public void test_completePENRequest_givenValidPayload_shouldReturnStatusNoContent() throws Exception {
     String payload = "{\n" +
-            "  \"digitalID\": \"ac330603-715f-12b6-8171-6079a6270005\",\n" +
-            "  \"penRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
-            "  \"pen\": \"123456789\",\n" +
-            "  \"legalFirstName\": \"om\",\n" +
-            "  \"legalMiddleNames\": \"mishra\",\n" +
-            "  \"legalLastName\": \"mishra\",\n" +
-            "  \"dob\": \"2000-01-01\",\n" +
-            "  \"sexCode\": \"M\",\n" +
-            "  \"genderCode\": \"M\",\n" +
-            "  \"email\": \"om@gmail.com\",\n" +
-            "  \"createUser\": \"om\",\n" +
-            "  \"updateUser\": \"om\",\n" +
-            "  \"bcscAutoMatchOutcome\": \"ONEMATCH\",\n" +
-            "  \"penRequestStatusCode\": \"MANUAL\",\n" +
-            "  \"statusUpdateDate\": \"2020-04-17T22:29:00\",\n" +
-            "  \"identityType\": \"BASIC\"\n" +
-            "}";
+        "  \"digitalID\": \"ac330603-715f-12b6-8171-6079a6270005\",\n" +
+        "  \"penRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
+        "  \"pen\": \"123456789\",\n" +
+        "  \"legalFirstName\": \"om\",\n" +
+        "  \"legalMiddleNames\": \"mishra\",\n" +
+        "  \"legalLastName\": \"mishra\",\n" +
+        "  \"dob\": \"2000-01-01\",\n" +
+        "  \"sexCode\": \"M\",\n" +
+        "  \"genderCode\": \"M\",\n" +
+        "  \"email\": \"om@gmail.com\",\n" +
+        "  \"createUser\": \"om\",\n" +
+        "  \"updateUser\": \"om\",\n" +
+        "  \"bcscAutoMatchOutcome\": \"ONEMATCH\",\n" +
+        "  \"penRequestStatusCode\": \"MANUAL\",\n" +
+        "  \"statusUpdateDate\": \"2020-04-17T22:29:00\",\n" +
+        "  \"historyActivityCode\": \"PEN\",\n" +
+        "  \"identityType\": \"BASIC\"\n" +
+        "}";
     this.mockMvc.perform(post("/pen-request-complete-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
     val result = repository.findAll();
     assertEquals(1, result.size());
@@ -120,27 +121,28 @@ public class PenRequestSagaControllerTest {
   @WithMockOAuth2Scope(scope = "PEN_REQUEST_REJECT_SAGA")
   public void test_rejectPENRequest_givenValidPayload_shouldReturnStatusNoContent() throws Exception {
     String payload = "{\n" +
-            "  \"digitalID\": \"ac330603-715f-12b6-8171-6079a6270005\",\n" +
-            "  \"penRetrievalRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
-            "  \"pen\": \"123456789\",\n" +
-            "  \"legalFirstName\": \"eric\",\n" +
-            "  \"legalMiddleNames\": \"mishra\",\n" +
-            "  \"legalLastName\": \"sermon\",\n" +
-            "  \"dob\": \"2000-01-01\",\n" +
-            "  \"sexCode\": \"M\",\n" +
-            "  \"genderCode\": \"M\",\n" +
-            "  \"email\": \"someplace@gmail.com\",\n" +
-            "  \"createUser\": \"marco\",\n" +
-            "  \"updateUser\": \"marco\",\n" +
-            "  \"penRequestStatusCode\": \"REJECTED\",\n" +
-            "  \"identityType\": \"BASIC\",\n" +
-            "  \"rejectionReason\": \"Can't find you\",\n" +
-            "  \"statusUpdateDate\": \"2020-04-17T22:29:00\"\n" +
-            "}";
+        "  \"digitalID\": \"ac330603-715f-12b6-8171-6079a6270005\",\n" +
+        "  \"penRetrievalRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
+        "  \"pen\": \"123456789\",\n" +
+        "  \"legalFirstName\": \"eric\",\n" +
+        "  \"legalMiddleNames\": \"mishra\",\n" +
+        "  \"legalLastName\": \"sermon\",\n" +
+        "  \"dob\": \"2000-01-01\",\n" +
+        "  \"sexCode\": \"M\",\n" +
+        "  \"genderCode\": \"M\",\n" +
+        "  \"email\": \"someplace@gmail.com\",\n" +
+        "  \"createUser\": \"marco\",\n" +
+        "  \"updateUser\": \"marco\",\n" +
+        "  \"penRequestStatusCode\": \"REJECTED\",\n" +
+        "  \"identityType\": \"BASIC\",\n" +
+        "  \"rejectionReason\": \"Can't find you\",\n" +
+        "  \"statusUpdateDate\": \"2020-04-17T22:29:00\"\n" +
+        "}";
     this.mockMvc.perform(post("/pen-request-reject-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
     val result = repository.findAll();
     assertEquals(1, result.size());
   }
+
   @Test
   @WithMockOAuth2Scope(scope = "PEN_REQUEST_REJECT_SAGA")
   public void test_rejectPENRequest_givenValidPayloadButOtherSagaInFlight_shouldReturnStatusConflict() throws Exception {
@@ -162,7 +164,7 @@ public class PenRequestSagaControllerTest {
         "  \"rejectionReason\": \"Can't find you\",\n" +
         "  \"statusUpdateDate\": \"2020-04-17T22:29:00\"\n" +
         "}";
-    repository.save(getSaga(payload,"PEN_REQUEST_REJECT_SAGA", UUID.fromString("ac334a38-715f-1340-8171-607a59d0000a")));
+    repository.save(getSaga(payload, "PEN_REQUEST_REJECT_SAGA", UUID.fromString("ac334a38-715f-1340-8171-607a59d0000a")));
     this.mockMvc.perform(post("/pen-request-reject-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isConflict());
     val result = repository.findAll();
     assertEquals(1, result.size());
@@ -173,36 +175,36 @@ public class PenRequestSagaControllerTest {
   @WithMockOAuth2Scope(scope = "PEN_REQUEST_COMMENT_SAGA")
   public void test_commentPENRequest_givenInValidPayload_shouldReturnBadRequest() throws Exception {
     String payload = "{\n" +
-            "  \"staffMemberIDIRGUID\": \"2827808f-dfde-4b9b-835c-10cf0130261c\",\n" +
-            "  \"staffMemberName\": \"SHFOORD\",\n" +
-            "  \"commentContent\": \"Hi\",\n" +
-            "  \"commentTimestamp\": \"2020-04-18T19:57:00\",\n" +
-            "  \"penRequestStatusCode\": \"SUBSREV\",\n" +
-            "  \"createUser\": \"STAFF_ADMIN\",\n" +
-            "  \"updateUser\": \"STAFF_ADMIN\"\n" +
-            "}";
+        "  \"staffMemberIDIRGUID\": \"2827808f-dfde-4b9b-835c-10cf0130261c\",\n" +
+        "  \"staffMemberName\": \"SHFOORD\",\n" +
+        "  \"commentContent\": \"Hi\",\n" +
+        "  \"commentTimestamp\": \"2020-04-18T19:57:00\",\n" +
+        "  \"penRequestStatusCode\": \"SUBSREV\",\n" +
+        "  \"createUser\": \"STAFF_ADMIN\",\n" +
+        "  \"updateUser\": \"STAFF_ADMIN\"\n" +
+        "}";
     this.mockMvc.perform(post("/pen-request-comment-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isBadRequest());
   }
-
 
 
   @Test
   @WithMockOAuth2Scope(scope = "PEN_REQUEST_COMMENT_SAGA")
   public void test_commentPENRequest_givenValidPayload_shouldReturnNoContent() throws Exception {
     String payload = "{\n" +
-            "  \"penRetrievalRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
-            "  \"staffMemberIDIRGUID\": \"2827808f-dfde-4b9b-835c-10cf0130261c\",\n" +
-            "  \"staffMemberName\": \"SHFOORD\",\n" +
-            "  \"commentContent\": \"Hi\",\n" +
-            "  \"commentTimestamp\": \"2020-04-18T19:57:00\",\n" +
-            "  \"penRequestStatusCode\": \"SUBSREV\",\n" +
-            "  \"createUser\": \"STAFF_ADMIN\",\n" +
-            "  \"updateUser\": \"STAFF_ADMIN\"\n" +
-            "}";
+        "  \"penRetrievalRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
+        "  \"staffMemberIDIRGUID\": \"2827808f-dfde-4b9b-835c-10cf0130261c\",\n" +
+        "  \"staffMemberName\": \"SHFOORD\",\n" +
+        "  \"commentContent\": \"Hi\",\n" +
+        "  \"commentTimestamp\": \"2020-04-18T19:57:00\",\n" +
+        "  \"penRequestStatusCode\": \"SUBSREV\",\n" +
+        "  \"createUser\": \"STAFF_ADMIN\",\n" +
+        "  \"updateUser\": \"STAFF_ADMIN\"\n" +
+        "}";
     this.mockMvc.perform(post("/pen-request-comment-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
     val result = repository.findAll();
     assertEquals(1, result.size());
   }
+
   @Test
   @WithMockOAuth2Scope(scope = "PEN_REQUEST_UNLINK_SAGA")
   public void test_unlinkPENRequest_givenInValidPayload_shouldReturnBadRequest() throws Exception {
@@ -210,7 +212,7 @@ public class PenRequestSagaControllerTest {
 
         "}";
     this.mockMvc.perform(post("/pen-request-unlink-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print())
-        .andExpect(status().isBadRequest()).andExpect(jsonPath("$.subErrors", hasSize(6)));
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.subErrors", hasSize(6)));
   }
 
   @Test
@@ -228,6 +230,7 @@ public class PenRequestSagaControllerTest {
     val result = repository.findAll();
     assertEquals(1, result.size());
   }
+
   @Test
   @WithMockOAuth2Scope(scope = "PEN_REQUEST_UNLINK_SAGA")
   public void test_unlinkPENRequest_givenValidPayloadAndCompleteSagaInProgress_shouldForceStopCompleteSagaAndReturnOK() throws Exception {
@@ -239,7 +242,7 @@ public class PenRequestSagaControllerTest {
         "  \"createUser\": \"STAFF_ADMIN\",\n" +
         "  \"updateUser\": \"STAFF_ADMIN\"\n" +
         "}";
-    var saga = getSaga(payload,"PEN_REQUEST_COMPLETE_SAGA", UUID.fromString("ac334a38-715f-1340-8171-607a59d0000a"));
+    var saga = getSaga(payload, "PEN_REQUEST_COMPLETE_SAGA", UUID.fromString("ac334a38-715f-1340-8171-607a59d0000a"));
     repository.save(saga);
     this.mockMvc.perform(post("/pen-request-unlink-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$", notNullValue()));
     val result = repository.findAll();
@@ -248,6 +251,7 @@ public class PenRequestSagaControllerTest {
     assertTrue(updatedSaga.isPresent());
     assertEquals("FORCE_STOPPED", updatedSaga.get().getStatus());
   }
+
   public static String asJsonString(final Object obj) {
     try {
       return new ObjectMapper().writeValueAsString(obj);
@@ -255,6 +259,7 @@ public class PenRequestSagaControllerTest {
       throw new SagaRuntimeException(e.getMessage());
     }
   }
+
   private Saga getSaga(String payload, String sagaName, UUID penRequestId) {
     return Saga
         .builder()

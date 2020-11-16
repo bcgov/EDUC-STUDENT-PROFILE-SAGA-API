@@ -73,4 +73,6 @@ public class PenRequestCompleteSagaData {
   private String completeComment;
   @NotNull(message = "identityType can not be null")
   protected String identityType;
+  @NotNull(message = "History Activity Code can not be null.")
+  String historyActivityCode;
 }
