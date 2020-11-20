@@ -134,11 +134,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.nats</groupId>
-      <artifactId>java-nats-streaming</artifactId>
-      <version>2.2.3</version>
-    </dependency>
-    <dependency>
       <groupId>org.springframework.retry</groupId>
       <artifactId>spring-retry</artifactId>
     </dependency>
@@ -173,6 +168,11 @@
           <artifactId>hamcrest-core</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>io.nats</groupId>
+      <artifactId>nats-spring-boot-starter</artifactId>
+      <version>0.4.0</version>
     </dependency>
   </dependencies>
 
