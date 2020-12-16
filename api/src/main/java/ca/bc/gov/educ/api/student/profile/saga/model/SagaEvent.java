@@ -46,7 +46,7 @@ public class SagaEvent {
   @Column(name = "SAGA_STEP_NUMBER")
   private Integer sagaStepNumber;
 
-  @Column(name = "SAGA_EVENT_RESPONSE", length = 4000)
+  @Column(name = "SAGA_EVENT_RESPONSE", length = 10485760)
   private String sagaEventResponse;
 
   @NotNull(message = "create user cannot be null")
