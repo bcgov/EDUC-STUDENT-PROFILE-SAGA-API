@@ -38,7 +38,7 @@ public class Saga {
   private String sagaState;
 
   @NotNull(message = "payload cannot be null")
-  @Column(name = "PAYLOAD", length = 4000)
+  @Column(name = "PAYLOAD", length = 10485760)
   private String payload;
 
   @NotNull(message = "status cannot be null")

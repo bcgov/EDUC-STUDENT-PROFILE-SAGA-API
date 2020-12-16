@@ -32,3 +32,6 @@ hs_err_pid*
 .vscode
 
 *-dev.properties
+
+.idea
+*.iml
