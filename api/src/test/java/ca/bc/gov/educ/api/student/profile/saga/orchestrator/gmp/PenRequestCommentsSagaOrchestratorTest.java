@@ -34,6 +34,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles("test")
@@ -64,7 +65,7 @@ public class PenRequestCommentsSagaOrchestratorTest {
 
   @Before
   public void setUp() throws Exception {
-    initMocks(this);
+    openMocks(this);
     sagaData = getSagaData(getPenRequestCommentPayload());
     saga = sagaService.createPenRequestSagaRecord(getSagaData(getPenRequestCommentPayload()), PEN_REQUEST_COMMENTS_SAGA.toString(), "OMISHRA",
         UUID.fromString(penRequestID));
