@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import net.javacrumbs.shedlock.core.LockAssert;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -67,11 +66,10 @@ public class EventTaskScheduler {
    * @throws TimeoutException     the timeout exception
    */
 //Run the job every minute to check how many records are in IN_PROGRESS or STARTED status and has not been updated in last 5 minutes.
-  @Scheduled(cron = "1 * * * * *")
+  @Scheduled(cron = "${scheduled.jobs.poll.uncompleted.saga.records.cron}")
   @SchedulerLock(name = "ProfileRequestSagaTablePoller",
       lockAtLeastFor = "55s", lockAtMostFor = "57s")
   public void pollEventTableAndPublish() throws InterruptedException, IOException, TimeoutException {
-    LockAssert.assertLocked();
     var sagas = getSagaRepository().findAllByStatusIn(getStatusFilters());
     if (!sagas.isEmpty()) {
       for (val saga : sagas) {
