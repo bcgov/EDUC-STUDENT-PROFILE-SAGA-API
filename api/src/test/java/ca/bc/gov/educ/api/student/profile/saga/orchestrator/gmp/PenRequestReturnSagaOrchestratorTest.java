@@ -38,6 +38,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles("test")
@@ -69,7 +70,7 @@ public class PenRequestReturnSagaOrchestratorTest {
 
   @Before
   public void setUp() throws Exception {
-    initMocks(this);
+    openMocks(this);
     sagaData = getSagaData(getReturnPenRequestPayload());
     saga = sagaService.createPenRequestSagaRecord(getSagaData(getReturnPenRequestPayload()), PEN_REQUEST_RETURN_SAGA.toString(), "OMISHRA",
         UUID.fromString(penRequestID));

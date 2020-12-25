@@ -37,6 +37,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles("test")
@@ -66,7 +67,7 @@ public class StudentProfileCompleteSagaOrchestratorTest {
 
   @Before
   public void setUp() throws JsonProcessingException {
-    initMocks(this);
+    openMocks(this);
     sagaData = getSagaData(getPayload());
     saga = sagaService.createPenRequestSagaRecord(getSagaData(getPayload()), STUDENT_PROFILE_COMPLETE_SAGA.toString(), "OMISHRA",
         UUID.fromString(profileRequestID));

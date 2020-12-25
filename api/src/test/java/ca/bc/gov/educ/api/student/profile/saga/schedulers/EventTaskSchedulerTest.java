@@ -53,7 +53,7 @@ public class EventTaskSchedulerTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
     eventTaskScheduler = new EventTaskScheduler(repository);
     eventTaskScheduler.registerSagaOrchestrators(STUDENT_PROFILE_RETURN_SAGA.toString(), returnSagaOrchestrator);
     eventTaskScheduler.registerSagaOrchestrators(STUDENT_PROFILE_REJECT_SAGA.toString(), rejectSagaOrchestrator);
