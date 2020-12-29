@@ -2,17 +2,17 @@ package ca.bc.gov.educ.api.student.profile.saga.schedulers;
 
 import ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
-import ca.bc.gov.educ.api.student.profile.saga.orchestrator.ump.StudentProfileRejectSagaOrchestrator;
-import ca.bc.gov.educ.api.student.profile.saga.orchestrator.ump.StudentProfileReturnSagaOrchestrator;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaEventRepository;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
+import net.javacrumbs.shedlock.core.LockAssert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -22,41 +22,38 @@ import java.util.ArrayList;
 import java.util.concurrent.TimeoutException;
 
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.INITIATED;
-import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.STUDENT_PROFILE_REJECT_SAGA;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.STUDENT_PROFILE_RETURN_SAGA;
-import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.IN_PROGRESS;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.STARTED;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("test")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @SuppressWarnings("java:S100")
 public class EventTaskSchedulerTest {
 
   public static final String REJECTION_REASON_REJECTED = "  \"rejectionReason\": \"rejected\"\n";
-  @MockBean
-  private StudentProfileReturnSagaOrchestrator returnSagaOrchestrator;
-  @MockBean
-  private StudentProfileRejectSagaOrchestrator rejectSagaOrchestrator;
 
+  @Autowired
   private EventTaskScheduler eventTaskScheduler;
-  @MockBean
+  @Autowired
   private SagaRepository repository;
-  @MockBean
+  @Autowired
   private SagaEventRepository sagaEventRepository;
   public static final String PAYLOAD_STR = "  \"studentProfileRequestID\": \"ac335214-7252-1946-8172-589e58000004\",\n" +
-      "  \"createUser\": \"om\",\n" +
-      "  \"updateUser\": \"om\",\n" +
-      "  \"email\": \"omprkshmishra@gmail.com\",\n" +
-      "  \"identityType\": \"BASIC\",\n";
+    "  \"createUser\": \"om\",\n" +
+    "  \"updateUser\": \"om\",\n" +
+    "  \"email\": \"omprkshmishra@gmail.com\",\n" +
+    "  \"identityType\": \"BASIC\"\n";
 
   @Before
   public void setUp() {
     MockitoAnnotations.openMocks(this);
-    eventTaskScheduler = new EventTaskScheduler(repository);
-    eventTaskScheduler.registerSagaOrchestrators(STUDENT_PROFILE_RETURN_SAGA.toString(), returnSagaOrchestrator);
-    eventTaskScheduler.registerSagaOrchestrators(STUDENT_PROFILE_REJECT_SAGA.toString(), rejectSagaOrchestrator);
+    var statuses = new ArrayList<String>();
+    statuses.add(SagaStatusEnum.IN_PROGRESS.toString());
+    statuses.add(SagaStatusEnum.STARTED.toString());
+    eventTaskScheduler.setStatusFilters(statuses);
   }
 
   @After
@@ -68,144 +65,56 @@ public class EventTaskSchedulerTest {
   @Test
   public void testPollEventTableAndPublish_givenReturnSagaRecordInSTARTEDStateForMoreThan5Minutes_shouldBeProcessed() throws InterruptedException, TimeoutException, IOException {
     String payload = "{\n" +
-        PAYLOAD_STR +
-        "}";
-    Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString());
-    var dummyList = new ArrayList<Saga>();
-    dummyList.add(dummyRecord);
-    var statuses = new ArrayList<String>();
-    statuses.add(SagaStatusEnum.IN_PROGRESS.toString());
-    statuses.add(SagaStatusEnum.STARTED.toString());
-    eventTaskScheduler.setStatusFilters(statuses);
-    when(repository.findAllByStatusIn(statuses)).thenReturn(dummyList);
-
-    doNothing().when(returnSagaOrchestrator).replaySaga(dummyRecord);
-    repository.save(dummyRecord);
+      PAYLOAD_STR +
+      "}";
+    Saga placeHolderRecord = createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString());
+    repository.save(placeHolderRecord);
+    LockAssert.TestHelper.makeAllAssertsPass(true);
     eventTaskScheduler.pollEventTableAndPublish();
-    verify(returnSagaOrchestrator, atLeastOnce()).replaySaga(dummyRecord);
+    var eventStates = sagaEventRepository.findBySaga(placeHolderRecord);
+    assertThat(eventStates).isNotEmpty();
   }
 
   @Test
   public void testPollEventTableAndPublish_givenReturnSagaRecordInPROGRESSStateForMoreThan5Minutes_shouldBeProcessed() throws InterruptedException, TimeoutException, IOException {
     String payload = "{\n" +
-        PAYLOAD_STR +
-        "}";
-    Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString());
-    dummyRecord.setStatus(IN_PROGRESS.toString());
-    var dummyList = new ArrayList<Saga>();
-    dummyList.add(dummyRecord);
-    var statuses = new ArrayList<String>();
-    statuses.add(SagaStatusEnum.IN_PROGRESS.toString());
-    statuses.add(SagaStatusEnum.STARTED.toString());
-    eventTaskScheduler.setStatusFilters(statuses);
-    when(repository.findAllByStatusIn(statuses)).thenReturn(dummyList);
-
-    doNothing().when(returnSagaOrchestrator).replaySaga(dummyRecord);
-    repository.save(dummyRecord);
+      PAYLOAD_STR +
+      "}";
+    Saga placeHolderRecord = createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString());
+    repository.save(placeHolderRecord);
+    LockAssert.TestHelper.makeAllAssertsPass(true);
     eventTaskScheduler.pollEventTableAndPublish();
-    verify(returnSagaOrchestrator, atLeastOnce()).replaySaga(dummyRecord);
+    var eventStates = sagaEventRepository.findBySaga(placeHolderRecord);
+    assertThat(eventStates).isNotEmpty();
   }
 
   @Test
   public void testPollEventTableAndPublish_givenReturnSagaRecordInPROGRESSStateForLessThan2Minutes_shouldNotBeProcessed() throws InterruptedException, TimeoutException, IOException {
     String payload = "{\n" +
-        PAYLOAD_STR +
-        "}";
-    Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString());
-    dummyRecord.setStatus(IN_PROGRESS.toString());
-    dummyRecord.setCreateDate(LocalDateTime.now());
-    var dummyList = new ArrayList<Saga>();
-    dummyList.add(dummyRecord);
-    var statuses = new ArrayList<String>();
-    statuses.add(SagaStatusEnum.IN_PROGRESS.toString());
-    statuses.add(SagaStatusEnum.STARTED.toString());
-    eventTaskScheduler.setStatusFilters(statuses);
-    when(repository.findAllByStatusIn(statuses)).thenReturn(dummyList);
-
-    doNothing().when(returnSagaOrchestrator).replaySaga(dummyRecord);
-    repository.save(dummyRecord);
+      PAYLOAD_STR +
+      "}";
+    Saga placeHolderRecord = createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString());
+    repository.save(placeHolderRecord);
+    LockAssert.TestHelper.makeAllAssertsPass(true);
     eventTaskScheduler.pollEventTableAndPublish();
-    verify(returnSagaOrchestrator, never()).replaySaga(dummyRecord);
+    var eventStates = sagaEventRepository.findBySaga(placeHolderRecord);
+    assertThat(eventStates).isNotEmpty();
+
   }
 
-  @Test
-  public void testPollEventTableAndPublish_givenRejectSagaRecordInSTARTEDStateForMoreThan5Minutes_shouldBeProcessed() throws InterruptedException, TimeoutException, IOException {
-    String payload = "{\n" +
-        PAYLOAD_STR +
-        REJECTION_REASON_REJECTED +
-        "}";
-    Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_REJECT_SAGA.toString());
-    var dummyList = new ArrayList<Saga>();
-    dummyList.add(dummyRecord);
-    var statuses = new ArrayList<String>();
-    statuses.add(SagaStatusEnum.IN_PROGRESS.toString());
-    statuses.add(SagaStatusEnum.STARTED.toString());
-    eventTaskScheduler.setStatusFilters(statuses);
-    when(repository.findAllByStatusIn(statuses)).thenReturn(dummyList);
-
-    doNothing().when(rejectSagaOrchestrator).replaySaga(dummyRecord);
-    repository.save(dummyRecord);
-    eventTaskScheduler.pollEventTableAndPublish();
-    verify(rejectSagaOrchestrator, atLeastOnce()).replaySaga(dummyRecord);
-  }
-
-  @Test
-  public void testPollEventTableAndPublish_givenRejectSagaRecordInPROGRESSStateForMoreThan5Minutes_shouldBeProcessed() throws InterruptedException, TimeoutException, IOException {
-    String payload = "{\n" +
-        PAYLOAD_STR +
-        REJECTION_REASON_REJECTED +
-        "}";
-    Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_REJECT_SAGA.toString());
-    dummyRecord.setStatus(IN_PROGRESS.toString());
-    var dummyList = new ArrayList<Saga>();
-    dummyList.add(dummyRecord);
-    var statuses = new ArrayList<String>();
-    statuses.add(SagaStatusEnum.IN_PROGRESS.toString());
-    statuses.add(SagaStatusEnum.STARTED.toString());
-    eventTaskScheduler.setStatusFilters(statuses);
-    when(repository.findAllByStatusIn(statuses)).thenReturn(dummyList);
-
-    doNothing().when(rejectSagaOrchestrator).replaySaga(dummyRecord);
-    repository.save(dummyRecord);
-    eventTaskScheduler.pollEventTableAndPublish();
-    verify(rejectSagaOrchestrator, atLeastOnce()).replaySaga(dummyRecord);
-  }
-
-  @Test
-  public void testPollEventTableAndPublish_givenRejectSagaRecordInPROGRESSStateForLessThan2Minutes_shouldNotBeProcessed() throws InterruptedException, TimeoutException, IOException {
-    String payload = "{\n" +
-        PAYLOAD_STR +
-        REJECTION_REASON_REJECTED +
-        "}";
-    Saga dummyRecord = createDummySagaRecord(payload, STUDENT_PROFILE_REJECT_SAGA.toString());
-    dummyRecord.setStatus(IN_PROGRESS.toString());
-    dummyRecord.setCreateDate(LocalDateTime.now());
-    var dummyList = new ArrayList<Saga>();
-    dummyList.add(dummyRecord);
-    var statuses = new ArrayList<String>();
-    statuses.add(SagaStatusEnum.IN_PROGRESS.toString());
-    statuses.add(SagaStatusEnum.STARTED.toString());
-    eventTaskScheduler.setStatusFilters(statuses);
-    when(repository.findAllByStatusIn(statuses)).thenReturn(dummyList);
-
-    doNothing().when(rejectSagaOrchestrator).replaySaga(dummyRecord);
-    repository.save(dummyRecord);
-    eventTaskScheduler.pollEventTableAndPublish();
-    verify(rejectSagaOrchestrator, never()).replaySaga(dummyRecord);
-  }
 
   private Saga createDummySagaRecord(String payload, String sagaName) {
     return Saga
-        .builder()
-        .payload(payload)
-        .sagaName(sagaName)
-        .status(STARTED.toString())
-        .sagaState(INITIATED.toString())
-        .sagaCompensated(false)
-        .createDate(LocalDateTime.now().minusMinutes(3))
-        .createUser("test")
-        .updateUser("test")
-        .updateDate(LocalDateTime.now().minusMinutes(10))
-        .build();
+      .builder()
+      .payload(payload)
+      .sagaName(sagaName)
+      .status(STARTED.toString())
+      .sagaState(INITIATED.toString())
+      .sagaCompensated(false)
+      .createDate(LocalDateTime.now().minusMinutes(3))
+      .createUser("test")
+      .updateUser("test")
+      .updateDate(LocalDateTime.now().minusMinutes(10))
+      .build();
   }
 }

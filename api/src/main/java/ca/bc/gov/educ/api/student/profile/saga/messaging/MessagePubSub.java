@@ -22,7 +22,7 @@ public abstract class MessagePubSub implements Closeable {
    */
   @Override
   public void close() {
-    if(Optional.ofNullable(connection).isPresent()){
+    if (Optional.ofNullable(connection).isPresent()) {
       log.info("closing nats connection...");
       try {
         connection.close();

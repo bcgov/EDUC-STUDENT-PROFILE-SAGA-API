@@ -2,10 +2,8 @@ package ca.bc.gov.educ.api.student.profile.saga.orchestrator.ump;
 
 import ca.bc.gov.educ.api.student.profile.saga.mappers.StudentProfileCommentsMapper;
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
-import ca.bc.gov.educ.api.student.profile.saga.messaging.MessageSubscriber;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
-import ca.bc.gov.educ.api.student.profile.saga.schedulers.EventTaskScheduler;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileComments;
@@ -32,19 +30,19 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.*
 @Slf4j
 public class StudentProfileReturnSagaOrchestrator extends BaseProfileReqSagaOrchestrator<StudentProfileReturnActionSagaData> {
 
-  public StudentProfileReturnSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, MessageSubscriber messageSubscriber, EventTaskScheduler taskScheduler) {
-    super(sagaService, messagePublisher, messageSubscriber, taskScheduler, StudentProfileReturnActionSagaData.class, STUDENT_PROFILE_RETURN_SAGA.toString(), STUDENT_PROFILE_REQUEST_RETURN_SAGA_TOPIC.toString());
+  public StudentProfileReturnSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher) {
+    super(sagaService, messagePublisher, StudentProfileReturnActionSagaData.class, STUDENT_PROFILE_RETURN_SAGA.toString(), STUDENT_PROFILE_REQUEST_RETURN_SAGA_TOPIC.toString());
   }
 
   @Override
   public void populateStepsToExecuteMap() {
     stepBuilder()
-        .step(INITIATED, INITIATE_SUCCESS, ADD_STUDENT_PROFILE_COMMENT, this::executeAddProfileRequestComments)
-        .step(ADD_STUDENT_PROFILE_COMMENT, STUDENT_PROFILE_COMMENT_ADDED, GET_STUDENT_PROFILE, this::executeGetProfileRequest)
-        .step(ADD_STUDENT_PROFILE_COMMENT, STUDENT_PROFILE_COMMENT_ALREADY_EXIST, GET_STUDENT_PROFILE, this::executeGetProfileRequest)
-        .step(GET_STUDENT_PROFILE, STUDENT_PROFILE_FOUND, UPDATE_STUDENT_PROFILE, this::executeUpdateProfileRequest)
-        .step(UPDATE_STUDENT_PROFILE, STUDENT_PROFILE_UPDATED, NOTIFY_STUDENT_PROFILE_REQUEST_RETURN, this::executeNotifyStudentProfileRequestReturned)
-        .step(NOTIFY_STUDENT_PROFILE_REQUEST_RETURN, STUDENT_NOTIFIED, MARK_SAGA_COMPLETE, this::markSagaComplete);
+      .step(INITIATED, INITIATE_SUCCESS, ADD_STUDENT_PROFILE_COMMENT, this::executeAddProfileRequestComments)
+      .step(ADD_STUDENT_PROFILE_COMMENT, STUDENT_PROFILE_COMMENT_ADDED, GET_STUDENT_PROFILE, this::executeGetProfileRequest)
+      .step(ADD_STUDENT_PROFILE_COMMENT, STUDENT_PROFILE_COMMENT_ALREADY_EXIST, GET_STUDENT_PROFILE, this::executeGetProfileRequest)
+      .step(GET_STUDENT_PROFILE, STUDENT_PROFILE_FOUND, UPDATE_STUDENT_PROFILE, this::executeUpdateProfileRequest)
+      .step(UPDATE_STUDENT_PROFILE, STUDENT_PROFILE_UPDATED, NOTIFY_STUDENT_PROFILE_REQUEST_RETURN, this::executeNotifyStudentProfileRequestReturned)
+      .step(NOTIFY_STUDENT_PROFILE_REQUEST_RETURN, STUDENT_NOTIFIED, MARK_SAGA_COMPLETE, this::markSagaComplete);
   }
 
   protected void executeAddProfileRequestComments(Event event, Saga saga, StudentProfileReturnActionSagaData studentProfileReturnActionSagaData) throws InterruptedException, TimeoutException, IOException {
@@ -54,10 +52,10 @@ public class StudentProfileReturnSagaOrchestrator extends BaseProfileReqSagaOrch
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     StudentProfileComments studentProfileComments = StudentProfileCommentsMapper.mapper.toComments(studentProfileReturnActionSagaData);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-        .eventType(ADD_STUDENT_PROFILE_COMMENT)
-        .replyTo(getTopicToSubscribe())
-        .eventPayload(JsonUtil.getJsonStringFromObject(studentProfileComments))
-        .build();
+      .eventType(ADD_STUDENT_PROFILE_COMMENT)
+      .replyTo(getTopicToSubscribe())
+      .eventPayload(JsonUtil.getJsonStringFromObject(studentProfileComments))
+      .build();
     postMessageToTopic(STUDENT_PROFILE_API_TOPIC.toString(), nextEvent);
     log.info("message sent to STUDENT_PROFILE_API_TOPIC for ADD_PROFILE_REQUEST_COMMENT Event.");
   }
@@ -90,19 +88,19 @@ public class StudentProfileReturnSagaOrchestrator extends BaseProfileReqSagaOrch
     saga.setSagaState(NOTIFY_STUDENT_PROFILE_REQUEST_RETURN.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-        .eventType(NOTIFY_STUDENT_PROFILE_REQUEST_RETURN)
-        .replyTo(getTopicToSubscribe())
-        .eventPayload(buildEmailSagaData(studentProfileReturnActionSagaData))
-        .build();
+      .eventType(NOTIFY_STUDENT_PROFILE_REQUEST_RETURN)
+      .replyTo(getTopicToSubscribe())
+      .eventPayload(buildEmailSagaData(studentProfileReturnActionSagaData))
+      .build();
     postMessageToTopic(PROFILE_REQUEST_EMAIL_API_TOPIC.toString(), nextEvent);
     log.info("message sent to STUDENT_PROFILE_EMAIL_API_TOPIC for NOTIFY_STUDENT_PROFILE_REQUEST_RETURN Event.");
   }
 
   private String buildEmailSagaData(StudentProfileReturnActionSagaData studentProfileRequestRejectActionSagaData) throws JsonProcessingException {
     StudentProfileEmailSagaData penReqEmailSagaData = StudentProfileEmailSagaData.builder()
-        .emailAddress(studentProfileRequestRejectActionSagaData.getEmail())
-        .identityType(studentProfileRequestRejectActionSagaData.getIdentityType())
-        .build();
+      .emailAddress(studentProfileRequestRejectActionSagaData.getEmail())
+      .identityType(studentProfileRequestRejectActionSagaData.getIdentityType())
+      .build();
     return JsonUtil.getJsonStringFromObject(penReqEmailSagaData);
   }
 }

@@ -42,7 +42,8 @@ public interface PenRequestSagaEndpoint {
 
   /**
    * If staff members first complete a PEN request, then reject the same request, DIGITAL_ID is updated to remove the link with STUDENT record and
-   *  PEN_REQUEST is updated subsequent review.
+   * PEN_REQUEST is updated subsequent review.
+   *
    * @param penRequestUnlinkSagaData the payload which will be processed by this saga.
    * @return String the saga Id
    */

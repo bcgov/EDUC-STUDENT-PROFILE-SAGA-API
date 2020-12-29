@@ -10,6 +10,8 @@ import org.mapstruct.factory.Mappers;
 @SuppressWarnings("squid:S1214")
 public interface StudentSagaDataMapper {
   StudentSagaDataMapper mapper = Mappers.getMapper(StudentSagaDataMapper.class);
+
   StudentSagaData toStudentSaga(StudentProfileCompleteSagaData studentProfileCompleteSagaData);
+
   StudentSagaData toStudentSaga(PenRequestCompleteSagaData penRequestCompleteSagaData);
 }

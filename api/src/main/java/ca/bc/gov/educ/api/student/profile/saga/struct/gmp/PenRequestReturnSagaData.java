@@ -9,11 +9,11 @@ import javax.validation.constraints.Size;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class PenRequestReturnSagaData extends PenRequestActionsSagaData{
-    @NotNull(message = "Comment content can not be null")
-    String commentContent;
-    @Pattern(regexp = "(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})")
-    @Size(max = 19)
-    @NotNull(message = "commentTimestamp can not be null")
-    String commentTimestamp;
+public class PenRequestReturnSagaData extends PenRequestActionsSagaData {
+  @NotNull(message = "Comment content can not be null")
+  String commentContent;
+  @Pattern(regexp = "(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})")
+  @Size(max = 19)
+  @NotNull(message = "commentTimestamp can not be null")
+  String commentTimestamp;
 }

@@ -6,33 +6,25 @@ import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import io.nats.client.Connection;
 import io.nats.client.Message;
 import io.nats.client.MessageHandler;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static lombok.AccessLevel.PRIVATE;
+import java.util.List;
 
 
 @Component
 @Slf4j
 public class MessageSubscriber extends MessagePubSub {
 
-  @Getter(PRIVATE)
-  private final Map<String, SagaEventHandler> handlers = new HashMap<>();
 
   @Autowired
-  public MessageSubscriber(final Connection con) {
+  public MessageSubscriber(final Connection con, List<SagaEventHandler> sagaEventHandlers) {
     super.connection = con;
+    sagaEventHandlers.forEach(handler -> subscribe(handler.getTopicToSubscribe(), handler));
   }
 
   public void subscribe(String topic, SagaEventHandler eventHandler) {
-    if(!handlers.containsKey(topic)){
-      handlers.put(topic, eventHandler);
-    }
     String queue = topic.replace("_", "-");
     var dispatcher = connection.createDispatcher(onMessage(eventHandler));
     dispatcher.subscribe(topic, queue);
@@ -50,7 +42,7 @@ public class MessageSubscriber extends MessagePubSub {
         try {
           var eventString = new String(message.getData());
           var event = JsonUtil.getJsonObjectFromString(Event.class, eventString);
-          eventHandler.onSagaEvent(event);
+          eventHandler.executeSagaEvent(event);
         } catch (final Exception e) {
           log.error("Exception ", e);
         }

@@ -8,5 +8,5 @@ import java.util.concurrent.TimeoutException;
 
 @FunctionalInterface
 public interface SagaStep<T> {
-    void apply(Event event, Saga saga, T sagaData) throws InterruptedException, TimeoutException, IOException;
+  void apply(Event event, Saga saga, T sagaData) throws InterruptedException, TimeoutException, IOException;
 }

@@ -32,8 +32,8 @@ public class PenRequestCommentsSagaOrchestrator extends BasePenReqSagaOrchestrat
 
 
   @Autowired
-  public PenRequestCommentsSagaOrchestrator(final SagaService sagaService, final MessagePublisher messagePublisher, final MessageSubscriber messageSubscriber, final EventTaskScheduler taskScheduler) {
-    super(sagaService, messagePublisher, messageSubscriber, taskScheduler, PenRequestCommentsSagaData.class, PEN_REQUEST_COMMENTS_SAGA.toString(), PEN_REQUEST_COMMENTS_SAGA_TOPIC.toString());
+  public PenRequestCommentsSagaOrchestrator(final SagaService sagaService, final MessagePublisher messagePublisher) {
+    super(sagaService, messagePublisher, PenRequestCommentsSagaData.class, PEN_REQUEST_COMMENTS_SAGA.toString(), PEN_REQUEST_COMMENTS_SAGA_TOPIC.toString());
   }
 
   /**
@@ -42,18 +42,18 @@ public class PenRequestCommentsSagaOrchestrator extends BasePenReqSagaOrchestrat
   @Override
   public void populateStepsToExecuteMap() {
     stepBuilder()
-            .step(INITIATED, INITIATE_SUCCESS, ADD_PEN_REQUEST_COMMENT, this::executeAddPenRequestComments)
-            .step(ADD_PEN_REQUEST_COMMENT, PEN_REQUEST_COMMENT_ADDED, GET_PEN_REQUEST, this::executeGetPenRequest)
-            .step(ADD_PEN_REQUEST_COMMENT, PEN_REQUEST_COMMENT_ALREADY_EXIST, GET_PEN_REQUEST, this::executeGetPenRequest)
-            .step(GET_PEN_REQUEST, PEN_REQUEST_FOUND, UPDATE_PEN_REQUEST, this::executeUpdatePenRequest)
-            .step(UPDATE_PEN_REQUEST, PEN_REQUEST_UPDATED, MARK_SAGA_COMPLETE, this::markSagaComplete);
+      .step(INITIATED, INITIATE_SUCCESS, ADD_PEN_REQUEST_COMMENT, this::executeAddPenRequestComments)
+      .step(ADD_PEN_REQUEST_COMMENT, PEN_REQUEST_COMMENT_ADDED, GET_PEN_REQUEST, this::executeGetPenRequest)
+      .step(ADD_PEN_REQUEST_COMMENT, PEN_REQUEST_COMMENT_ALREADY_EXIST, GET_PEN_REQUEST, this::executeGetPenRequest)
+      .step(GET_PEN_REQUEST, PEN_REQUEST_FOUND, UPDATE_PEN_REQUEST, this::executeUpdatePenRequest)
+      .step(UPDATE_PEN_REQUEST, PEN_REQUEST_UPDATED, MARK_SAGA_COMPLETE, this::markSagaComplete);
   }
 
   /**
    * it will send a message to pen request api topic to add a comment.
    *
    * @param event                      current event.
-   * @param saga             the model object.
+   * @param saga                       the model object.
    * @param penRequestCommentsSagaData the payload as the object.
    * @throws InterruptedException if thread is interrupted.
    * @throws IOException          if there is connectivity problem
@@ -65,10 +65,10 @@ public class PenRequestCommentsSagaOrchestrator extends BasePenReqSagaOrchestrat
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     PenRequestComments penRequestComments = mapper.toPenReqComments(penRequestCommentsSagaData);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-            .eventType(ADD_PEN_REQUEST_COMMENT)
-            .replyTo(getTopicToSubscribe())
-            .eventPayload(JsonUtil.getJsonStringFromObject(penRequestComments))
-            .build();
+      .eventType(ADD_PEN_REQUEST_COMMENT)
+      .replyTo(getTopicToSubscribe())
+      .eventPayload(JsonUtil.getJsonStringFromObject(penRequestComments))
+      .build();
     postMessageToTopic(PEN_REQUEST_API_TOPIC.toString(), nextEvent);
     log.info("message sent to PEN_REQUEST_API_TOPIC for ADD_PEN_REQUEST_COMMENT Event.");
   }

@@ -1,10 +1,8 @@
 package ca.bc.gov.educ.api.student.profile.saga.orchestrator.ump;
 
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
-import ca.bc.gov.educ.api.student.profile.saga.messaging.MessageSubscriber;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
-import ca.bc.gov.educ.api.student.profile.saga.schedulers.EventTaskScheduler;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileEmailSagaData;
@@ -32,18 +30,18 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.S
 public class StudentProfileRejectSagaOrchestrator extends BaseProfileReqSagaOrchestrator<StudentProfileRequestRejectActionSagaData> {
 
   @Autowired
-  public StudentProfileRejectSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, MessageSubscriber messageSubscriber, EventTaskScheduler taskScheduler) {
-    super(sagaService, messagePublisher, messageSubscriber, taskScheduler, StudentProfileRequestRejectActionSagaData.class, STUDENT_PROFILE_REJECT_SAGA.toString(), STUDENT_PROFILE_REQUEST_REJECT_SAGA_TOPIC.toString());
+  public StudentProfileRejectSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher) {
+    super(sagaService, messagePublisher, StudentProfileRequestRejectActionSagaData.class, STUDENT_PROFILE_REJECT_SAGA.toString(), STUDENT_PROFILE_REQUEST_REJECT_SAGA_TOPIC.toString());
   }
 
 
   @Override
   public void populateStepsToExecuteMap() {
     stepBuilder()
-        .step(INITIATED, INITIATE_SUCCESS, GET_STUDENT_PROFILE, this::executeGetProfileRequest)
-        .step(GET_STUDENT_PROFILE, STUDENT_PROFILE_FOUND, UPDATE_STUDENT_PROFILE, this::executeUpdateProfileRequest)
-        .step(UPDATE_STUDENT_PROFILE, STUDENT_PROFILE_UPDATED, NOTIFY_STUDENT_PROFILE_REQUEST_REJECT, this::executeNotifyStudentProfileRequestRejected)
-        .step(NOTIFY_STUDENT_PROFILE_REQUEST_REJECT, STUDENT_NOTIFIED, MARK_SAGA_COMPLETE, this::markSagaComplete);
+      .step(INITIATED, INITIATE_SUCCESS, GET_STUDENT_PROFILE, this::executeGetProfileRequest)
+      .step(GET_STUDENT_PROFILE, STUDENT_PROFILE_FOUND, UPDATE_STUDENT_PROFILE, this::executeUpdateProfileRequest)
+      .step(UPDATE_STUDENT_PROFILE, STUDENT_PROFILE_UPDATED, NOTIFY_STUDENT_PROFILE_REQUEST_REJECT, this::executeNotifyStudentProfileRequestRejected)
+      .step(NOTIFY_STUDENT_PROFILE_REQUEST_REJECT, STUDENT_NOTIFIED, MARK_SAGA_COMPLETE, this::markSagaComplete);
   }
 
   @Override
@@ -75,20 +73,20 @@ public class StudentProfileRejectSagaOrchestrator extends BaseProfileReqSagaOrch
     saga.setSagaState(NOTIFY_STUDENT_PROFILE_REQUEST_REJECT.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-        .eventType(NOTIFY_STUDENT_PROFILE_REQUEST_REJECT)
-        .replyTo(getTopicToSubscribe())
-        .eventPayload(buildEmailSagaData(studentProfileRequestRejectActionSagaData))
-        .build();
+      .eventType(NOTIFY_STUDENT_PROFILE_REQUEST_REJECT)
+      .replyTo(getTopicToSubscribe())
+      .eventPayload(buildEmailSagaData(studentProfileRequestRejectActionSagaData))
+      .build();
     postMessageToTopic(PROFILE_REQUEST_EMAIL_API_TOPIC.toString(), nextEvent);
     log.info("message sent to STUDENT_PROFILE_EMAIL_API_TOPIC for NOTIFY_STUDENT_PROFILE_REQUEST_REJECT Event.");
   }
 
   private String buildEmailSagaData(StudentProfileRequestRejectActionSagaData studentProfileRequestRejectActionSagaData) throws JsonProcessingException {
     StudentProfileEmailSagaData penReqEmailSagaData = StudentProfileEmailSagaData.builder()
-        .emailAddress(studentProfileRequestRejectActionSagaData.getEmail())
-        .rejectionReason(studentProfileRequestRejectActionSagaData.getRejectionReason())
-        .identityType(studentProfileRequestRejectActionSagaData.getIdentityType())
-        .build();
+      .emailAddress(studentProfileRequestRejectActionSagaData.getEmail())
+      .rejectionReason(studentProfileRequestRejectActionSagaData.getRejectionReason())
+      .identityType(studentProfileRequestRejectActionSagaData.getIdentityType())
+      .build();
     return JsonUtil.getJsonStringFromObject(penReqEmailSagaData);
   }
 }

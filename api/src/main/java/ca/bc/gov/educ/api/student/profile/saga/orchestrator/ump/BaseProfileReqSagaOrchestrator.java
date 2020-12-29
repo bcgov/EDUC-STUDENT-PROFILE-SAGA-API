@@ -1,11 +1,9 @@
 package ca.bc.gov.educ.api.student.profile.saga.orchestrator.ump;
 
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
-import ca.bc.gov.educ.api.student.profile.saga.messaging.MessageSubscriber;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
 import ca.bc.gov.educ.api.student.profile.saga.orchestrator.base.BaseOrchestrator;
-import ca.bc.gov.educ.api.student.profile.saga.schedulers.EventTaskScheduler;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileSagaData;
@@ -30,8 +28,8 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.S
 public abstract class BaseProfileReqSagaOrchestrator<T> extends BaseOrchestrator<T> {
 
 
-  protected BaseProfileReqSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, MessageSubscriber messageSubscriber, EventTaskScheduler taskScheduler, Class<T> clazz, String sagaName, String topicToSubscribe) {
-    super(sagaService, messagePublisher, messageSubscriber, taskScheduler, clazz, sagaName, topicToSubscribe);
+  protected BaseProfileReqSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, Class<T> clazz, String sagaName, String topicToSubscribe) {
+    super(sagaService, messagePublisher, clazz, sagaName, topicToSubscribe);
   }
 
 
@@ -42,10 +40,10 @@ public abstract class BaseProfileReqSagaOrchestrator<T> extends BaseOrchestrator
     StudentProfileSagaData sagaData = JsonUtil.getJsonObjectFromString(StudentProfileSagaData.class, event.getEventPayload());
     updateProfileRequestPayload(sagaData, t);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-        .eventType(UPDATE_STUDENT_PROFILE)
-        .replyTo(getTopicToSubscribe())
-        .eventPayload(JsonUtil.getJsonStringFromObject(sagaData))
-        .build();
+      .eventType(UPDATE_STUDENT_PROFILE)
+      .replyTo(getTopicToSubscribe())
+      .eventPayload(JsonUtil.getJsonStringFromObject(sagaData))
+      .build();
     postMessageToTopic(STUDENT_PROFILE_API_TOPIC.toString(), nextEvent);
     log.info("message sent to STUDENT_PROFILE_API_TOPIC for UPDATE_PROFILE_REQUEST Event.");
   }
@@ -56,10 +54,10 @@ public abstract class BaseProfileReqSagaOrchestrator<T> extends BaseOrchestrator
     saga.setStatus(IN_PROGRESS.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-        .eventType(GET_STUDENT_PROFILE)
-        .replyTo(getTopicToSubscribe())
-        .eventPayload(updateGetProfileRequestPayload(t))
-        .build();
+      .eventType(GET_STUDENT_PROFILE)
+      .replyTo(getTopicToSubscribe())
+      .eventPayload(updateGetProfileRequestPayload(t))
+      .build();
     postMessageToTopic(STUDENT_PROFILE_API_TOPIC.toString(), nextEvent);
     log.info("message sent to STUDENT_PROFILE_API_TOPIC for GET_PROFILE_REQUEST Event.");
   }

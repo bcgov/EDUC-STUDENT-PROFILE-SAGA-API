@@ -68,11 +68,11 @@ public class PenRequestSagaController extends BaseController implements PenReque
       }
       var saga = getSagaService().createPenRequestSagaRecord(penRequestCompleteSagaData, PEN_REQUEST_COMPLETE_SAGA.toString(), penRequestCompleteSagaData.getCreateUser(), penRequestId);
       getPenRequestCompleteSagaOrchestrator().executeSagaEvent(Event.builder()
-          .eventType(EventType.INITIATED)
-          .eventOutcome(EventOutcome.INITIATE_SUCCESS)
-          .penRequestID(penRequestCompleteSagaData.getPenRequestID())
-          .sagaId(saga.getSagaId())
-          .build());
+        .eventType(EventType.INITIATED)
+        .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+        .penRequestID(penRequestCompleteSagaData.getPenRequestID())
+        .sagaId(saga.getSagaId())
+        .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());
@@ -89,11 +89,11 @@ public class PenRequestSagaController extends BaseController implements PenReque
       }
       final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestCommentsSagaData, PEN_REQUEST_COMMENTS_SAGA.toString(), penRequestCommentsSagaData.getCreateUser(), penRequestId);
       getPenRequestCommentsSagaOrchestrator().executeSagaEvent(Event.builder()
-          .eventType(EventType.INITIATED)
-          .eventOutcome(EventOutcome.INITIATE_SUCCESS)
-          .penRequestID(penRequestCommentsSagaData.getPenRetrievalRequestID())
-          .sagaId(saga.getSagaId())
-          .build());
+        .eventType(EventType.INITIATED)
+        .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+        .penRequestID(penRequestCommentsSagaData.getPenRetrievalRequestID())
+        .sagaId(saga.getSagaId())
+        .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());
@@ -110,11 +110,11 @@ public class PenRequestSagaController extends BaseController implements PenReque
       }
       final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestReturnSagaData, PEN_REQUEST_RETURN_SAGA.toString(), penRequestReturnSagaData.getCreateUser(), penRequestId);
       getPenRequestReturnSagaOrchestrator().executeSagaEvent(Event.builder()
-          .eventType(EventType.INITIATED)
-          .eventOutcome(EventOutcome.INITIATE_SUCCESS)
-          .penRequestID(penRequestReturnSagaData.getPenRetrievalRequestID())
-          .sagaId(saga.getSagaId())
-          .build());
+        .eventType(EventType.INITIATED)
+        .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+        .penRequestID(penRequestReturnSagaData.getPenRetrievalRequestID())
+        .sagaId(saga.getSagaId())
+        .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());
@@ -131,11 +131,11 @@ public class PenRequestSagaController extends BaseController implements PenReque
       }
       final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestRejectSagaData, PEN_REQUEST_REJECT_SAGA.toString(), penRequestRejectSagaData.getCreateUser(), penRequestId);
       getPenRequestRejectSagaOrchestrator().executeSagaEvent(Event.builder()
-          .eventType(EventType.INITIATED)
-          .eventOutcome(EventOutcome.INITIATE_SUCCESS)
-          .penRequestID(penRequestRejectSagaData.getPenRetrievalRequestID())
-          .sagaId(saga.getSagaId())
-          .build());
+        .eventType(EventType.INITIATED)
+        .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+        .penRequestID(penRequestRejectSagaData.getPenRetrievalRequestID())
+        .sagaId(saga.getSagaId())
+        .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());
@@ -157,11 +157,11 @@ public class PenRequestSagaController extends BaseController implements PenReque
       }
       final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestUnlinkSagaData, PEN_REQUEST_UNLINK_SAGA.toString(), penRequestUnlinkSagaData.getCreateUser(), UUID.fromString(penRequestUnlinkSagaData.getPenRetrievalRequestID()));
       getPenRequestUnlinkSagaOrchestrator().executeSagaEvent(Event.builder()
-          .eventType(EventType.INITIATED)
-          .eventOutcome(EventOutcome.INITIATE_SUCCESS)
-          .penRequestID(penRequestUnlinkSagaData.getPenRetrievalRequestID())
-          .sagaId(saga.getSagaId())
-          .build());
+        .eventType(EventType.INITIATED)
+        .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+        .penRequestID(penRequestUnlinkSagaData.getPenRetrievalRequestID())
+        .sagaId(saga.getSagaId())
+        .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());

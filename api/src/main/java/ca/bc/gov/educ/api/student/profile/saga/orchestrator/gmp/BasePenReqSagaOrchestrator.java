@@ -28,8 +28,8 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.P
 @Slf4j
 public abstract class BasePenReqSagaOrchestrator<T> extends BaseOrchestrator<T> {
 
-  protected BasePenReqSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, MessageSubscriber messageSubscriber, EventTaskScheduler taskScheduler, Class<T> clazz, String sagaName, String topicToSubscribe) {
-    super(sagaService, messagePublisher, messageSubscriber, taskScheduler, clazz, sagaName, topicToSubscribe);
+  protected BasePenReqSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, Class<T> clazz, String sagaName, String topicToSubscribe) {
+    super(sagaService, messagePublisher, clazz, sagaName, topicToSubscribe);
   }
 
 
@@ -40,10 +40,10 @@ public abstract class BasePenReqSagaOrchestrator<T> extends BaseOrchestrator<T> 
     PenRequestSagaData penRequestSagaData = JsonUtil.getJsonObjectFromString(PenRequestSagaData.class, event.getEventPayload());
     updatePenRequestPayload(penRequestSagaData, t);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-            .eventType(UPDATE_PEN_REQUEST)
-            .replyTo(getTopicToSubscribe())
-            .eventPayload(JsonUtil.getJsonStringFromObject(penRequestSagaData))
-            .build();
+      .eventType(UPDATE_PEN_REQUEST)
+      .replyTo(getTopicToSubscribe())
+      .eventPayload(JsonUtil.getJsonStringFromObject(penRequestSagaData))
+      .build();
     postMessageToTopic(PEN_REQUEST_API_TOPIC.toString(), nextEvent);
     log.info("message sent to PEN_REQUEST_API_TOPIC for UPDATE_PEN_REQUEST Event.");
   }
@@ -53,10 +53,10 @@ public abstract class BasePenReqSagaOrchestrator<T> extends BaseOrchestrator<T> 
     saga.setSagaState(GET_PEN_REQUEST.toString()); // set current event as saga state.
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-            .eventType(GET_PEN_REQUEST)
-            .replyTo(getTopicToSubscribe())
-            .eventPayload(updateGetPenRequestPayload(t))
-            .build();
+      .eventType(GET_PEN_REQUEST)
+      .replyTo(getTopicToSubscribe())
+      .eventPayload(updateGetPenRequestPayload(t))
+      .build();
     postMessageToTopic(PEN_REQUEST_API_TOPIC.toString(), nextEvent);
     log.info("message sent to PEN_REQUEST_API_TOPIC for GET_PEN_REQUEST Event.");
   }

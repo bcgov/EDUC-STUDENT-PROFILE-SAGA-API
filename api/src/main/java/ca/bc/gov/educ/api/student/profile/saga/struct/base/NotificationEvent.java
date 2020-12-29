@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class NotificationEvent extends Event{
+public class NotificationEvent extends Event {
   private String sagaStatus;
   private String sagaName;
 }

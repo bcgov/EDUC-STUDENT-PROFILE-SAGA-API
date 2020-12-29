@@ -25,10 +25,10 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.P
 
 @Component
 @Slf4j
-public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator<PenRequestUnlinkSagaData>{
+public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator<PenRequestUnlinkSagaData> {
 
-  public PenRequestUnlinkSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, MessageSubscriber messageSubscriber, EventTaskScheduler taskScheduler) {
-    super(sagaService, messagePublisher, messageSubscriber, taskScheduler, PenRequestUnlinkSagaData.class, PEN_REQUEST_UNLINK_SAGA.toString(), PEN_REQUEST_UNLINK_SAGA_TOPIC.toString());
+  public PenRequestUnlinkSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher) {
+    super(sagaService, messagePublisher, PenRequestUnlinkSagaData.class, PEN_REQUEST_UNLINK_SAGA.toString(), PEN_REQUEST_UNLINK_SAGA_TOPIC.toString());
   }
 
   /**
@@ -37,12 +37,13 @@ public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator
   @Override
   public void populateStepsToExecuteMap() {
     stepBuilder()
-        .step(INITIATED, INITIATE_SUCCESS, GET_DIGITAL_ID, this::executeGetDigitalId)
-        .step(GET_DIGITAL_ID, DIGITAL_ID_FOUND, UPDATE_DIGITAL_ID, this::executeUpdateDigitalId)
-        .step(UPDATE_DIGITAL_ID, DIGITAL_ID_UPDATED, GET_PEN_REQUEST, this::executeGetPenRequest)
-        .step(GET_PEN_REQUEST, PEN_REQUEST_FOUND, UPDATE_PEN_REQUEST, this::executeUpdatePenRequest)
-        .step(UPDATE_PEN_REQUEST, PEN_REQUEST_UPDATED, MARK_SAGA_COMPLETE, this::markSagaComplete);
+      .step(INITIATED, INITIATE_SUCCESS, GET_DIGITAL_ID, this::executeGetDigitalId)
+      .step(GET_DIGITAL_ID, DIGITAL_ID_FOUND, UPDATE_DIGITAL_ID, this::executeUpdateDigitalId)
+      .step(UPDATE_DIGITAL_ID, DIGITAL_ID_UPDATED, GET_PEN_REQUEST, this::executeGetPenRequest)
+      .step(GET_PEN_REQUEST, PEN_REQUEST_FOUND, UPDATE_PEN_REQUEST, this::executeUpdatePenRequest)
+      .step(UPDATE_PEN_REQUEST, PEN_REQUEST_UPDATED, MARK_SAGA_COMPLETE, this::markSagaComplete);
   }
+
   @Override
   protected void updatePenRequestPayload(PenRequestSagaData penRequestSagaData, PenRequestUnlinkSagaData penRequestUnlinkSagaData) {
     penRequestSagaData.setReviewer(penRequestUnlinkSagaData.getReviewer());
@@ -58,9 +59,8 @@ public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator
   }
 
   /**
-   *
-   * @param event                      current event
-   * @param saga             the model object.
+   * @param event                    current event
+   * @param saga                     the model object.
    * @param penRequestUnlinkSagaData the payload as object.
    * @throws InterruptedException if thread is interrupted.
    * @throws IOException          if there is connectivity problem
@@ -72,18 +72,19 @@ public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator
     saga.setSagaState(GET_DIGITAL_ID.toString()); // set current event as saga state.
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     var nextEvent = Event.builder().sagaId(saga.getSagaId())
-        .eventType(GET_DIGITAL_ID)
-        .replyTo(getTopicToSubscribe())
-        .eventPayload(penRequestUnlinkSagaData.getDigitalID())
-        .build();
+      .eventType(GET_DIGITAL_ID)
+      .replyTo(getTopicToSubscribe())
+      .eventPayload(penRequestUnlinkSagaData.getDigitalID())
+      .build();
     postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
     log.info("message sent to DIGITAL_ID_API_TOPIC for GET_DIGITAL_ID Event.");
   }
+
   /**
    * this is executed after get digital id, so the event response would contain the entire digital id payload, this method will only update the student Id.
    *
-   * @param event                      current event
-   * @param saga             the model object.
+   * @param event                    current event
+   * @param saga                     the model object.
    * @param penRequestUnlinkSagaData the payload as object.
    * @throws InterruptedException if thread is interrupted.
    * @throws IOException          if there is connectivity problem
@@ -97,10 +98,10 @@ public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator
     digitalIdSagaData.setStudentID(null);
     digitalIdSagaData.setUpdateUser(penRequestUnlinkSagaData.getUpdateUser());
     var nextEvent = Event.builder().sagaId(saga.getSagaId())
-        .eventType(UPDATE_DIGITAL_ID)
-        .replyTo(getTopicToSubscribe())
-        .eventPayload(JsonUtil.getJsonStringFromObject(digitalIdSagaData))
-        .build();
+      .eventType(UPDATE_DIGITAL_ID)
+      .replyTo(getTopicToSubscribe())
+      .eventPayload(JsonUtil.getJsonStringFromObject(digitalIdSagaData))
+      .build();
     postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
     log.info("message sent to DIGITAL_ID_API_TOPIC for UPDATE_DIGITAL_ID Event.");
 

@@ -13,5 +13,6 @@ public interface PenRequestCommentsMapper {
   PenRequestCommentsMapper mapper = Mappers.getMapper(PenRequestCommentsMapper.class);
 
   PenRequestComments toPenReqComments(PenRequestCommentsSagaData penRequestCommentsSagaData);
+
   PenRequestComments toPenReqComments(PenRequestReturnSagaData penRequestReturnSagaData);
 }

@@ -45,7 +45,7 @@ public class PurgeOldSagaRecordsScheduler {
    */
   @Scheduled(cron = "${scheduled.jobs.purge.old.saga.records.cron}")
   @SchedulerLock(name = "PurgeOldSagaRecordsLock",
-      lockAtLeastFor = "55s", lockAtMostFor = "57s")
+    lockAtLeastFor = "55s", lockAtMostFor = "57s")
   @Transactional
   public void pollSagaTableAndPurgeOldRecords() {
     LockAssert.assertLocked();

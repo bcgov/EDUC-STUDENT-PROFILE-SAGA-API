@@ -1,12 +1,13 @@
 package ca.bc.gov.educ.api.student.profile.saga.schedulers;
 
 import ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum;
-import ca.bc.gov.educ.api.student.profile.saga.orchestrator.base.BaseOrchestrator;
+import ca.bc.gov.educ.api.student.profile.saga.orchestrator.base.Orchestrator;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import net.javacrumbs.shedlock.core.LockAssert;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -29,10 +30,9 @@ import static lombok.AccessLevel.PRIVATE;
 @Slf4j
 public class EventTaskScheduler {
   @Getter(PRIVATE)
-  private final Map<String, BaseOrchestrator<?>> sagaOrchestrators = new HashMap<>();
+  private final Map<String, Orchestrator> sagaOrchestrators = new HashMap<>();
   @Getter(PRIVATE)
   private final SagaRepository sagaRepository;
-
 
 
   @Setter
@@ -44,8 +44,9 @@ public class EventTaskScheduler {
    * @param sagaRepository the saga repository
    */
   @Autowired
-  public EventTaskScheduler(SagaRepository sagaRepository) {
+  public EventTaskScheduler(SagaRepository sagaRepository, List<Orchestrator> orchestrators) {
     this.sagaRepository = sagaRepository;
+    orchestrators.forEach(orchestrator -> registerSagaOrchestrators(orchestrator.getSagaName(), orchestrator));
   }
 
   /**
@@ -54,7 +55,7 @@ public class EventTaskScheduler {
    * @param sagaName     the saga name
    * @param orchestrator the orchestrator
    */
-  public void registerSagaOrchestrators(String sagaName, BaseOrchestrator<?> orchestrator) {
+  public void registerSagaOrchestrators(String sagaName, Orchestrator orchestrator) {
     getSagaOrchestrators().put(sagaName, orchestrator);
   }
 
@@ -68,13 +69,14 @@ public class EventTaskScheduler {
 //Run the job every minute to check how many records are in IN_PROGRESS or STARTED status and has not been updated in last 5 minutes.
   @Scheduled(cron = "${scheduled.jobs.poll.uncompleted.saga.records.cron}")
   @SchedulerLock(name = "ProfileRequestSagaTablePoller",
-      lockAtLeastFor = "55s", lockAtMostFor = "57s")
+    lockAtLeastFor = "55s", lockAtMostFor = "57s")
   public void pollEventTableAndPublish() throws InterruptedException, IOException, TimeoutException {
+    LockAssert.assertLocked();
     var sagas = getSagaRepository().findAllByStatusIn(getStatusFilters());
     if (!sagas.isEmpty()) {
       for (val saga : sagas) {
         if (saga.getCreateDate().isBefore(LocalDateTime.now().minusMinutes(1))
-            && getSagaOrchestrators().containsKey(saga.getSagaName())) {
+          && getSagaOrchestrators().containsKey(saga.getSagaName())) {
           getSagaOrchestrators().get(saga.getSagaName()).replaySaga(saga);
         }
       }

@@ -4,22 +4,26 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
+@EnableAsync
+@Profile("!test")
 public class StudentProfileSagaMVCConfig implements WebMvcConfigurer {
 
-    @Getter(AccessLevel.PRIVATE)
-    private final StudentProfileSagaInterceptor studentProfileSagaInterceptor;
+  @Getter(AccessLevel.PRIVATE)
+  private final StudentProfileSagaInterceptor studentProfileSagaInterceptor;
 
-    @Autowired
-    public StudentProfileSagaMVCConfig(final StudentProfileSagaInterceptor studentProfileSagaInterceptor){
-        this.studentProfileSagaInterceptor = studentProfileSagaInterceptor;
-    }
+  @Autowired
+  public StudentProfileSagaMVCConfig(final StudentProfileSagaInterceptor studentProfileSagaInterceptor) {
+    this.studentProfileSagaInterceptor = studentProfileSagaInterceptor;
+  }
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(studentProfileSagaInterceptor).addPathPatterns("/**");
-    }
+  @Override
+  public void addInterceptors(InterceptorRegistry registry) {
+    registry.addInterceptor(studentProfileSagaInterceptor).addPathPatterns("/**");
+  }
 }

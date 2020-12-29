@@ -4,18 +4,16 @@ package ca.bc.gov.educ.api.student.profile.saga.orchestrator.gmp;
 import ca.bc.gov.educ.api.student.profile.saga.constants.EventType;
 import ca.bc.gov.educ.api.student.profile.saga.mappers.StudentSagaDataMapper;
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
-import ca.bc.gov.educ.api.student.profile.saga.messaging.MessageSubscriber;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
-import ca.bc.gov.educ.api.student.profile.saga.schedulers.EventTaskScheduler;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
+import ca.bc.gov.educ.api.student.profile.saga.struct.base.DigitalIdSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.NotificationEvent;
+import ca.bc.gov.educ.api.student.profile.saga.struct.base.StudentSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenReqEmailSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestCompleteSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestSagaData;
-import ca.bc.gov.educ.api.student.profile.saga.struct.base.DigitalIdSagaData;
-import ca.bc.gov.educ.api.student.profile.saga.struct.base.StudentSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
@@ -29,8 +27,9 @@ import java.util.concurrent.TimeoutException;
 
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.*;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.*;
-import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.*;
-import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.*;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.PEN_REQUEST_COMPLETE_SAGA;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.FORCE_STOPPED;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.IN_PROGRESS;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.*;
 
 
@@ -40,8 +39,8 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
   private static final StudentSagaDataMapper studentSagaDataMapper = StudentSagaDataMapper.mapper;
 
   @Autowired
-  public PenRequestCompleteSagaOrchestrator(final SagaService sagaService, final MessagePublisher messagePublisher, final MessageSubscriber messageSubscriber, final EventTaskScheduler taskScheduler) {
-    super(sagaService, messagePublisher, messageSubscriber, taskScheduler, PenRequestCompleteSagaData.class, PEN_REQUEST_COMPLETE_SAGA.toString(), PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString());
+  public PenRequestCompleteSagaOrchestrator(final SagaService sagaService, final MessagePublisher messagePublisher) {
+    super(sagaService, messagePublisher, PenRequestCompleteSagaData.class, PEN_REQUEST_COMPLETE_SAGA.toString(), PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString());
   }
 
   /**
@@ -50,16 +49,16 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
   @Override
   public void populateStepsToExecuteMap() {
     stepBuilder()
-        .step(INITIATED, INITIATE_SUCCESS, GET_STUDENT, this::executeGetStudent)
-        .step(GET_STUDENT, STUDENT_FOUND, UPDATE_STUDENT, this::executeUpdateStudent)
-        .step(GET_STUDENT, STUDENT_NOT_FOUND, CREATE_STUDENT, this::executeCreateStudent)
-        .step(CREATE_STUDENT, STUDENT_CREATED, GET_DIGITAL_ID, this::executeGetDigitalId)
-        .step(UPDATE_STUDENT, STUDENT_UPDATED, GET_DIGITAL_ID, this::executeGetDigitalId)
-        .step(GET_DIGITAL_ID, DIGITAL_ID_FOUND, UPDATE_DIGITAL_ID, this::executeUpdateDigitalId)
-        .step(UPDATE_DIGITAL_ID, DIGITAL_ID_UPDATED, GET_PEN_REQUEST, this::executeGetPenRequest)
-        .step(GET_PEN_REQUEST, PEN_REQUEST_FOUND, UPDATE_PEN_REQUEST, this::executeUpdatePenRequest)
-        .step(UPDATE_PEN_REQUEST, PEN_REQUEST_UPDATED, NOTIFY_STUDENT_PEN_REQUEST_COMPLETE, this::executeNotifyStudentPenRequestComplete)
-        .step(NOTIFY_STUDENT_PEN_REQUEST_COMPLETE, STUDENT_NOTIFIED, MARK_SAGA_COMPLETE, this::markSagaComplete);
+      .step(INITIATED, INITIATE_SUCCESS, GET_STUDENT, this::executeGetStudent)
+      .step(GET_STUDENT, STUDENT_FOUND, UPDATE_STUDENT, this::executeUpdateStudent)
+      .step(GET_STUDENT, STUDENT_NOT_FOUND, CREATE_STUDENT, this::executeCreateStudent)
+      .step(CREATE_STUDENT, STUDENT_CREATED, GET_DIGITAL_ID, this::executeGetDigitalId)
+      .step(UPDATE_STUDENT, STUDENT_UPDATED, GET_DIGITAL_ID, this::executeGetDigitalId)
+      .step(GET_DIGITAL_ID, DIGITAL_ID_FOUND, UPDATE_DIGITAL_ID, this::executeUpdateDigitalId)
+      .step(UPDATE_DIGITAL_ID, DIGITAL_ID_UPDATED, GET_PEN_REQUEST, this::executeGetPenRequest)
+      .step(GET_PEN_REQUEST, PEN_REQUEST_FOUND, UPDATE_PEN_REQUEST, this::executeUpdatePenRequest)
+      .step(UPDATE_PEN_REQUEST, PEN_REQUEST_UPDATED, NOTIFY_STUDENT_PEN_REQUEST_COMPLETE, this::executeNotifyStudentPenRequestComplete)
+      .step(NOTIFY_STUDENT_PEN_REQUEST_COMPLETE, STUDENT_NOTIFIED, MARK_SAGA_COMPLETE, this::markSagaComplete);
   }
 
   /**
@@ -99,7 +98,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * system has already updated the student id in original payload, please look at {@link #executeUpdateStudent method}.
    *
    * @param event                      current event
-   * @param saga             the model object.
+   * @param saga                       the model object.
    * @param penRequestCompleteSagaData the payload as object.
    * @throws InterruptedException if thread is interrupted.
    * @throws IOException          if there is connectivity problem
@@ -116,10 +115,10 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     saga.setSagaState(GET_DIGITAL_ID.toString()); // set current event as saga state.
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-            .eventType(GET_DIGITAL_ID)
-            .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
-            .eventPayload(penRequestCompleteSagaData.getDigitalID())
-            .build();
+      .eventType(GET_DIGITAL_ID)
+      .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
+      .eventPayload(penRequestCompleteSagaData.getDigitalID())
+      .build();
     postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
     log.info("message sent to DIGITAL_ID_API_TOPIC for GET_DIGITAL_ID Event.");
   }
@@ -129,7 +128,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * we will be passing in the student data to update which we got from saga payload.
    *
    * @param event                      current event
-   * @param saga             the model object.
+   * @param saga                       the model object.
    * @param penRequestCompleteSagaData the payload as object.
    * @throws InterruptedException if thread is interrupted.
    * @throws IOException          if there is connectivity problem
@@ -153,7 +152,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * This event will be after get student event, if student is not found via pen.
    *
    * @param event                      current event
-   * @param saga             the model object.
+   * @param saga                       the model object.
    * @param penRequestCompleteSagaData the payload as object.
    * @throws InterruptedException if thread is interrupted.
    * @throws IOException          if there is connectivity problem
@@ -174,7 +173,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
   /**
    * common method for posting message to student api topic.
    *
-   * @param saga  the model object.
+   * @param saga            the model object.
    * @param studentSagaData the payload which will be passed to student api topic as json string.
    * @param eventType       the type of event whether CREATE_STUDENT or UPDATE_STUDENT
    * @throws InterruptedException if thread is interrupted.
@@ -183,10 +182,10 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    */
   private void delegateMessagePostingForStudent(Saga saga, StudentSagaData studentSagaData, EventType eventType) throws InterruptedException, IOException, TimeoutException {
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-            .eventType(eventType)
-            .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
-            .eventPayload(JsonUtil.getJsonStringFromObject(studentSagaData))
-            .build();
+      .eventType(eventType)
+      .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
+      .eventPayload(JsonUtil.getJsonStringFromObject(studentSagaData))
+      .build();
     postMessageToTopic(STUDENT_API_TOPIC.toString(), nextEvent);
 
   }
@@ -195,7 +194,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * this method will send a message to student api topic to get student details based on PEN.
    *
    * @param event                      current event
-   * @param saga             the model object.
+   * @param saga                       the model object.
    * @param penRequestCompleteSagaData the payload as object.
    * @throws InterruptedException if thread is interrupted.
    * @throws IOException          if there is connectivity problem
@@ -207,10 +206,10 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     saga.setSagaState(GET_STUDENT.toString()); // set current event as saga state.
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-            .eventType(GET_STUDENT)
-            .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
-            .eventPayload(penRequestCompleteSagaData.getPen())
-            .build();
+      .eventType(GET_STUDENT)
+      .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
+      .eventPayload(penRequestCompleteSagaData.getPen())
+      .build();
     postMessageToTopic(STUDENT_API_TOPIC.toString(), nextEvent);
     log.info("message sent to STUDENT_API_TOPIC for GET_STUDENT Event.");
   }
@@ -220,7 +219,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * this is executed after get digital id, so the event response would contain the entire digital id payload, this method will only update the student Id.
    *
    * @param event                      current event
-   * @param saga             the model object.
+   * @param saga                       the model object.
    * @param penRequestCompleteSagaData the payload as object.
    * @throws InterruptedException if thread is interrupted.
    * @throws IOException          if there is connectivity problem
@@ -234,10 +233,10 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     digitalIdSagaData.setStudentID(penRequestCompleteSagaData.getStudentID());
     digitalIdSagaData.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-            .eventType(UPDATE_DIGITAL_ID)
-            .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
-            .eventPayload(JsonUtil.getJsonStringFromObject(digitalIdSagaData))
-            .build();
+      .eventType(UPDATE_DIGITAL_ID)
+      .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
+      .eventPayload(JsonUtil.getJsonStringFromObject(digitalIdSagaData))
+      .build();
     postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
     log.info("message sent to DIGITAL_ID_API_TOPIC for UPDATE_DIGITAL_ID Event.");
 
@@ -247,7 +246,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * this method will send message to pen request email api to send email to the student that the pen request is now completed.
    *
    * @param event                      current event
-   * @param saga             the model object.
+   * @param saga                       the model object.
    * @param penRequestCompleteSagaData the payload as object.
    * @throws InterruptedException if thread is interrupted.
    * @throws IOException          if there is connectivity problem
@@ -258,10 +257,10 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     saga.setSagaState(NOTIFY_STUDENT_PEN_REQUEST_COMPLETE.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-            .eventType(NOTIFY_STUDENT_PEN_REQUEST_COMPLETE)
-            .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
-            .eventPayload(buildPenReqEmailSagaData(penRequestCompleteSagaData))
-            .build();
+      .eventType(NOTIFY_STUDENT_PEN_REQUEST_COMPLETE)
+      .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
+      .eventPayload(buildPenReqEmailSagaData(penRequestCompleteSagaData))
+      .build();
     postMessageToTopic(PROFILE_REQUEST_EMAIL_API_TOPIC.toString(), nextEvent);
     log.info("message sent to PROFILE_REQUEST_EMAIL_API_TOPIC for NOTIFY_STUDENT_PEN_REQUEST_COMPLETE Event.");
 
@@ -276,16 +275,17 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    */
   private String buildPenReqEmailSagaData(PenRequestCompleteSagaData penRequestCompleteSagaData) throws JsonProcessingException {
     PenReqEmailSagaData penReqEmailSagaData = PenReqEmailSagaData.builder()
-            .emailAddress(penRequestCompleteSagaData.getEmail())
-            .firstName(penRequestCompleteSagaData.getLegalFirstName())
-            .demographicsChanged("Y".equalsIgnoreCase(penRequestCompleteSagaData.getDemogChanged()))
-            .identityType(penRequestCompleteSagaData.getIdentityType())
-            .build();
+      .emailAddress(penRequestCompleteSagaData.getEmail())
+      .firstName(penRequestCompleteSagaData.getLegalFirstName())
+      .demographicsChanged("Y".equalsIgnoreCase(penRequestCompleteSagaData.getDemogChanged()))
+      .identityType(penRequestCompleteSagaData.getIdentityType())
+      .build();
     return JsonUtil.getJsonStringFromObject(penReqEmailSagaData);
   }
 
   /**
    * this method is called when the complete saga is in progress and staff members clicks on unlink. system will force stop the existing saga and start unlink saga.
+   *
    * @param saga the model object.
    * @throws InterruptedException if thread is interrupted.
    * @throws IOException          if there is connectivity problem

@@ -47,6 +47,7 @@ public class SagaService {
     saga.setProfileRequestId(profileRequestId);
     return getSagaRepository().save(saga);
   }
+
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public Saga createPenRequestSagaRecord(Object sagaData, String sagaName, String user, UUID penRequestId) throws JsonProcessingException {
     Saga saga = getSaga(JsonUtil.getJsonStringFromObject(sagaData), sagaName, user);
@@ -67,7 +68,7 @@ public class SagaService {
     saga.setUpdateDate(LocalDateTime.now());
     getSagaRepository().save(saga);
     val result = getSagaEventRepository()
-        .findBySagaAndSagaEventOutcomeAndSagaEventStateAndSagaStepNumber(saga, sagaEvent.getSagaEventOutcome(), sagaEvent.getSagaEventState(), sagaEvent.getSagaStepNumber() - 1); //check if the previous step was same and had same outcome, and it is due to replay.
+      .findBySagaAndSagaEventOutcomeAndSagaEventStateAndSagaStepNumber(saga, sagaEvent.getSagaEventOutcome(), sagaEvent.getSagaEventState(), sagaEvent.getSagaStepNumber() - 1); //check if the previous step was same and had same outcome, and it is due to replay.
     if (result.isEmpty()) {
       getSagaEventRepository().save(sagaEvent);
     }
@@ -83,25 +84,25 @@ public class SagaService {
 
   private Saga getSaga(String payload, String sagaName, String user) {
     return Saga
-        .builder()
-        .payload(payload)
-        .sagaName(sagaName)
-        .status(STARTED.toString())
-        .sagaState(INITIATED.toString())
-        .sagaCompensated(false)
-        .createDate(LocalDateTime.now())
-        .createUser(user)
-        .updateUser(user)
-        .updateDate(LocalDateTime.now())
-        .build();
+      .builder()
+      .payload(payload)
+      .sagaName(sagaName)
+      .status(STARTED.toString())
+      .sagaState(INITIATED.toString())
+      .sagaCompensated(false)
+      .createDate(LocalDateTime.now())
+      .createUser(user)
+      .updateUser(user)
+      .updateDate(LocalDateTime.now())
+      .build();
   }
 
-  public List<Saga> findAllByPenRequestIdAndStatuses(UUID penRequestId, List<String> statuses){
-    return getSagaRepository().findAllByPenRequestIdAndStatusIn(penRequestId,statuses);
+  public List<Saga> findAllByPenRequestIdAndStatuses(UUID penRequestId, List<String> statuses) {
+    return getSagaRepository().findAllByPenRequestIdAndStatusIn(penRequestId, statuses);
   }
 
-  public List<Saga> findAllByProfileRequestIdAndStatuses(UUID profileRequestId, List<String> statuses){
-    return getSagaRepository().findAllByProfileRequestIdAndStatusIn(profileRequestId,statuses);
+  public List<Saga> findAllByProfileRequestIdAndStatuses(UUID profileRequestId, List<String> statuses) {
+    return getSagaRepository().findAllByProfileRequestIdAndStatusIn(profileRequestId, statuses);
   }
 
   public Optional<Saga> findByPenRequestIdAndStatusInAndSagaName(UUID penRequestId, List<String> statuses, String sagaName) {
@@ -109,7 +110,7 @@ public class SagaService {
   }
 
   @Transactional(propagation = Propagation.MANDATORY)
-  public void updateSagaRecord(Saga saga){ // saga here MUST be an attached entity
+  public void updateSagaRecord(Saga saga) { // saga here MUST be an attached entity
     getSagaRepository().save(saga);
   }
 }

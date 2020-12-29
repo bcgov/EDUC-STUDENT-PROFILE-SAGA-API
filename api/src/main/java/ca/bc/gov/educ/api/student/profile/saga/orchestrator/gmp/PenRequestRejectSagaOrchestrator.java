@@ -1,10 +1,8 @@
 package ca.bc.gov.educ.api.student.profile.saga.orchestrator.gmp;
 
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
-import ca.bc.gov.educ.api.student.profile.saga.messaging.MessageSubscriber;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
-import ca.bc.gov.educ.api.student.profile.saga.schedulers.EventTaskScheduler;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenReqEmailSagaData;
@@ -23,7 +21,8 @@ import java.util.concurrent.TimeoutException;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.*;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.*;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.PEN_REQUEST_REJECT_SAGA;
-import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.*;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.PEN_REQUEST_REJECT_SAGA_TOPIC;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.PROFILE_REQUEST_EMAIL_API_TOPIC;
 
 
 @Component
@@ -31,8 +30,8 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.*
 public class PenRequestRejectSagaOrchestrator extends BasePenReqSagaOrchestrator<PenRequestRejectSagaData> {
 
   @Autowired
-  public PenRequestRejectSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, MessageSubscriber messageSubscriber, EventTaskScheduler taskScheduler) {
-    super(sagaService, messagePublisher, messageSubscriber, taskScheduler, PenRequestRejectSagaData.class, PEN_REQUEST_REJECT_SAGA.toString(), PEN_REQUEST_REJECT_SAGA_TOPIC.toString());
+  public PenRequestRejectSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher) {
+    super(sagaService, messagePublisher, PenRequestRejectSagaData.class, PEN_REQUEST_REJECT_SAGA.toString(), PEN_REQUEST_REJECT_SAGA_TOPIC.toString());
   }
 
   /**
@@ -41,10 +40,10 @@ public class PenRequestRejectSagaOrchestrator extends BasePenReqSagaOrchestrator
   @Override
   public void populateStepsToExecuteMap() {
     stepBuilder()
-        .step(INITIATED, INITIATE_SUCCESS, GET_PEN_REQUEST, this::executeGetPenRequest)
-        .step(GET_PEN_REQUEST, PEN_REQUEST_FOUND, UPDATE_PEN_REQUEST, this::executeUpdatePenRequest)
-        .step(UPDATE_PEN_REQUEST, PEN_REQUEST_UPDATED, NOTIFY_STUDENT_PEN_REQUEST_REJECT, this::executeNotifyStudentPenRequestReject)
-        .step(NOTIFY_STUDENT_PEN_REQUEST_REJECT, STUDENT_NOTIFIED, MARK_SAGA_COMPLETE, this::markSagaComplete);
+      .step(INITIATED, INITIATE_SUCCESS, GET_PEN_REQUEST, this::executeGetPenRequest)
+      .step(GET_PEN_REQUEST, PEN_REQUEST_FOUND, UPDATE_PEN_REQUEST, this::executeUpdatePenRequest)
+      .step(UPDATE_PEN_REQUEST, PEN_REQUEST_UPDATED, NOTIFY_STUDENT_PEN_REQUEST_REJECT, this::executeNotifyStudentPenRequestReject)
+      .step(NOTIFY_STUDENT_PEN_REQUEST_REJECT, STUDENT_NOTIFIED, MARK_SAGA_COMPLETE, this::markSagaComplete);
   }
 
   @Override
@@ -65,7 +64,7 @@ public class PenRequestRejectSagaOrchestrator extends BasePenReqSagaOrchestrator
    * this method will send message to pen request email api to send email to the student that the pen request is now returned.
    *
    * @param event                    current event
-   * @param saga           the model object.
+   * @param saga                     the model object.
    * @param penRequestRejectSagaData the payload as object.
    * @throws InterruptedException if thread is interrupted.
    * @throws IOException          if there is connectivity problem
@@ -76,10 +75,10 @@ public class PenRequestRejectSagaOrchestrator extends BasePenReqSagaOrchestrator
     saga.setSagaState(NOTIFY_STUDENT_PEN_REQUEST_REJECT.toString());
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     Event nextEvent = Event.builder().sagaId(saga.getSagaId())
-        .eventType(NOTIFY_STUDENT_PEN_REQUEST_REJECT)
-        .replyTo(getTopicToSubscribe())
-        .eventPayload(buildPenReqEmailSagaData(penRequestRejectSagaData))
-        .build();
+      .eventType(NOTIFY_STUDENT_PEN_REQUEST_REJECT)
+      .replyTo(getTopicToSubscribe())
+      .eventPayload(buildPenReqEmailSagaData(penRequestRejectSagaData))
+      .build();
     postMessageToTopic(PROFILE_REQUEST_EMAIL_API_TOPIC.toString(), nextEvent);
     log.info("message sent to PROFILE_REQUEST_EMAIL_API_TOPIC for NOTIFY_STUDENT_PEN_REQUEST_REJECT Event.");
 
@@ -94,10 +93,10 @@ public class PenRequestRejectSagaOrchestrator extends BasePenReqSagaOrchestrator
    */
   private String buildPenReqEmailSagaData(PenRequestRejectSagaData penRequestRejectSagaData) throws JsonProcessingException {
     PenReqEmailSagaData penReqEmailSagaData = PenReqEmailSagaData.builder()
-        .emailAddress(penRequestRejectSagaData.getEmail())
-        .identityType(penRequestRejectSagaData.getIdentityType())
-        .rejectionReason(penRequestRejectSagaData.getRejectionReason())
-        .build();
+      .emailAddress(penRequestRejectSagaData.getEmail())
+      .identityType(penRequestRejectSagaData.getIdentityType())
+      .rejectionReason(penRequestRejectSagaData.getRejectionReason())
+      .build();
     return JsonUtil.getJsonStringFromObject(penReqEmailSagaData);
   }
 }

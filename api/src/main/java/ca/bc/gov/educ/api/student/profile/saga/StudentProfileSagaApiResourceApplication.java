@@ -23,7 +23,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @EnableCaching
 @Slf4j
-@EnableAsync
 @EnableRetry
 @EnableScheduling
 @EnableSchedulerLock(defaultLockAtMostFor = "1s")
@@ -43,10 +42,11 @@ public class StudentProfileSagaApiResourceApplication {
     @Override
     public void configure(WebSecurity web) {
       web.ignoring().antMatchers("/v3/api-docs/**",
-              "/actuator/health", "/actuator/prometheus",
-              "/swagger-ui/**", "/health");
+        "/actuator/health", "/actuator/prometheus",
+        "/swagger-ui/**", "/health");
     }
   }
+
   @Bean
   public LockProvider lockProvider(@Autowired JdbcTemplate jdbcTemplate, @Autowired PlatformTransactionManager transactionManager) {
     return new JdbcTemplateLockProvider(jdbcTemplate, transactionManager, "STUDENT_PROFILE_SAGA_SHEDLOCK");

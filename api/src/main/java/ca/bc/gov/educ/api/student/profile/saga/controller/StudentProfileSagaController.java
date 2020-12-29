@@ -69,11 +69,11 @@ public class StudentProfileSagaController extends BaseController implements Stud
       }
       final Saga saga = getSagaService().createProfileRequestSagaRecord(studentProfileCompleteSagaData, STUDENT_PROFILE_COMPLETE_SAGA.toString(), studentProfileCompleteSagaData.getCreateUser(), profileRequestId);
       getStudentProfileCompleteSagaOrchestrator().executeSagaEvent(Event.builder()
-          .eventType(EventType.INITIATED)
-          .eventOutcome(EventOutcome.INITIATE_SUCCESS)
-          .sagaId(saga.getSagaId())
-          .studentRequestID(studentProfileCompleteSagaData.getStudentProfileRequestID())
-          .build());
+        .eventType(EventType.INITIATED)
+        .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+        .sagaId(saga.getSagaId())
+        .studentRequestID(studentProfileCompleteSagaData.getStudentProfileRequestID())
+        .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());
@@ -88,13 +88,13 @@ public class StudentProfileSagaController extends BaseController implements Stud
       if (!sagaInProgress.isEmpty()) {
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
       }
-      final Saga saga = getSagaService().createProfileRequestSagaRecord(studentProfileCommentsSagaData, STUDENT_PROFILE_COMMENTS_SAGA.toString(),  studentProfileCommentsSagaData.getCreateUser(), profileRequestId);
+      final Saga saga = getSagaService().createProfileRequestSagaRecord(studentProfileCommentsSagaData, STUDENT_PROFILE_COMMENTS_SAGA.toString(), studentProfileCommentsSagaData.getCreateUser(), profileRequestId);
       getStudentProfileCommentsSagaOrchestrator().executeSagaEvent(Event.builder()
-          .eventType(EventType.INITIATED)
-          .eventOutcome(EventOutcome.INITIATE_SUCCESS)
-          .studentRequestID(studentProfileCommentsSagaData.getStudentProfileRequestID())
-          .sagaId(saga.getSagaId())
-          .build());
+        .eventType(EventType.INITIATED)
+        .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+        .studentRequestID(studentProfileCommentsSagaData.getStudentProfileRequestID())
+        .sagaId(saga.getSagaId())
+        .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());
@@ -109,13 +109,13 @@ public class StudentProfileSagaController extends BaseController implements Stud
       if (!sagaInProgress.isEmpty()) {
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
       }
-      final Saga saga = getSagaService().createProfileRequestSagaRecord(studentProfileRequestRejectActionSagaData, STUDENT_PROFILE_REJECT_SAGA.toString(),  studentProfileRequestRejectActionSagaData.getCreateUser(), profileRequestId);
+      final Saga saga = getSagaService().createProfileRequestSagaRecord(studentProfileRequestRejectActionSagaData, STUDENT_PROFILE_REJECT_SAGA.toString(), studentProfileRequestRejectActionSagaData.getCreateUser(), profileRequestId);
       getStudentProfileRejectSagaOrchestrator().executeSagaEvent(Event.builder()
-          .eventType(EventType.INITIATED)
-          .eventOutcome(EventOutcome.INITIATE_SUCCESS)
-          .studentRequestID(studentProfileRequestRejectActionSagaData.getStudentProfileRequestID())
-          .sagaId(saga.getSagaId())
-          .build());
+        .eventType(EventType.INITIATED)
+        .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+        .studentRequestID(studentProfileRequestRejectActionSagaData.getStudentProfileRequestID())
+        .sagaId(saga.getSagaId())
+        .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());
@@ -130,13 +130,13 @@ public class StudentProfileSagaController extends BaseController implements Stud
       if (!sagaInProgress.isEmpty()) {
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
       }
-      final Saga saga = getSagaService().createProfileRequestSagaRecord(studentProfileReturnActionSagaData, STUDENT_PROFILE_RETURN_SAGA.toString(),  studentProfileReturnActionSagaData.getCreateUser(), profileRequestId);
+      final Saga saga = getSagaService().createProfileRequestSagaRecord(studentProfileReturnActionSagaData, STUDENT_PROFILE_RETURN_SAGA.toString(), studentProfileReturnActionSagaData.getCreateUser(), profileRequestId);
       getStudentProfileReturnSagaOrchestrator().executeSagaEvent(Event.builder()
-          .eventType(EventType.INITIATED)
-          .eventOutcome(EventOutcome.INITIATE_SUCCESS)
-          .studentRequestID(studentProfileReturnActionSagaData.getStudentProfileRequestID())
-          .sagaId(saga.getSagaId())
-          .build());
+        .eventType(EventType.INITIATED)
+        .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+        .studentRequestID(studentProfileReturnActionSagaData.getStudentProfileRequestID())
+        .sagaId(saga.getSagaId())
+        .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());

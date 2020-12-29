@@ -25,6 +25,6 @@ public class MessagePublisher extends MessagePubSub {
    * @param message the message
    */
   public void dispatchMessage(String subject, byte[] message) {
-      connection.publish(subject, message);
+    connection.publish(subject, message);
   }
 }

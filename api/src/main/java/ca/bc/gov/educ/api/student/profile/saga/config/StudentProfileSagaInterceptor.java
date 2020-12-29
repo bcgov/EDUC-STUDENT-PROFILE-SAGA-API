@@ -40,7 +40,7 @@ public class StudentProfileSagaInterceptor extends HandlerInterceptorAdapter {
   @Override
   public void afterCompletion(@NonNull HttpServletRequest request, HttpServletResponse response, @NonNull Object handler, Exception ex) {
     int status = response.getStatus();
-    if(status >= 200 && status < 300) {
+    if (status >= 200 && status < 300) {
       log.info("RESPONSE STATUS: {}", status);
     } else {
       log.error("RESPONSE STATUS: {}", status);
