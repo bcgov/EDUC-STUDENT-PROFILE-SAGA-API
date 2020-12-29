@@ -38,7 +38,6 @@ public class MessageSubscriber extends MessagePubSub {
   private MessageHandler onMessage(SagaEventHandler eventHandler) {
     return (Message message) -> {
       if (message != null) {
-        log.info("Message received is :: {} ", message);
         try {
           var eventString = new String(message.getData());
           var event = JsonUtil.getJsonObjectFromString(Event.class, eventString);
