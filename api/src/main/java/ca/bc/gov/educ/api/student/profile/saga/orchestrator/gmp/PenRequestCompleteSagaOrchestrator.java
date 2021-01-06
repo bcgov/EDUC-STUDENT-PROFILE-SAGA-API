@@ -149,6 +149,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     studentDataFromEventResponse.setGenderCode(penRequestCompleteSagaData.getSexCode());
     studentDataFromEventResponse.setSexCode(penRequestCompleteSagaData.getSexCode());
     studentDataFromEventResponse.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
+    studentDataFromEventResponse.setHistoryActivityCode(penRequestCompleteSagaData.getHistoryActivityCode());
     penRequestCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
     saga.setSagaState(UPDATE_STUDENT.toString());
     saga.setPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData));
