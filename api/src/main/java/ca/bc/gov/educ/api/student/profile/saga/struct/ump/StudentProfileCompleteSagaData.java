@@ -43,7 +43,7 @@ public class StudentProfileCompleteSagaData extends StudentProfileRequestActionS
   private String emailVerified;
   //Student Profile Request
   private String completeComment;
-  @Pattern(regexp = "^([A-Z]\\d[A-Z]\\d[A-Z]\\d|)$")
+  @Size(max = 6)
   String postalCode;
   @Size(max = 2)
   String gradeCode;

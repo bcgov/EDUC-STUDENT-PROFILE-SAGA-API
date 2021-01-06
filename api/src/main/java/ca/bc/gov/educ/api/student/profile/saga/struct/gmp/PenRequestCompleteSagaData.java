@@ -44,7 +44,7 @@ public class PenRequestCompleteSagaData {
   String usualLastName;
   @Size(max = 12)
   String localID;
-  @Pattern(regexp = "^([A-Z]\\d[A-Z]\\d[A-Z]\\d|)$")
+  @Size(max = 6)
   String postalCode;
   @Size(max = 2)
   String gradeCode;
