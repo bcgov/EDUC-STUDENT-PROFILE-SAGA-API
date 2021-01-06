@@ -135,17 +135,27 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws TimeoutException     if connection to messaging system times out.
    */
   protected void executeUpdateStudent(Event event, Saga saga, PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    StudentSagaData studentSagaData = studentSagaDataMapper.toStudentSaga(penRequestCompleteSagaData); // get the student data from saga payload.
     StudentSagaData studentDataFromEventResponse = JsonUtil.getJsonObjectFromString(StudentSagaData.class, event.getEventPayload());
-    studentSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); // update the student ID so that update call will have proper identifier.
-    studentSagaData.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
+    //update only the fields which are updated through gmp form.
+    studentDataFromEventResponse.setLegalFirstName(penRequestCompleteSagaData.getLegalFirstName());
+    studentDataFromEventResponse.setLegalLastName(penRequestCompleteSagaData.getLegalLastName());
+    studentDataFromEventResponse.setLegalMiddleNames(penRequestCompleteSagaData.getLegalMiddleNames());
+    studentDataFromEventResponse.setUsualFirstName(penRequestCompleteSagaData.getUsualFirstName());
+    studentDataFromEventResponse.setUsualLastName(penRequestCompleteSagaData.getUsualLastName());
+    studentDataFromEventResponse.setUsualMiddleNames(penRequestCompleteSagaData.getUsualMiddleNames());
+    studentDataFromEventResponse.setDob(penRequestCompleteSagaData.getDob());
+    studentDataFromEventResponse.setEmail(penRequestCompleteSagaData.getEmail());
+    studentDataFromEventResponse.setEmailVerified(penRequestCompleteSagaData.getEmailVerified());
+    studentDataFromEventResponse.setGenderCode(penRequestCompleteSagaData.getSexCode());
+    studentDataFromEventResponse.setSexCode(penRequestCompleteSagaData.getSexCode());
+    studentDataFromEventResponse.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
     penRequestCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
     saga.setSagaState(UPDATE_STUDENT.toString());
     saga.setPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData));
     SagaEvent eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     log.info("message sent to STUDENT_API_TOPIC for UPDATE_STUDENT Event.");
-    delegateMessagePostingForStudent(saga, studentSagaData, UPDATE_STUDENT);
+    delegateMessagePostingForStudent(saga, studentDataFromEventResponse, UPDATE_STUDENT);
   }
 
   /**

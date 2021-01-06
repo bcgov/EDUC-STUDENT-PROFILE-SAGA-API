@@ -33,4 +33,8 @@ public class StudentSagaData {
   private String mincode;
   private String emailVerified;
   private String historyActivityCode;
+  private String gradeYear;
+  private String demogCode;
+  private String statusCode;
+  private String memo;
 }
