@@ -113,6 +113,7 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
     studentDataFromEventResponse.setGenderCode(studentProfileCompleteSagaData.getSexCode());
     studentDataFromEventResponse.setSexCode(studentProfileCompleteSagaData.getSexCode());
     studentDataFromEventResponse.setUpdateUser(studentProfileCompleteSagaData.getUpdateUser());
+    studentDataFromEventResponse.setHistoryActivityCode(studentProfileCompleteSagaData.getHistoryActivityCode());
     studentProfileCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
     saga.setSagaState(UPDATE_STUDENT.toString());
     saga.setPayload(JsonUtil.getJsonStringFromObject(studentProfileCompleteSagaData));
