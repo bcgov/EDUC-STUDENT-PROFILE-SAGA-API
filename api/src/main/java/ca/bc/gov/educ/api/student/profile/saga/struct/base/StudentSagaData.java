@@ -37,4 +37,5 @@ public class StudentSagaData {
   private String demogCode;
   private String statusCode;
   private String memo;
+  private String trueStudentID;
 }
