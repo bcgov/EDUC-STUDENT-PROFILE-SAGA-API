@@ -15,12 +15,14 @@ import java.util.List;
 
 @Component
 @Slf4j
-public class MessageSubscriber extends MessagePubSub {
+public class MessageSubscriber {
 
+
+  private final Connection connection;
 
   @Autowired
   public MessageSubscriber(final Connection con, List<SagaEventHandler> sagaEventHandlers) {
-    super.connection = con;
+    this.connection = con;
     sagaEventHandlers.forEach(handler -> subscribe(handler.getTopicToSubscribe(), handler));
   }
 
