@@ -19,11 +19,11 @@ public class StudentProfileCompleteSagaData extends StudentProfileRequestActionS
   //Student Api
   @NotNull(message = "PEN Number can not be null.")
   private String pen;
-  @Size(max = 40)
+  @Size(max = 25)
   private String legalFirstName;
-  @Size(max = 60)
+  @Size(max = 25)
   private String legalMiddleNames;
-  @Size(max = 40)
+  @Size(max = 25)
   @NotNull(message = "Legal Last Name can not be null.")
   private String legalLastName;
   @NotNull(message = "Date of Birth can not be null.")
@@ -32,13 +32,13 @@ public class StudentProfileCompleteSagaData extends StudentProfileRequestActionS
   @NotNull(message = "Sex Code can not be null.")
   private String sexCode;
   private String genderCode;
-  @Size(max = 40)
+  @Size(max = 25)
   private String usualFirstName;
-  @Size(max = 60)
+  @Size(max = 25)
   private String usualMiddleNames;
-  @Size(max = 40)
+  @Size(max = 25)
   private String usualLastName;
-  @Size(max = 80)
+  @Pattern(regexp = "\\d{4}-\\d{2}-\\d{2}")
   private String deceasedDate;
   private String emailVerified;
   //Student Profile Request

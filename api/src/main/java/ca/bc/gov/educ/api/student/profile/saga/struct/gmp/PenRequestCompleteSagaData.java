@@ -23,11 +23,11 @@ public class PenRequestCompleteSagaData {
   private String penRequestID;
   @NotNull(message = "PEN Number can not be null.")
   String pen;
-  @Size(max = 40)
+  @Size(max = 25)
   String legalFirstName;
-  @Size(max = 60)
+  @Size(max = 25)
   String legalMiddleNames;
-  @Size(max = 40)
+  @Size(max = 25)
   @NotNull(message = "Legal Last Name can not be null.")
   String legalLastName;
   @NotNull(message = "Date of Birth can not be null.")
@@ -36,11 +36,11 @@ public class PenRequestCompleteSagaData {
   @NotNull(message = "Sex Code can not be null.")
   String sexCode;
   String genderCode;
-  @Size(max = 40)
+  @Size(max = 25)
   String usualFirstName;
-  @Size(max = 60)
+  @Size(max = 25)
   String usualMiddleNames;
-  @Size(max = 40)
+  @Size(max = 25)
   String usualLastName;
   @Size(max = 12)
   String localID;
