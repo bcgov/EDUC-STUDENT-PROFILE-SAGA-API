@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.concurrent.TimeoutException;
 
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.*;
@@ -83,6 +84,7 @@ public class PenRequestCommentsSagaOrchestrator extends BasePenReqSagaOrchestrat
   protected void updatePenRequestPayload(PenRequestSagaData penRequestSagaData, PenRequestCommentsSagaData penRequestCommentsSagaData) {
     penRequestSagaData.setPenRequestStatusCode(penRequestCommentsSagaData.getPenRequestStatusCode());
     penRequestSagaData.setUpdateUser(penRequestCommentsSagaData.getUpdateUser());
+    penRequestSagaData.setStatusUpdateDate(LocalDateTime.now().withNano(0).toString());
   }
 
   /**
