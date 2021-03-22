@@ -22,6 +22,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
@@ -30,6 +31,7 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.PEN_REQ
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.PEN_REQUEST_COMPLETE_SAGA;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.PEN_REQUEST_API_TOPIC;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.DURATION;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
@@ -92,6 +94,7 @@ public class PenRequestCommentsSagaOrchestratorTest {
     var sagaFromDB = sagaService.findSagaById(saga.getSagaId()).orElseThrow();
     assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
+    assertThat(sagaFromDB.getUpdateDate()).isBefore(LocalDateTime.now().toString());
     assertThat(sagaFromDB.getSagaState()).isEqualTo(ADD_PEN_REQUEST_COMMENT.toString());
     var sagaStates = sagaService.findAllSagaStates(saga);
     assertThat(sagaStates.size()).isEqualTo(1);
@@ -114,6 +117,7 @@ public class PenRequestCommentsSagaOrchestratorTest {
     var sagaFromDB = sagaService.findSagaById(saga.getSagaId()).orElseThrow();
     assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
+    assertThat(sagaFromDB.getUpdateDate()).isBefore(LocalDateTime.now().toString());
     assertThat(sagaFromDB.getSagaState()).isEqualTo(GET_PEN_REQUEST.toString());
     var sagaStates = sagaService.findAllSagaStates(saga);
     assertThat(sagaStates.size()).isEqualTo(1);
@@ -136,6 +140,7 @@ public class PenRequestCommentsSagaOrchestratorTest {
     var sagaFromDB = sagaService.findSagaById(saga.getSagaId()).orElseThrow();
     assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
+    assertThat(sagaFromDB.getUpdateDate()).isBefore(LocalDateTime.now().toString());
     assertThat(sagaFromDB.getSagaState()).isEqualTo(UPDATE_PEN_REQUEST.toString());
     var sagaStates = sagaService.findAllSagaStates(saga);
     assertThat(sagaStates.size()).isEqualTo(1);
