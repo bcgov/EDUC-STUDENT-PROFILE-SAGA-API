@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.concurrent.TimeoutException;
 
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.*;
@@ -78,6 +79,7 @@ public class StudentProfileCommentsSagaOrchestrator extends BaseProfileReqSagaOr
   protected void updateProfileRequestPayload(StudentProfileSagaData studentProfileSagaData, StudentProfileCommentsSagaData studentProfileCommentsSagaData) {
     studentProfileSagaData.setStudentRequestStatusCode(studentProfileCommentsSagaData.getStudentProfileRequestStatusCode());
     studentProfileSagaData.setUpdateUser(studentProfileCommentsSagaData.getUpdateUser());
+    studentProfileSagaData.setStatusUpdateDate(LocalDateTime.now().withNano(0).toString());
   }
 
   /**
