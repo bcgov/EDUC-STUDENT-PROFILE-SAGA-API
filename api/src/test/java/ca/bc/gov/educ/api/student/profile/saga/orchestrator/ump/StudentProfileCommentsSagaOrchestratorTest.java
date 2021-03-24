@@ -24,6 +24,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
@@ -97,6 +98,7 @@ public class StudentProfileCommentsSagaOrchestratorTest {
     assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(ADD_STUDENT_PROFILE_COMMENT.toString());
+    assertThat(sagaFromDB.getUpdateDate()).isBefore(LocalDateTime.now().toString());
     var sagaStates = sagaService.findAllSagaStates(saga);
     assertThat(sagaStates.size()).isEqualTo(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(INITIATED.toString());
@@ -119,6 +121,7 @@ public class StudentProfileCommentsSagaOrchestratorTest {
     assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(GET_STUDENT_PROFILE.toString());
+    assertThat(sagaFromDB.getUpdateDate()).isBefore(LocalDateTime.now().toString());
     var sagaStates = sagaService.findAllSagaStates(saga);
     assertThat(sagaStates.size()).isEqualTo(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.ADD_STUDENT_PROFILE_COMMENT.toString());
@@ -140,6 +143,7 @@ public class StudentProfileCommentsSagaOrchestratorTest {
     var sagaFromDB = sagaService.findSagaById(saga.getSagaId()).orElseThrow();
     assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
+    assertThat(sagaFromDB.getUpdateDate()).isBefore(LocalDateTime.now().toString());
     assertThat(sagaFromDB.getSagaState()).isEqualTo(UPDATE_STUDENT_PROFILE.toString());
     var sagaStates = sagaService.findAllSagaStates(saga);
     assertThat(sagaStates.size()).isEqualTo(1);
