@@ -33,7 +33,7 @@ public class StudentProfileSagaMVCConfig implements WebMvcConfigurer {
     registry.addInterceptor(this.studentProfileSagaInterceptor).addPathPatterns("/**");
   }
 
-  @Bean
+  @Bean("async-task-executor")
   public Executor taskExecutor() {
     return new EnhancedQueueExecutor.Builder()
         .setThreadFactory(new ThreadFactoryBuilder().setNameFormat("async-task-%d").build())
