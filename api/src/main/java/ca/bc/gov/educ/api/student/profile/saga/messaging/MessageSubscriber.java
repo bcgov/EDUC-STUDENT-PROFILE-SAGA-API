@@ -21,14 +21,14 @@ public class MessageSubscriber {
   private final Connection connection;
 
   @Autowired
-  public MessageSubscriber(final Connection con, List<SagaEventHandler> sagaEventHandlers) {
+  public MessageSubscriber(final Connection con, final List<SagaEventHandler> sagaEventHandlers) {
     this.connection = con;
-    sagaEventHandlers.forEach(handler -> subscribe(handler.getTopicToSubscribe(), handler));
+    sagaEventHandlers.forEach(handler -> this.subscribe(handler.getTopicToSubscribe(), handler));
   }
 
-  public void subscribe(String topic, SagaEventHandler eventHandler) {
-    String queue = topic.replace("_", "-");
-    var dispatcher = connection.createDispatcher(onMessage(eventHandler));
+  public void subscribe(final String topic, final SagaEventHandler eventHandler) {
+    final String queue = topic.replace("_", "-");
+    final var dispatcher = this.connection.createDispatcher(this.onMessage(eventHandler));
     dispatcher.subscribe(topic, queue);
   }
 
@@ -37,12 +37,12 @@ public class MessageSubscriber {
    *
    * @return the message handler
    */
-  private MessageHandler onMessage(SagaEventHandler eventHandler) {
+  private MessageHandler onMessage(final SagaEventHandler eventHandler) {
     return (Message message) -> {
       if (message != null) {
         try {
-          var eventString = new String(message.getData());
-          var event = JsonUtil.getJsonObjectFromString(Event.class, eventString);
+          final var eventString = new String(message.getData());
+          final var event = JsonUtil.getJsonObjectFromString(Event.class, eventString);
           eventHandler.executeSagaEvent(event);
         } catch (final Exception e) {
           log.error("Exception ", e);

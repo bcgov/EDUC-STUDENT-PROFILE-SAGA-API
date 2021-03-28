@@ -1,16 +1,18 @@
 package ca.bc.gov.educ.api.student.profile.saga.config;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.AccessLevel;
 import lombok.Getter;
+import org.jboss.threads.EnhancedQueueExecutor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.time.Duration;
 import java.util.concurrent.Executor;
 
 @Configuration
@@ -27,18 +29,14 @@ public class StudentProfileSagaMVCConfig implements WebMvcConfigurer {
   }
 
   @Override
-  public void addInterceptors(InterceptorRegistry registry) {
-    registry.addInterceptor(studentProfileSagaInterceptor).addPathPatterns("/**");
+  public void addInterceptors(final InterceptorRegistry registry) {
+    registry.addInterceptor(this.studentProfileSagaInterceptor).addPathPatterns("/**");
   }
 
   @Bean
   public Executor taskExecutor() {
-    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    executor.setCorePoolSize(5);
-    executor.setMaxPoolSize(10);
-    executor.setQueueCapacity(500);
-    executor.setThreadNamePrefix("async-task-");
-    executor.initialize();
-    return executor;
+    return new EnhancedQueueExecutor.Builder()
+        .setThreadFactory(new ThreadFactoryBuilder().setNameFormat("async-task-%d").build())
+        .setCorePoolSize(2).setMaximumPoolSize(50).setKeepAliveTime(Duration.ofSeconds(60)).build();
   }
 }

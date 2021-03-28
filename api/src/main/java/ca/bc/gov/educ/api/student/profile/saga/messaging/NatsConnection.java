@@ -34,38 +34,38 @@ public class NatsConnection implements Closeable {
    */
   @Autowired
   public NatsConnection(final ApplicationProperties applicationProperties) throws IOException, InterruptedException {
-    this.natsCon = connectToNats(applicationProperties.getServer(), applicationProperties.getMaxReconnect(), applicationProperties.getConnectionName());
+    this.natsCon = this.connectToNats(applicationProperties.getServer(), applicationProperties.getMaxReconnect(), applicationProperties.getConnectionName());
   }
 
-  private Connection connectToNats(String serverUrl, int maxReconnect, String connectionName) throws IOException, InterruptedException {
-    io.nats.client.Options natsOptions = new io.nats.client.Options.Builder()
-      .connectionListener(this::connectionListener)
-      .maxPingsOut(5)
-      .pingInterval(Duration.ofSeconds(2))
-      .connectionName(connectionName)
-      .connectionTimeout(Duration.ofSeconds(5))
-      .executor(new EnhancedQueueExecutor.Builder()
-        .setThreadFactory(new ThreadFactoryBuilder().setNameFormat("core-nats-%d").build())
-        .setCorePoolSize(10).setMaximumPoolSize(50).setKeepAliveTime(Duration.ofSeconds(60)).build())
-      .maxReconnects(maxReconnect)
-      .reconnectWait(Duration.ofSeconds(2))
+  private Connection connectToNats(final String serverUrl, final int maxReconnect, final String connectionName) throws IOException, InterruptedException {
+    final io.nats.client.Options natsOptions = new io.nats.client.Options.Builder()
+        .connectionListener(this::connectionListener)
+        .maxPingsOut(5)
+        .pingInterval(Duration.ofSeconds(2))
+        .connectionName(connectionName)
+        .connectionTimeout(Duration.ofSeconds(5))
+        .executor(new EnhancedQueueExecutor.Builder()
+            .setThreadFactory(new ThreadFactoryBuilder().setNameFormat("core-nats-%d").build())
+            .setCorePoolSize(10).setMaximumPoolSize(50).setKeepAliveTime(Duration.ofSeconds(60)).build())
+        .maxReconnects(maxReconnect)
+        .reconnectWait(Duration.ofSeconds(2))
       .servers(new String[]{serverUrl})
       .build();
     return Nats.connect(natsOptions);
   }
 
-  private void connectionListener(Connection connection, ConnectionListener.Events events) {
+  private void connectionListener(final Connection connection, final ConnectionListener.Events events) {
     log.info("NATS -> {}", events.toString());
   }
 
 
   @Override
   public void close() {
-    if (natsCon != null) {
+    if (this.natsCon != null) {
       log.info("closing nats connection...");
       try {
-        natsCon.close();
-      } catch (InterruptedException e) {
+        this.natsCon.close();
+      } catch (final InterruptedException e) {
         log.error("error while closing nats connection...", e);
         Thread.currentThread().interrupt();
       }
@@ -75,6 +75,6 @@ public class NatsConnection implements Closeable {
 
   @Bean
   public Connection getConnection() {
-    return natsCon;
+    return this.natsCon;
   }
 }

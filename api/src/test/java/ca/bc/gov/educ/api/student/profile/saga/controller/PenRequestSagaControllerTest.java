@@ -1,26 +1,23 @@
 package ca.bc.gov.educ.api.student.profile.saga.controller;
 
-import ca.bc.gov.educ.api.student.profile.saga.exception.RestExceptionHandler;
 import ca.bc.gov.educ.api.student.profile.saga.exception.SagaRuntimeException;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaEventRepository;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
-import ca.bc.gov.educ.api.student.profile.saga.support.WithMockOAuth2Scope;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.val;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -29,20 +26,23 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.INITIA
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.STARTED;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @SuppressWarnings("java:S100")
+@AutoConfigureMockMvc
 public class PenRequestSagaControllerTest {
 
+  @Autowired
   private MockMvc mockMvc;
 
   @Autowired
@@ -56,22 +56,16 @@ public class PenRequestSagaControllerTest {
   @Autowired
   PenRequestSagaController controller;
 
-  @Before
-  public void setUp() {
-    mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                             .setControllerAdvice(new RestExceptionHandler()).build();
-  }
 
   @After
   public void after() {
-    sagaEventRepository.deleteAll();
-    repository.deleteAll();
+    this.sagaEventRepository.deleteAll();
+    this.repository.deleteAll();
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "PEN_REQUEST_COMPLETE_SAGA")
   public void test_completePENRequest_givenInValidPayload_shouldReturnBadRequest() throws Exception {
-    String payload = "{\n" +
+    final String payload = "{\n" +
         "  \"digitalID\": \"ac330603-715f-12b6-8171-6079a6270005\",\n" +
         "  \"penRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
         "  \"legalFirstName\": \"om\",\n" +
@@ -87,13 +81,12 @@ public class PenRequestSagaControllerTest {
         "  \"penRequestStatusCode\": \"MANUAL\",\n" +
         "  \"statusUpdateDate\": \"2020-04-17T22:29:00\"\n" +
         "}";
-    this.mockMvc.perform(post("/pen-request-complete-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isBadRequest());
+    this.mockMvc.perform(post("/pen-request-complete-saga").with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_COMPLETE_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "PEN_REQUEST_COMPLETE_SAGA")
   public void test_completePENRequest_givenValidPayload_shouldReturnStatusNoContent() throws Exception {
-    String payload = "{\n" +
+    final String payload = "{\n" +
         "  \"digitalID\": \"ac330603-715f-12b6-8171-6079a6270005\",\n" +
         "  \"penRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
         "  \"pen\": \"123456789\",\n" +
@@ -112,15 +105,14 @@ public class PenRequestSagaControllerTest {
         "  \"historyActivityCode\": \"PEN\",\n" +
         "  \"identityType\": \"BASIC\"\n" +
         "}";
-    this.mockMvc.perform(post("/pen-request-complete-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
-    val result = repository.findAll();
+    this.mockMvc.perform(post("/pen-request-complete-saga").with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_COMPLETE_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
+    val result = this.repository.findAll();
     assertEquals(1, result.size());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "PEN_REQUEST_REJECT_SAGA")
   public void test_rejectPENRequest_givenValidPayload_shouldReturnStatusNoContent() throws Exception {
-    String payload = "{\n" +
+    final String payload = "{\n" +
         "  \"digitalID\": \"ac330603-715f-12b6-8171-6079a6270005\",\n" +
         "  \"penRetrievalRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
         "  \"pen\": \"123456789\",\n" +
@@ -138,15 +130,14 @@ public class PenRequestSagaControllerTest {
         "  \"rejectionReason\": \"Can't find you\",\n" +
         "  \"statusUpdateDate\": \"2020-04-17T22:29:00\"\n" +
         "}";
-    this.mockMvc.perform(post("/pen-request-reject-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
-    val result = repository.findAll();
+    this.mockMvc.perform(post("/pen-request-reject-saga").with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_REJECT_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
+    val result = this.repository.findAll();
     assertEquals(1, result.size());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "PEN_REQUEST_REJECT_SAGA")
   public void test_rejectPENRequest_givenValidPayloadButOtherSagaInFlight_shouldReturnStatusConflict() throws Exception {
-    String payload = "{\n" +
+    final String payload = "{\n" +
         "  \"digitalID\": \"ac330603-715f-12b6-8171-6079a6270005\",\n" +
         "  \"penRetrievalRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
         "  \"pen\": \"123456789\",\n" +
@@ -164,17 +155,16 @@ public class PenRequestSagaControllerTest {
         "  \"rejectionReason\": \"Can't find you\",\n" +
         "  \"statusUpdateDate\": \"2020-04-17T22:29:00\"\n" +
         "}";
-    repository.save(getSaga(payload, "PEN_REQUEST_REJECT_SAGA", UUID.fromString("ac334a38-715f-1340-8171-607a59d0000a")));
-    this.mockMvc.perform(post("/pen-request-reject-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isConflict());
-    val result = repository.findAll();
+    this.repository.save(this.getSaga(payload, "PEN_REQUEST_REJECT_SAGA", UUID.fromString("ac334a38-715f-1340-8171-607a59d0000a")));
+    this.mockMvc.perform(post("/pen-request-reject-saga").with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_REJECT_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isConflict());
+    val result = this.repository.findAll();
     assertEquals(1, result.size());
   }
 
 
   @Test
-  @WithMockOAuth2Scope(scope = "PEN_REQUEST_COMMENT_SAGA")
   public void test_commentPENRequest_givenInValidPayload_shouldReturnBadRequest() throws Exception {
-    String payload = "{\n" +
+    final String payload = "{\n" +
         "  \"staffMemberIDIRGUID\": \"2827808f-dfde-4b9b-835c-10cf0130261c\",\n" +
         "  \"staffMemberName\": \"SHFOORD\",\n" +
         "  \"commentContent\": \"Hi\",\n" +
@@ -183,14 +173,13 @@ public class PenRequestSagaControllerTest {
         "  \"createUser\": \"STAFF_ADMIN\",\n" +
         "  \"updateUser\": \"STAFF_ADMIN\"\n" +
         "}";
-    this.mockMvc.perform(post("/pen-request-comment-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isBadRequest());
+    this.mockMvc.perform(post("/pen-request-comment-saga").with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_COMMENT_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isBadRequest());
   }
 
 
   @Test
-  @WithMockOAuth2Scope(scope = "PEN_REQUEST_COMMENT_SAGA")
   public void test_commentPENRequest_givenValidPayload_shouldReturnNoContent() throws Exception {
-    String payload = "{\n" +
+    final String payload = "{\n" +
         "  \"penRetrievalRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
         "  \"staffMemberIDIRGUID\": \"2827808f-dfde-4b9b-835c-10cf0130261c\",\n" +
         "  \"staffMemberName\": \"SHFOORD\",\n" +
@@ -200,25 +189,23 @@ public class PenRequestSagaControllerTest {
         "  \"createUser\": \"STAFF_ADMIN\",\n" +
         "  \"updateUser\": \"STAFF_ADMIN\"\n" +
         "}";
-    this.mockMvc.perform(post("/pen-request-comment-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
-    val result = repository.findAll();
+    this.mockMvc.perform(post("/pen-request-comment-saga").with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_COMMENT_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
+    val result = this.repository.findAll();
     assertEquals(1, result.size());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "PEN_REQUEST_UNLINK_SAGA")
   public void test_unlinkPENRequest_givenInValidPayload_shouldReturnBadRequest() throws Exception {
-    var payload = "{\n" +
+    final var payload = "{\n" +
 
         "}";
-    this.mockMvc.perform(post("/pen-request-unlink-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print())
+    this.mockMvc.perform(post("/pen-request-unlink-saga").with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_UNLINK_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print())
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.subErrors", hasSize(6)));
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "PEN_REQUEST_UNLINK_SAGA")
   public void test_unlinkPENRequest_givenValidPayload_shouldReturnOK() throws Exception {
-    var payload = "{\n" +
+    final var payload = "{\n" +
         "  \"penRetrievalRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
         "  \"digitalID\": \"2827808f-dfde-4b9b-835c-10cf0130261c\",\n" +
         "  \"reviewer\": \"SHFOORD\",\n" +
@@ -226,15 +213,14 @@ public class PenRequestSagaControllerTest {
         "  \"createUser\": \"STAFF_ADMIN\",\n" +
         "  \"updateUser\": \"STAFF_ADMIN\"\n" +
         "}";
-    this.mockMvc.perform(post("/pen-request-unlink-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$", notNullValue()));
-    val result = repository.findAll();
+    this.mockMvc.perform(post("/pen-request-unlink-saga").with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_UNLINK_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$", notNullValue()));
+    val result = this.repository.findAll();
     assertEquals(1, result.size());
   }
 
   @Test
-  @WithMockOAuth2Scope(scope = "PEN_REQUEST_UNLINK_SAGA")
   public void test_unlinkPENRequest_givenValidPayloadAndCompleteSagaInProgress_shouldForceStopCompleteSagaAndReturnOK() throws Exception {
-    var payload = "{\n" +
+    final var payload = "{\n" +
         "  \"penRetrievalRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
         "  \"digitalID\": \"2827808f-dfde-4b9b-835c-10cf0130261c\",\n" +
         "  \"reviewer\": \"SHFOORD\",\n" +
@@ -242,12 +228,12 @@ public class PenRequestSagaControllerTest {
         "  \"createUser\": \"STAFF_ADMIN\",\n" +
         "  \"updateUser\": \"STAFF_ADMIN\"\n" +
         "}";
-    var saga = getSaga(payload, "PEN_REQUEST_COMPLETE_SAGA", UUID.fromString("ac334a38-715f-1340-8171-607a59d0000a"));
-    repository.save(saga);
-    this.mockMvc.perform(post("/pen-request-unlink-saga").contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$", notNullValue()));
-    val result = repository.findAll();
+    final var saga = this.getSaga(payload, "PEN_REQUEST_COMPLETE_SAGA", UUID.fromString("ac334a38-715f-1340-8171-607a59d0000a"));
+    this.repository.save(saga);
+    this.mockMvc.perform(post("/pen-request-unlink-saga").with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_UNLINK_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$", notNullValue()));
+    val result = this.repository.findAll();
     assertEquals(2, result.size());
-    var updatedSaga = repository.findById(saga.getSagaId());
+    final var updatedSaga = this.repository.findById(saga.getSagaId());
     assertTrue(updatedSaga.isPresent());
     assertEquals("FORCE_STOPPED", updatedSaga.get().getStatus());
   }
@@ -255,12 +241,12 @@ public class PenRequestSagaControllerTest {
   public static String asJsonString(final Object obj) {
     try {
       return new ObjectMapper().writeValueAsString(obj);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());
     }
   }
 
-  private Saga getSaga(String payload, String sagaName, UUID penRequestId) {
+  private Saga getSaga(final String payload, final String sagaName, final UUID penRequestId) {
     return Saga
         .builder()
         .payload(payload)

@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,7 +25,6 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.F
 import static lombok.AccessLevel.PRIVATE;
 
 @RestController
-@EnableResourceServer
 @Slf4j
 public class PenRequestSagaController extends BaseController implements PenRequestSagaEndpoint {
   @Getter(PRIVATE)
@@ -49,7 +47,7 @@ public class PenRequestSagaController extends BaseController implements PenReque
   private final PenRequestUnlinkSagaOrchestrator penRequestUnlinkSagaOrchestrator;
 
   @Autowired
-  public PenRequestSagaController(final SagaService sagaService, final PenRequestCompleteSagaOrchestrator penRequestCompleteSagaOrchestrator, PenRequestCommentsSagaOrchestrator penRequestCommentsSagaOrchestrator, PenRequestReturnSagaOrchestrator penRequestReturnSagaOrchestrator, PenRequestRejectSagaOrchestrator penRequestRejectSagaOrchestrator, PenRequestUnlinkSagaOrchestrator penRequestUnlinkSagaOrchestrator) {
+  public PenRequestSagaController(final SagaService sagaService, final PenRequestCompleteSagaOrchestrator penRequestCompleteSagaOrchestrator, final PenRequestCommentsSagaOrchestrator penRequestCommentsSagaOrchestrator, final PenRequestReturnSagaOrchestrator penRequestReturnSagaOrchestrator, final PenRequestRejectSagaOrchestrator penRequestRejectSagaOrchestrator, final PenRequestUnlinkSagaOrchestrator penRequestUnlinkSagaOrchestrator) {
     this.sagaService = sagaService;
     this.penRequestCompleteSagaOrchestrator = penRequestCompleteSagaOrchestrator;
     this.penRequestCommentsSagaOrchestrator = penRequestCommentsSagaOrchestrator;
@@ -59,20 +57,20 @@ public class PenRequestSagaController extends BaseController implements PenReque
   }
 
   @Override
-  public ResponseEntity<String> completePENRequest(PenRequestCompleteSagaData penRequestCompleteSagaData) {
+  public ResponseEntity<String> completePENRequest(final PenRequestCompleteSagaData penRequestCompleteSagaData) {
     try {
-      var penRequestId = UUID.fromString(penRequestCompleteSagaData.getPenRequestID());
-      var sagaInProgress = getSagaService().findAllByPenRequestIdAndStatuses(penRequestId, getStatusesFilter());
+      final var penRequestId = UUID.fromString(penRequestCompleteSagaData.getPenRequestID());
+      final var sagaInProgress = this.getSagaService().findAllByPenRequestIdAndStatuses(penRequestId, this.getStatusesFilter());
       if (!sagaInProgress.isEmpty()) {
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
       }
-      var saga = getSagaService().createPenRequestSagaRecord(penRequestCompleteSagaData, PEN_REQUEST_COMPLETE_SAGA.toString(), penRequestCompleteSagaData.getCreateUser(), penRequestId);
-      getPenRequestCompleteSagaOrchestrator().executeSagaEvent(Event.builder()
-        .eventType(EventType.INITIATED)
-        .eventOutcome(EventOutcome.INITIATE_SUCCESS)
-        .penRequestID(penRequestCompleteSagaData.getPenRequestID())
-        .sagaId(saga.getSagaId())
-        .build());
+      final var saga = this.getSagaService().createPenRequestSagaRecord(penRequestCompleteSagaData, PEN_REQUEST_COMPLETE_SAGA.toString(), penRequestCompleteSagaData.getCreateUser(), penRequestId);
+      this.getPenRequestCompleteSagaOrchestrator().executeSagaEvent(Event.builder()
+          .eventType(EventType.INITIATED)
+          .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+          .penRequestID(penRequestCompleteSagaData.getPenRequestID())
+          .sagaId(saga.getSagaId())
+          .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());
@@ -80,20 +78,20 @@ public class PenRequestSagaController extends BaseController implements PenReque
   }
 
   @Override
-  public ResponseEntity<String> updatePenRequestAndAddComment(PenRequestCommentsSagaData penRequestCommentsSagaData) {
+  public ResponseEntity<String> updatePenRequestAndAddComment(final PenRequestCommentsSagaData penRequestCommentsSagaData) {
     try {
-      var penRequestId = UUID.fromString(penRequestCommentsSagaData.getPenRetrievalRequestID());
-      var sagaInProgress = getSagaService().findAllByPenRequestIdAndStatuses(penRequestId, getStatusesFilter());
+      final var penRequestId = UUID.fromString(penRequestCommentsSagaData.getPenRetrievalRequestID());
+      final var sagaInProgress = this.getSagaService().findAllByPenRequestIdAndStatuses(penRequestId, this.getStatusesFilter());
       if (!sagaInProgress.isEmpty()) {
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
       }
-      final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestCommentsSagaData, PEN_REQUEST_COMMENTS_SAGA.toString(), penRequestCommentsSagaData.getCreateUser(), penRequestId);
-      getPenRequestCommentsSagaOrchestrator().executeSagaEvent(Event.builder()
-        .eventType(EventType.INITIATED)
-        .eventOutcome(EventOutcome.INITIATE_SUCCESS)
-        .penRequestID(penRequestCommentsSagaData.getPenRetrievalRequestID())
-        .sagaId(saga.getSagaId())
-        .build());
+      final Saga saga = this.getSagaService().createPenRequestSagaRecord(penRequestCommentsSagaData, PEN_REQUEST_COMMENTS_SAGA.toString(), penRequestCommentsSagaData.getCreateUser(), penRequestId);
+      this.getPenRequestCommentsSagaOrchestrator().executeSagaEvent(Event.builder()
+          .eventType(EventType.INITIATED)
+          .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+          .penRequestID(penRequestCommentsSagaData.getPenRetrievalRequestID())
+          .sagaId(saga.getSagaId())
+          .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());
@@ -103,18 +101,18 @@ public class PenRequestSagaController extends BaseController implements PenReque
   @Override
   public ResponseEntity<String> returnPENRequest(final PenRequestReturnSagaData penRequestReturnSagaData) {
     try {
-      var penRequestId = UUID.fromString(penRequestReturnSagaData.getPenRetrievalRequestID());
-      var sagaInProgress = getSagaService().findAllByPenRequestIdAndStatuses(penRequestId, getStatusesFilter());
+      final var penRequestId = UUID.fromString(penRequestReturnSagaData.getPenRetrievalRequestID());
+      final var sagaInProgress = this.getSagaService().findAllByPenRequestIdAndStatuses(penRequestId, this.getStatusesFilter());
       if (!sagaInProgress.isEmpty()) {
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
       }
-      final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestReturnSagaData, PEN_REQUEST_RETURN_SAGA.toString(), penRequestReturnSagaData.getCreateUser(), penRequestId);
-      getPenRequestReturnSagaOrchestrator().executeSagaEvent(Event.builder()
-        .eventType(EventType.INITIATED)
-        .eventOutcome(EventOutcome.INITIATE_SUCCESS)
-        .penRequestID(penRequestReturnSagaData.getPenRetrievalRequestID())
-        .sagaId(saga.getSagaId())
-        .build());
+      final Saga saga = this.getSagaService().createPenRequestSagaRecord(penRequestReturnSagaData, PEN_REQUEST_RETURN_SAGA.toString(), penRequestReturnSagaData.getCreateUser(), penRequestId);
+      this.getPenRequestReturnSagaOrchestrator().executeSagaEvent(Event.builder()
+          .eventType(EventType.INITIATED)
+          .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+          .penRequestID(penRequestReturnSagaData.getPenRetrievalRequestID())
+          .sagaId(saga.getSagaId())
+          .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());
@@ -122,20 +120,20 @@ public class PenRequestSagaController extends BaseController implements PenReque
   }
 
   @Override
-  public ResponseEntity<String> rejectPENRequest(PenRequestRejectSagaData penRequestRejectSagaData) {
+  public ResponseEntity<String> rejectPENRequest(final PenRequestRejectSagaData penRequestRejectSagaData) {
     try {
-      var penRequestId = UUID.fromString(penRequestRejectSagaData.getPenRetrievalRequestID());
-      var sagaInProgress = getSagaService().findAllByPenRequestIdAndStatuses(penRequestId, getStatusesFilter());
+      final var penRequestId = UUID.fromString(penRequestRejectSagaData.getPenRetrievalRequestID());
+      final var sagaInProgress = this.getSagaService().findAllByPenRequestIdAndStatuses(penRequestId, this.getStatusesFilter());
       if (!sagaInProgress.isEmpty()) {
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
       }
-      final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestRejectSagaData, PEN_REQUEST_REJECT_SAGA.toString(), penRequestRejectSagaData.getCreateUser(), penRequestId);
-      getPenRequestRejectSagaOrchestrator().executeSagaEvent(Event.builder()
-        .eventType(EventType.INITIATED)
-        .eventOutcome(EventOutcome.INITIATE_SUCCESS)
-        .penRequestID(penRequestRejectSagaData.getPenRetrievalRequestID())
-        .sagaId(saga.getSagaId())
-        .build());
+      final Saga saga = this.getSagaService().createPenRequestSagaRecord(penRequestRejectSagaData, PEN_REQUEST_REJECT_SAGA.toString(), penRequestRejectSagaData.getCreateUser(), penRequestId);
+      this.getPenRequestRejectSagaOrchestrator().executeSagaEvent(Event.builder()
+          .eventType(EventType.INITIATED)
+          .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+          .penRequestID(penRequestRejectSagaData.getPenRetrievalRequestID())
+          .sagaId(saga.getSagaId())
+          .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());
@@ -144,24 +142,24 @@ public class PenRequestSagaController extends BaseController implements PenReque
 
   @Override
   @Transactional
-  public ResponseEntity<String> unlinkPenRequest(PenRequestUnlinkSagaData penRequestUnlinkSagaData) {
+  public ResponseEntity<String> unlinkPenRequest(final PenRequestUnlinkSagaData penRequestUnlinkSagaData) {
     try {
-      var penRequestId = UUID.fromString(penRequestUnlinkSagaData.getPenRetrievalRequestID());
-      var completeSagaInProgress = getSagaService().findByPenRequestIdAndStatusInAndSagaName(penRequestId, getStatusesFilter(), PEN_REQUEST_COMPLETE_SAGA.toString());
+      final var penRequestId = UUID.fromString(penRequestUnlinkSagaData.getPenRetrievalRequestID());
+      final var completeSagaInProgress = this.getSagaService().findByPenRequestIdAndStatusInAndSagaName(penRequestId, this.getStatusesFilter(), PEN_REQUEST_COMPLETE_SAGA.toString());
       if (completeSagaInProgress.isPresent()) { // force stop if a complete saga is in progress and then start the unlink saga.
-        var saga = completeSagaInProgress.get();
+        final var saga = completeSagaInProgress.get();
         saga.setStatus(FORCE_STOPPED.toString());
         saga.setSagaState(SAGA_FORCE_STOPPED.toString());
-        getSagaService().updateSagaRecord(saga);
-        getPenRequestCompleteSagaOrchestrator().publishSagaForceStopped(saga);
+        this.getSagaService().updateSagaRecord(saga);
+        this.getPenRequestCompleteSagaOrchestrator().publishSagaForceStopped(saga);
       }
-      final Saga saga = getSagaService().createPenRequestSagaRecord(penRequestUnlinkSagaData, PEN_REQUEST_UNLINK_SAGA.toString(), penRequestUnlinkSagaData.getCreateUser(), UUID.fromString(penRequestUnlinkSagaData.getPenRetrievalRequestID()));
-      getPenRequestUnlinkSagaOrchestrator().executeSagaEvent(Event.builder()
-        .eventType(EventType.INITIATED)
-        .eventOutcome(EventOutcome.INITIATE_SUCCESS)
-        .penRequestID(penRequestUnlinkSagaData.getPenRetrievalRequestID())
-        .sagaId(saga.getSagaId())
-        .build());
+      final Saga saga = this.getSagaService().createPenRequestSagaRecord(penRequestUnlinkSagaData, PEN_REQUEST_UNLINK_SAGA.toString(), penRequestUnlinkSagaData.getCreateUser(), UUID.fromString(penRequestUnlinkSagaData.getPenRetrievalRequestID()));
+      this.getPenRequestUnlinkSagaOrchestrator().executeSagaEvent(Event.builder()
+          .eventType(EventType.INITIATED)
+          .eventOutcome(EventOutcome.INITIATE_SUCCESS)
+          .penRequestID(penRequestUnlinkSagaData.getPenRetrievalRequestID())
+          .sagaId(saga.getSagaId())
+          .build());
       return ResponseEntity.ok(saga.getSagaId().toString());
     } catch (final Exception e) {
       throw new SagaRuntimeException(e.getMessage());

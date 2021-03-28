@@ -28,6 +28,7 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.P
 @Slf4j
 public abstract class BasePenReqSagaOrchestrator<T> extends BaseOrchestrator<T> {
 
+
   protected BasePenReqSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher, Class<T> clazz, String sagaName, String topicToSubscribe) {
     super(sagaService, messagePublisher, clazz, sagaName, topicToSubscribe);
   }

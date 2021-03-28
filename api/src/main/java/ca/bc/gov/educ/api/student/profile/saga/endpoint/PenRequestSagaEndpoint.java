@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public interface PenRequestSagaEndpoint {
 
   @PostMapping("/pen-request-complete-saga")
-  @PreAuthorize("#oauth2.hasScope('PEN_REQUEST_COMPLETE_SAGA')")
+  @PreAuthorize("hasAuthority('SCOPE_PEN_REQUEST_COMPLETE_SAGA')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK.")})
   ResponseEntity<String> completePENRequest(@Validated @RequestBody PenRequestCompleteSagaData penRequestCompleteSagaData);
 
@@ -26,17 +26,17 @@ public interface PenRequestSagaEndpoint {
    * this is for student making a comment and returning to staff, flow.
    */
   @PostMapping("/pen-request-comment-saga")
-  @PreAuthorize("#oauth2.hasScope('PEN_REQUEST_COMMENT_SAGA')")
+  @PreAuthorize("hasAuthority('SCOPE_PEN_REQUEST_COMMENT_SAGA')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK.")})
   ResponseEntity<String> updatePenRequestAndAddComment(@Validated @RequestBody PenRequestCommentsSagaData penRequestCommentsSagaData);
 
   @PostMapping("/pen-request-return-saga")
-  @PreAuthorize("#oauth2.hasScope('PEN_REQUEST_RETURN_SAGA')")
+  @PreAuthorize("hasAuthority('SCOPE_PEN_REQUEST_RETURN_SAGA')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK.")})
   ResponseEntity<String> returnPENRequest(@Validated @RequestBody PenRequestReturnSagaData penRequestReturnSagaData);
 
   @PostMapping("/pen-request-reject-saga")
-  @PreAuthorize("#oauth2.hasScope('PEN_REQUEST_REJECT_SAGA')")
+  @PreAuthorize("hasAuthority('SCOPE_PEN_REQUEST_REJECT_SAGA')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK.")})
   ResponseEntity<String> rejectPENRequest(@Validated @RequestBody PenRequestRejectSagaData penRequestRejectSagaData);
 
@@ -48,7 +48,7 @@ public interface PenRequestSagaEndpoint {
    * @return String the saga Id
    */
   @PostMapping("/pen-request-unlink-saga")
-  @PreAuthorize("#oauth2.hasScope('PEN_REQUEST_UNLINK_SAGA')")
+  @PreAuthorize("hasAuthority('SCOPE_PEN_REQUEST_UNLINK_SAGA')")
   @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "OK.")})
   ResponseEntity<String> unlinkPenRequest(@Validated @RequestBody PenRequestUnlinkSagaData penRequestUnlinkSagaData);
 }
