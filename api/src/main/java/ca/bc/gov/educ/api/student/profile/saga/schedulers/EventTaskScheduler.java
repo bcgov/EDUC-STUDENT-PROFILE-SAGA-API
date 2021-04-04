@@ -44,9 +44,9 @@ public class EventTaskScheduler {
    * @param sagaRepository the saga repository
    */
   @Autowired
-  public EventTaskScheduler(SagaRepository sagaRepository, List<Orchestrator> orchestrators) {
+  public EventTaskScheduler(final SagaRepository sagaRepository, final List<Orchestrator> orchestrators) {
     this.sagaRepository = sagaRepository;
-    orchestrators.forEach(orchestrator -> registerSagaOrchestrators(orchestrator.getSagaName(), orchestrator));
+    orchestrators.forEach(orchestrator -> this.registerSagaOrchestrators(orchestrator.getSagaName(), orchestrator));
   }
 
   /**
@@ -55,8 +55,8 @@ public class EventTaskScheduler {
    * @param sagaName     the saga name
    * @param orchestrator the orchestrator
    */
-  public void registerSagaOrchestrators(String sagaName, Orchestrator orchestrator) {
-    getSagaOrchestrators().put(sagaName, orchestrator);
+  public void registerSagaOrchestrators(final String sagaName, final Orchestrator orchestrator) {
+    this.getSagaOrchestrators().put(sagaName, orchestrator);
   }
 
   /**
@@ -69,15 +69,16 @@ public class EventTaskScheduler {
 //Run the job every minute to check how many records are in IN_PROGRESS or STARTED status and has not been updated in last 5 minutes.
   @Scheduled(cron = "${scheduled.jobs.poll.uncompleted.saga.records.cron}")
   @SchedulerLock(name = "ProfileRequestSagaTablePoller",
-    lockAtLeastFor = "55s", lockAtMostFor = "57s")
+      lockAtLeastFor = "${scheduled.jobs.poll.uncompleted.saga.records.cron.lockAtLeastFor}", lockAtMostFor = "$" +
+      "{scheduled.jobs.poll.uncompleted.saga.records.cron.lockAtMostFor}")
   public void pollEventTableAndPublish() throws InterruptedException, IOException, TimeoutException {
     LockAssert.assertLocked();
-    var sagas = getSagaRepository().findAllByStatusIn(getStatusFilters());
+    final var sagas = this.getSagaRepository().findAllByStatusIn(this.getStatusFilters());
     if (!sagas.isEmpty()) {
       for (val saga : sagas) {
         if (saga.getCreateDate().isBefore(LocalDateTime.now().minusMinutes(1))
-          && getSagaOrchestrators().containsKey(saga.getSagaName())) {
-          getSagaOrchestrators().get(saga.getSagaName()).replaySaga(saga);
+          && this.getSagaOrchestrators().containsKey(saga.getSagaName())) {
+          this.getSagaOrchestrators().get(saga.getSagaName()).replaySaga(saga);
         }
       }
     }
@@ -89,10 +90,10 @@ public class EventTaskScheduler {
    * @return the status filters
    */
   public List<String> getStatusFilters() {
-    if (statusFilters != null && !statusFilters.isEmpty()) {
-      return statusFilters;
+    if (this.statusFilters != null && !this.statusFilters.isEmpty()) {
+      return this.statusFilters;
     } else {
-      var statuses = new ArrayList<String>();
+      final var statuses = new ArrayList<String>();
       statuses.add(SagaStatusEnum.IN_PROGRESS.toString());
       statuses.add(SagaStatusEnum.STARTED.toString());
       return statuses;

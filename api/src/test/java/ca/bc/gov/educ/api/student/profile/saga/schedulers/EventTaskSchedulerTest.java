@@ -1,20 +1,15 @@
 package ca.bc.gov.educ.api.student.profile.saga.schedulers;
 
+import ca.bc.gov.educ.api.student.profile.saga.BaseSagaApiTest;
 import ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaEventRepository;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
 import net.javacrumbs.shedlock.core.LockAssert;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -26,12 +21,7 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.STUDENT
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
-@ActiveProfiles("test")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@SuppressWarnings("java:S100")
-public class EventTaskSchedulerTest {
+public class EventTaskSchedulerTest extends BaseSagaApiTest {
 
   public static final String REJECTION_REASON_REJECTED = "  \"rejectionReason\": \"rejected\"\n";
 
@@ -50,60 +40,55 @@ public class EventTaskSchedulerTest {
   @Before
   public void setUp() {
     MockitoAnnotations.openMocks(this);
-    var statuses = new ArrayList<String>();
+    final var statuses = new ArrayList<String>();
     statuses.add(SagaStatusEnum.IN_PROGRESS.toString());
     statuses.add(SagaStatusEnum.STARTED.toString());
-    eventTaskScheduler.setStatusFilters(statuses);
+    this.eventTaskScheduler.setStatusFilters(statuses);
   }
 
-  @After
-  public void tearDown() {
-    sagaEventRepository.deleteAll();
-    repository.deleteAll();
-  }
 
   @Test
   public void testPollEventTableAndPublish_givenReturnSagaRecordInSTARTEDStateForMoreThan5Minutes_shouldBeProcessed() throws InterruptedException, TimeoutException, IOException {
-    String payload = "{\n" +
+    final String payload = "{\n" +
       PAYLOAD_STR +
       "}";
-    Saga placeHolderRecord = createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString());
-    repository.save(placeHolderRecord);
+    final Saga placeHolderRecord = this.createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString());
+    this.repository.save(placeHolderRecord);
     LockAssert.TestHelper.makeAllAssertsPass(true);
-    eventTaskScheduler.pollEventTableAndPublish();
-    var eventStates = sagaEventRepository.findBySaga(placeHolderRecord);
+    this.eventTaskScheduler.pollEventTableAndPublish();
+    final var eventStates = this.sagaEventRepository.findBySaga(placeHolderRecord);
     assertThat(eventStates).isNotEmpty();
   }
 
   @Test
   public void testPollEventTableAndPublish_givenReturnSagaRecordInPROGRESSStateForMoreThan5Minutes_shouldBeProcessed() throws InterruptedException, TimeoutException, IOException {
-    String payload = "{\n" +
+    final String payload = "{\n" +
       PAYLOAD_STR +
       "}";
-    Saga placeHolderRecord = createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString());
-    repository.save(placeHolderRecord);
+    final Saga placeHolderRecord = this.createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString());
+    this.repository.save(placeHolderRecord);
     LockAssert.TestHelper.makeAllAssertsPass(true);
-    eventTaskScheduler.pollEventTableAndPublish();
-    var eventStates = sagaEventRepository.findBySaga(placeHolderRecord);
+    this.eventTaskScheduler.pollEventTableAndPublish();
+    final var eventStates = this.sagaEventRepository.findBySaga(placeHolderRecord);
     assertThat(eventStates).isNotEmpty();
   }
 
   @Test
   public void testPollEventTableAndPublish_givenReturnSagaRecordInPROGRESSStateForLessThan2Minutes_shouldNotBeProcessed() throws InterruptedException, TimeoutException, IOException {
-    String payload = "{\n" +
+    final String payload = "{\n" +
       PAYLOAD_STR +
       "}";
-    Saga placeHolderRecord = createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString());
-    repository.save(placeHolderRecord);
+    final Saga placeHolderRecord = this.createDummySagaRecord(payload, STUDENT_PROFILE_RETURN_SAGA.toString());
+    this.repository.save(placeHolderRecord);
     LockAssert.TestHelper.makeAllAssertsPass(true);
-    eventTaskScheduler.pollEventTableAndPublish();
-    var eventStates = sagaEventRepository.findBySaga(placeHolderRecord);
+    this.eventTaskScheduler.pollEventTableAndPublish();
+    final var eventStates = this.sagaEventRepository.findBySaga(placeHolderRecord);
     assertThat(eventStates).isNotEmpty();
 
   }
 
 
-  private Saga createDummySagaRecord(String payload, String sagaName) {
+  private Saga createDummySagaRecord(final String payload, final String sagaName) {
     return Saga
       .builder()
       .payload(payload)

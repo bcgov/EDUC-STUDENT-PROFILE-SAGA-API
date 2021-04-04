@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.retry.annotation.EnableRetry;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -30,7 +29,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @EnableSchedulerLock(defaultLockAtMostFor = "1s")
 public class StudentProfileSagaApiResourceApplication {
 
-  public static void main(String[] args) {
+  public static void main(final String[] args) {
     SpringApplication.run(StudentProfileSagaApiResourceApplication.class, args);
   }
 
@@ -51,14 +50,14 @@ public class StudentProfileSagaApiResourceApplication {
     }
 
     @Override
-    public void configure(WebSecurity web) {
+    public void configure(final WebSecurity web) {
       web.ignoring().antMatchers("/v3/api-docs/**",
           "/actuator/health", "/actuator/prometheus",
           "/swagger-ui/**");
     }
 
     @Override
-    protected void configure(HttpSecurity http) throws Exception {
+    protected void configure(final HttpSecurity http) throws Exception {
       http
           .authorizeRequests()
           .anyRequest().authenticated().and()
@@ -67,7 +66,7 @@ public class StudentProfileSagaApiResourceApplication {
   }
 
   @Bean
-  public LockProvider lockProvider(@Autowired JdbcTemplate jdbcTemplate, @Autowired PlatformTransactionManager transactionManager) {
+  public LockProvider lockProvider(@Autowired final JdbcTemplate jdbcTemplate, @Autowired final PlatformTransactionManager transactionManager) {
     return new JdbcTemplateLockProvider(jdbcTemplate, transactionManager, "STUDENT_PROFILE_SAGA_SHEDLOCK");
   }
 }

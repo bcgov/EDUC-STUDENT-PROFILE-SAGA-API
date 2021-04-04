@@ -1,17 +1,12 @@
 package ca.bc.gov.educ.api.student.profile.saga.schedulers;
 
+import ca.bc.gov.educ.api.student.profile.saga.BaseSagaApiTest;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaEventRepository;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -20,10 +15,7 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.INITIA
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
-@ActiveProfiles("test")
-public class PurgeOldSagaRecordsSchedulerTest {
+public class PurgeOldSagaRecordsSchedulerTest extends BaseSagaApiTest {
 
 
   @Autowired
@@ -35,17 +27,10 @@ public class PurgeOldSagaRecordsSchedulerTest {
   @Autowired
   PurgeOldSagaRecordsScheduler purgeOldSagaRecordsScheduler;
 
-  @Before
-  public void setUp() throws Exception {
-  }
-
-  @After
-  public void tearDown() throws Exception {
-  }
 
   @Test
   public void pollSagaTableAndPurgeOldRecords_givenOldRecordsPresent_shouldBeDeleted() {
-    var payload = "{\n" +
+    final var payload = "{\n" +
         "  \"penRetrievalRequestID\": \"ac334a38-715f-1340-8171-607a59d0000a\",\n" +
         "  \"digitalID\": \"2827808f-dfde-4b9b-835c-10cf0130261c\",\n" +
         "  \"reviewer\": \"SHFOORD\",\n" +
@@ -53,17 +38,17 @@ public class PurgeOldSagaRecordsSchedulerTest {
         "  \"createUser\": \"STAFF_ADMIN\",\n" +
         "  \"updateUser\": \"STAFF_ADMIN\"\n" +
         "}";
-    var saga = getSaga(payload, UUID.fromString("ac334a38-715f-1340-8171-607a59d0000a"));
-    repository.save(saga);
-    sagaEventRepository.save(getSagaEvent(saga,payload));
-    purgeOldSagaRecordsScheduler.setSagaRecordStaleInDays(0);
-    purgeOldSagaRecordsScheduler.pollSagaTableAndPurgeOldRecords();
-    var sagas = repository.findAll();
+    final var saga = this.getSaga(payload, UUID.fromString("ac334a38-715f-1340-8171-607a59d0000a"));
+    this.repository.save(saga);
+    this.sagaEventRepository.save(this.getSagaEvent(saga,payload));
+    this.purgeOldSagaRecordsScheduler.setSagaRecordStaleInDays(0);
+    this.purgeOldSagaRecordsScheduler.pollSagaTableAndPurgeOldRecords();
+    final var sagas = this.repository.findAll();
     assertThat(sagas).isEmpty();
   }
 
 
-  private Saga getSaga(String payload, UUID penRequestId) {
+  private Saga getSaga(final String payload, final UUID penRequestId) {
     return Saga
         .builder()
         .payload(payload)
@@ -78,7 +63,7 @@ public class PurgeOldSagaRecordsSchedulerTest {
         .penRequestId(penRequestId)
         .build();
   }
-  private SagaEvent getSagaEvent(Saga saga,String payload) {
+  private SagaEvent getSagaEvent(final Saga saga, final String payload) {
     return SagaEvent
         .builder()
         .sagaEventResponse(payload)

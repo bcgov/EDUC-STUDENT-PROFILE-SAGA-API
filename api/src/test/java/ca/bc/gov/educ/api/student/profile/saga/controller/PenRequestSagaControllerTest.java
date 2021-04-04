@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.profile.saga.controller;
 
+import ca.bc.gov.educ.api.student.profile.saga.BaseSagaApiTest;
 import ca.bc.gov.educ.api.student.profile.saga.exception.SagaRuntimeException;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaEventRepository;
@@ -7,16 +8,9 @@ import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.val;
-import org.junit.After;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -34,13 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
-@ActiveProfiles("test")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@SuppressWarnings("java:S100")
-@AutoConfigureMockMvc
-public class PenRequestSagaControllerTest {
+public class PenRequestSagaControllerTest extends BaseSagaApiTest {
 
   @Autowired
   private MockMvc mockMvc;
@@ -57,11 +45,6 @@ public class PenRequestSagaControllerTest {
   PenRequestSagaController controller;
 
 
-  @After
-  public void after() {
-    this.sagaEventRepository.deleteAll();
-    this.repository.deleteAll();
-  }
 
   @Test
   public void test_completePENRequest_givenInValidPayload_shouldReturnBadRequest() throws Exception {

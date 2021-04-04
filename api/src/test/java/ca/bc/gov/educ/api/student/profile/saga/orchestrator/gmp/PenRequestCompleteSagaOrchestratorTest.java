@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.profile.saga.orchestrator.gmp;
 
+import ca.bc.gov.educ.api.student.profile.saga.BaseSagaApiTest;
 import ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome;
 import ca.bc.gov.educ.api.student.profile.saga.constants.EventType;
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
@@ -11,16 +12,11 @@ import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestCompleteSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -33,13 +29,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-@RunWith(SpringRunner.class)
-@ActiveProfiles("test")
-@SpringBootTest
-public class PenRequestCompleteSagaOrchestratorTest {
+public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
 
   @Autowired
   SagaRepository repository;
@@ -65,35 +57,30 @@ public class PenRequestCompleteSagaOrchestratorTest {
   @Before
   public void setUp() throws JsonProcessingException {
     openMocks(this);
-    sagaData = getSagaData(getCompletePenRequestPayload());
-    saga = sagaService.createPenRequestSagaRecord(getSagaData(getCompletePenRequestPayload()), PEN_REQUEST_COMPLETE_SAGA.toString(), "OMISHRA",
-        UUID.fromString(penRequestID));
+    this.sagaData = this.getSagaData(this.getCompletePenRequestPayload());
+    this.saga = this.sagaService.createPenRequestSagaRecord(this.getSagaData(this.getCompletePenRequestPayload()), PEN_REQUEST_COMPLETE_SAGA.toString(), "OMISHRA",
+        UUID.fromString(this.penRequestID));
   }
 
-  @After
-  public void tearDown() {
-    sagaEventRepository.deleteAll();
-    repository.deleteAll();
-  }
 
   @Test
   public void testExecuteGetPenRequest_givenEventAndSagaData_shouldPostEventToPenRequestApi() throws IOException, InterruptedException, TimeoutException {
-    var event = Event.builder()
+    final var event = Event.builder()
         .eventType(EventType.UPDATE_DIGITAL_ID)
         .eventOutcome(EventOutcome.DIGITAL_ID_UPDATED)
-        .eventPayload(getCompletePenRequestPayload())
-        .sagaId(saga.getSagaId())
+        .eventPayload(this.getCompletePenRequestPayload())
+        .sagaId(this.saga.getSagaId())
         .build();
-    orchestrator.executeGetPenRequest(event, saga, sagaData);
-    verify(messagePublisher, atLeastOnce()).dispatchMessage(eq(PEN_REQUEST_API_TOPIC.toString()), eventCaptor.capture());
-    var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(eventCaptor.getValue()));
+    this.orchestrator.executeGetPenRequest(event, this.saga, this.sagaData);
+    verify(this.messagePublisher, atLeastOnce()).dispatchMessage(eq(PEN_REQUEST_API_TOPIC.toString()), this.eventCaptor.capture());
+    final var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(this.eventCaptor.getValue()));
     assertThat(newEvent.getEventType()).isEqualTo(GET_PEN_REQUEST);
-    assertThat(newEvent.getEventPayload()).isEqualTo(penRequestID);
-    var sagaFromDB = sagaService.findSagaById(saga.getSagaId()).orElseThrow();
+    assertThat(newEvent.getEventPayload()).isEqualTo(this.penRequestID);
+    final var sagaFromDB = this.sagaService.findSagaById(this.saga.getSagaId()).orElseThrow();
     assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(GET_PEN_REQUEST.toString());
-    var sagaStates = sagaService.findAllSagaStates(saga);
+    final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
     assertThat(sagaStates.size()).isEqualTo(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.UPDATE_DIGITAL_ID.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.DIGITAL_ID_UPDATED.toString());
@@ -101,21 +88,21 @@ public class PenRequestCompleteSagaOrchestratorTest {
 
   @Test
   public void testExecuteUpdatePenRequest_givenEventAndSagaData_shouldPostEventToPenRequestApi() throws IOException, InterruptedException, TimeoutException {
-    var event = Event.builder()
+    final var event = Event.builder()
         .eventType(EventType.GET_PEN_REQUEST)
         .eventOutcome(EventOutcome.PEN_REQUEST_FOUND)
-        .eventPayload(getCompletePenRequestPayload())
-        .sagaId(saga.getSagaId())
+        .eventPayload(this.getCompletePenRequestPayload())
+        .sagaId(this.saga.getSagaId())
         .build();
-    orchestrator.executeUpdatePenRequest(event, saga, sagaData);
-    verify(messagePublisher, atLeastOnce()).dispatchMessage(eq(PEN_REQUEST_API_TOPIC.toString()), eventCaptor.capture());
-    var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(eventCaptor.getValue()));
+    this.orchestrator.executeUpdatePenRequest(event, this.saga, this.sagaData);
+    verify(this.messagePublisher, atLeastOnce()).dispatchMessage(eq(PEN_REQUEST_API_TOPIC.toString()), this.eventCaptor.capture());
+    final var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(this.eventCaptor.getValue()));
     assertThat(newEvent.getEventType()).isEqualTo(UPDATE_PEN_REQUEST);
-    var sagaFromDB = sagaService.findSagaById(saga.getSagaId()).orElseThrow();
+    final var sagaFromDB = this.sagaService.findSagaById(this.saga.getSagaId()).orElseThrow();
     assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(UPDATE_PEN_REQUEST.toString());
-    var sagaStates = sagaService.findAllSagaStates(saga);
+    final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
     assertThat(sagaStates.size()).isEqualTo(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.GET_PEN_REQUEST.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.PEN_REQUEST_FOUND.toString());
@@ -123,42 +110,42 @@ public class PenRequestCompleteSagaOrchestratorTest {
 
   @Test
   public void testExecuteGetDigitalId_givenEventAndSagaData_shouldPostEventToDigitalIDApi() throws IOException, InterruptedException, TimeoutException {
-    var event = Event.builder()
+    final var event = Event.builder()
         .eventType(EventType.CREATE_STUDENT)
         .eventOutcome(EventOutcome.STUDENT_CREATED)
-        .eventPayload(getCompletePenRequestPayload())
-        .sagaId(saga.getSagaId())
+        .eventPayload(this.getCompletePenRequestPayload())
+        .sagaId(this.saga.getSagaId())
         .build();
-    orchestrator.executeGetDigitalId(event, saga, sagaData);
-    verify(messagePublisher, atLeastOnce()).dispatchMessage(eq(DIGITAL_ID_API_TOPIC.toString()), eventCaptor.capture());
-    var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(eventCaptor.getValue()));
+    this.orchestrator.executeGetDigitalId(event, this.saga, this.sagaData);
+    verify(this.messagePublisher, atLeastOnce()).dispatchMessage(eq(DIGITAL_ID_API_TOPIC.toString()), this.eventCaptor.capture());
+    final var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(this.eventCaptor.getValue()));
     assertThat(newEvent.getEventType()).isEqualTo(GET_DIGITAL_ID);
-    var sagaFromDB = sagaService.findSagaById(saga.getSagaId()).orElseThrow();
+    final var sagaFromDB = this.sagaService.findSagaById(this.saga.getSagaId()).orElseThrow();
     assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(GET_DIGITAL_ID.toString());
-    var sagaStates = sagaService.findAllSagaStates(saga);
+    final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
     assertThat(sagaStates.size()).isEqualTo(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.CREATE_STUDENT.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.STUDENT_CREATED.toString());
   }
   @Test
   public void testExecuteUpdateDigitalId_givenEventAndSagaData_shouldPostEventToDigitalIDApi() throws IOException, InterruptedException, TimeoutException {
-    var event = Event.builder()
+    final var event = Event.builder()
         .eventType(GET_DIGITAL_ID)
         .eventOutcome(EventOutcome.DIGITAL_ID_FOUND)
-        .eventPayload(getCompletePenRequestPayload())
-        .sagaId(saga.getSagaId())
+        .eventPayload(this.getCompletePenRequestPayload())
+        .sagaId(this.saga.getSagaId())
         .build();
-    orchestrator.executeUpdateDigitalId(event, saga, sagaData);
-    verify(messagePublisher, atLeastOnce()).dispatchMessage(eq(DIGITAL_ID_API_TOPIC.toString()), eventCaptor.capture());
-    var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(eventCaptor.getValue()));
+    this.orchestrator.executeUpdateDigitalId(event, this.saga, this.sagaData);
+    verify(this.messagePublisher, atLeastOnce()).dispatchMessage(eq(DIGITAL_ID_API_TOPIC.toString()), this.eventCaptor.capture());
+    final var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(this.eventCaptor.getValue()));
     assertThat(newEvent.getEventType()).isEqualTo(UPDATE_DIGITAL_ID);
-    var sagaFromDB = sagaService.findSagaById(saga.getSagaId()).orElseThrow();
+    final var sagaFromDB = this.sagaService.findSagaById(this.saga.getSagaId()).orElseThrow();
     assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(UPDATE_DIGITAL_ID.toString());
-    var sagaStates = sagaService.findAllSagaStates(saga);
+    final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
     assertThat(sagaStates.size()).isEqualTo(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.GET_DIGITAL_ID.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.DIGITAL_ID_FOUND.toString());
@@ -166,21 +153,21 @@ public class PenRequestCompleteSagaOrchestratorTest {
 
   @Test
   public void testExecuteGetStudent_givenEventAndSagaData_shouldPostEventToStudentApi() throws IOException, InterruptedException, TimeoutException {
-    var event = Event.builder()
+    final var event = Event.builder()
         .eventType(EventType.INITIATED)
         .eventOutcome(EventOutcome.INITIATE_SUCCESS)
-        .eventPayload(getCompletePenRequestPayload())
-        .sagaId(saga.getSagaId())
+        .eventPayload(this.getCompletePenRequestPayload())
+        .sagaId(this.saga.getSagaId())
         .build();
-    orchestrator.executeGetStudent(event, saga, sagaData);
-    verify(messagePublisher, atLeastOnce()).dispatchMessage(eq(STUDENT_API_TOPIC.toString()), eventCaptor.capture());
-    var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(eventCaptor.getValue()));
+    this.orchestrator.executeGetStudent(event, this.saga, this.sagaData);
+    verify(this.messagePublisher, atLeastOnce()).dispatchMessage(eq(STUDENT_API_TOPIC.toString()), this.eventCaptor.capture());
+    final var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(this.eventCaptor.getValue()));
     assertThat(newEvent.getEventType()).isEqualTo(GET_STUDENT);
-    var sagaFromDB = sagaService.findSagaById(saga.getSagaId()).orElseThrow();
+    final var sagaFromDB = this.sagaService.findSagaById(this.saga.getSagaId()).orElseThrow();
     assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(GET_STUDENT.toString());
-    var sagaStates = sagaService.findAllSagaStates(saga);
+    final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
     assertThat(sagaStates.size()).isEqualTo(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.INITIATED.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.INITIATE_SUCCESS.toString());
@@ -189,21 +176,21 @@ public class PenRequestCompleteSagaOrchestratorTest {
 
   @Test
   public void testExecuteCreateStudent_givenEventAndSagaData_shouldPostEventToStudentApi() throws IOException, InterruptedException, TimeoutException {
-    var event = Event.builder()
+    final var event = Event.builder()
         .eventType(EventType.GET_STUDENT)
         .eventOutcome(EventOutcome.STUDENT_NOT_FOUND)
-        .eventPayload(getCompletePenRequestPayload())
-        .sagaId(saga.getSagaId())
+        .eventPayload(this.getCompletePenRequestPayload())
+        .sagaId(this.saga.getSagaId())
         .build();
-    orchestrator.executeCreateStudent(event, saga, sagaData);
-    verify(messagePublisher, atLeastOnce()).dispatchMessage(eq(STUDENT_API_TOPIC.toString()), eventCaptor.capture());
-    var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(eventCaptor.getValue()));
+    this.orchestrator.executeCreateStudent(event, this.saga, this.sagaData);
+    verify(this.messagePublisher, atLeastOnce()).dispatchMessage(eq(STUDENT_API_TOPIC.toString()), this.eventCaptor.capture());
+    final var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(this.eventCaptor.getValue()));
     assertThat(newEvent.getEventType()).isEqualTo(CREATE_STUDENT);
-    var sagaFromDB = sagaService.findSagaById(saga.getSagaId()).orElseThrow();
+    final var sagaFromDB = this.sagaService.findSagaById(this.saga.getSagaId()).orElseThrow();
     assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(CREATE_STUDENT.toString());
-    var sagaStates = sagaService.findAllSagaStates(saga);
+    final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
     assertThat(sagaStates.size()).isEqualTo(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.GET_STUDENT.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.STUDENT_NOT_FOUND.toString());
@@ -211,21 +198,21 @@ public class PenRequestCompleteSagaOrchestratorTest {
 
   @Test
   public void testExecuteUpdateStudent_givenEventAndSagaData_shouldPostEventToStudentApi() throws IOException, InterruptedException, TimeoutException {
-    var event = Event.builder()
+    final var event = Event.builder()
         .eventType(EventType.GET_STUDENT)
         .eventOutcome(EventOutcome.STUDENT_FOUND)
-        .eventPayload(getCompletePenRequestPayload())
-        .sagaId(saga.getSagaId())
+        .eventPayload(this.getCompletePenRequestPayload())
+        .sagaId(this.saga.getSagaId())
         .build();
-    orchestrator.executeUpdateStudent(event, saga, sagaData);
-    verify(messagePublisher, atLeastOnce()).dispatchMessage(eq(STUDENT_API_TOPIC.toString()), eventCaptor.capture());
-    var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(eventCaptor.getValue()));
+    this.orchestrator.executeUpdateStudent(event, this.saga, this.sagaData);
+    verify(this.messagePublisher, atLeastOnce()).dispatchMessage(eq(STUDENT_API_TOPIC.toString()), this.eventCaptor.capture());
+    final var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(this.eventCaptor.getValue()));
     assertThat(newEvent.getEventType()).isEqualTo(UPDATE_STUDENT);
-    var sagaFromDB = sagaService.findSagaById(saga.getSagaId()).orElseThrow();
+    final var sagaFromDB = this.sagaService.findSagaById(this.saga.getSagaId()).orElseThrow();
     assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(UPDATE_STUDENT.toString());
-    var sagaStates = sagaService.findAllSagaStates(saga);
+    final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
     assertThat(sagaStates.size()).isEqualTo(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.GET_STUDENT.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.STUDENT_FOUND.toString());
@@ -233,21 +220,21 @@ public class PenRequestCompleteSagaOrchestratorTest {
 
   @Test
   public void testExecuteNotifyStudent_givenEventAndSagaData_shouldPostEventToProfileEmailApi() throws IOException, InterruptedException, TimeoutException {
-    var event = Event.builder()
+    final var event = Event.builder()
         .eventType(UPDATE_PEN_REQUEST)
         .eventOutcome(EventOutcome.PEN_REQUEST_UPDATED)
-        .eventPayload(getCompletePenRequestPayload())
-        .sagaId(saga.getSagaId())
+        .eventPayload(this.getCompletePenRequestPayload())
+        .sagaId(this.saga.getSagaId())
         .build();
-    orchestrator.executeNotifyStudentPenRequestComplete(event, saga, sagaData);
-    verify(messagePublisher, atLeastOnce()).dispatchMessage(eq(PROFILE_REQUEST_EMAIL_API_TOPIC.toString()), eventCaptor.capture());
-    var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(eventCaptor.getValue()));
+    this.orchestrator.executeNotifyStudentPenRequestComplete(event, this.saga, this.sagaData);
+    verify(this.messagePublisher, atLeastOnce()).dispatchMessage(eq(PROFILE_REQUEST_EMAIL_API_TOPIC.toString()), this.eventCaptor.capture());
+    final var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(this.eventCaptor.getValue()));
     assertThat(newEvent.getEventType()).isEqualTo(NOTIFY_STUDENT_PEN_REQUEST_COMPLETE);
-    var sagaFromDB = sagaService.findSagaById(saga.getSagaId()).orElseThrow();
+    final var sagaFromDB = this.sagaService.findSagaById(this.saga.getSagaId()).orElseThrow();
     assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(NOTIFY_STUDENT_PEN_REQUEST_COMPLETE.toString());
-    var sagaStates = sagaService.findAllSagaStates(saga);
+    final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
     assertThat(sagaStates.size()).isEqualTo(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.UPDATE_PEN_REQUEST.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.PEN_REQUEST_UPDATED.toString());
@@ -257,7 +244,7 @@ public class PenRequestCompleteSagaOrchestratorTest {
   String getCompletePenRequestPayload() {
     return "{\n" +
         "  \"digitalID\": \"ac330603-715f-12b6-8171-6079a6270005\",\n" +
-        "  \"penRequestID\":\"" + penRequestID + "\",\n" +
+        "  \"penRequestID\":\"" + this.penRequestID + "\",\n" +
         "  \"pen\": \"123456789\",\n" +
         "  \"legalFirstName\": \"om\",\n" +
         "  \"legalMiddleNames\": \"mishra\",\n" +
@@ -277,10 +264,10 @@ public class PenRequestCompleteSagaOrchestratorTest {
         "}";
   }
 
-  PenRequestCompleteSagaData getSagaData(String json) {
+  PenRequestCompleteSagaData getSagaData(final String json) {
     try {
       return JsonUtil.getJsonObjectFromString(PenRequestCompleteSagaData.class, json);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new RuntimeException(e);
     }
   }
