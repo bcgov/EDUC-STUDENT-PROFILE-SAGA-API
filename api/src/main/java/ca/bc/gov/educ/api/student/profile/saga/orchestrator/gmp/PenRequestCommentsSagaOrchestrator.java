@@ -2,10 +2,8 @@ package ca.bc.gov.educ.api.student.profile.saga.orchestrator.gmp;
 
 import ca.bc.gov.educ.api.student.profile.saga.mappers.PenRequestCommentsMapper;
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
-import ca.bc.gov.educ.api.student.profile.saga.messaging.MessageSubscriber;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
-import ca.bc.gov.educ.api.student.profile.saga.schedulers.EventTaskScheduler;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestComments;
@@ -42,7 +40,7 @@ public class PenRequestCommentsSagaOrchestrator extends BasePenReqSagaOrchestrat
    */
   @Override
   public void populateStepsToExecuteMap() {
-    stepBuilder()
+    this.stepBuilder()
       .step(INITIATED, INITIATE_SUCCESS, ADD_PEN_REQUEST_COMMENT, this::executeAddPenRequestComments)
       .step(ADD_PEN_REQUEST_COMMENT, PEN_REQUEST_COMMENT_ADDED, GET_PEN_REQUEST, this::executeGetPenRequest)
       .step(ADD_PEN_REQUEST_COMMENT, PEN_REQUEST_COMMENT_ALREADY_EXIST, GET_PEN_REQUEST, this::executeGetPenRequest)
@@ -60,17 +58,17 @@ public class PenRequestCommentsSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  protected void executeAddPenRequestComments(Event event, Saga saga, PenRequestCommentsSagaData penRequestCommentsSagaData) throws IOException, InterruptedException, TimeoutException {
-    SagaEvent eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+  protected void executeAddPenRequestComments(final Event event, final Saga saga, final PenRequestCommentsSagaData penRequestCommentsSagaData) throws IOException, InterruptedException, TimeoutException {
+    final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(ADD_PEN_REQUEST_COMMENT.toString());
-    getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    PenRequestComments penRequestComments = mapper.toPenReqComments(penRequestCommentsSagaData);
-    Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
+    final PenRequestComments penRequestComments = mapper.toPenReqComments(penRequestCommentsSagaData);
+    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(ADD_PEN_REQUEST_COMMENT)
-      .replyTo(getTopicToSubscribe())
+      .replyTo(this.getTopicToSubscribe())
       .eventPayload(JsonUtil.getJsonStringFromObject(penRequestComments))
       .build();
-    postMessageToTopic(PEN_REQUEST_API_TOPIC.toString(), nextEvent);
+    this.postMessageToTopic(PEN_REQUEST_API_TOPIC.toString(), nextEvent);
     log.info("message sent to PEN_REQUEST_API_TOPIC for ADD_PEN_REQUEST_COMMENT Event.");
   }
 
@@ -81,7 +79,7 @@ public class PenRequestCommentsSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @param penRequestCommentsSagaData the payload as the object.
    */
   @Override
-  protected void updatePenRequestPayload(PenRequestSagaData penRequestSagaData, PenRequestCommentsSagaData penRequestCommentsSagaData) {
+  protected void updatePenRequestPayload(final PenRequestSagaData penRequestSagaData, final PenRequestCommentsSagaData penRequestCommentsSagaData) {
     penRequestSagaData.setPenRequestStatusCode(penRequestCommentsSagaData.getPenRequestStatusCode());
     penRequestSagaData.setUpdateUser(penRequestCommentsSagaData.getUpdateUser());
     penRequestSagaData.setStatusUpdateDate(LocalDateTime.now().withNano(0).toString());
@@ -94,7 +92,7 @@ public class PenRequestCommentsSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @return pen request id as string value.
    */
   @Override
-  protected String updateGetPenRequestPayload(PenRequestCommentsSagaData penRequestCommentsSagaData) {
+  protected String updateGetPenRequestPayload(final PenRequestCommentsSagaData penRequestCommentsSagaData) {
     return penRequestCommentsSagaData.getPenRetrievalRequestID();
   }
 

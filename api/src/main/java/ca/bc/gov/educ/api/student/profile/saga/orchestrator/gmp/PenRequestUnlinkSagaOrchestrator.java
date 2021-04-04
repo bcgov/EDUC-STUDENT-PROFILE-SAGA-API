@@ -1,9 +1,7 @@
 package ca.bc.gov.educ.api.student.profile.saga.orchestrator.gmp;
 
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
-import ca.bc.gov.educ.api.student.profile.saga.messaging.MessageSubscriber;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
-import ca.bc.gov.educ.api.student.profile.saga.schedulers.EventTaskScheduler;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.DigitalIdSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
@@ -27,7 +25,7 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.P
 @Slf4j
 public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator<PenRequestUnlinkSagaData> {
 
-  public PenRequestUnlinkSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher) {
+  public PenRequestUnlinkSagaOrchestrator(final SagaService sagaService, final MessagePublisher messagePublisher) {
     super(sagaService, messagePublisher, PenRequestUnlinkSagaData.class, PEN_REQUEST_UNLINK_SAGA.toString(), PEN_REQUEST_UNLINK_SAGA_TOPIC.toString());
   }
 
@@ -36,7 +34,7 @@ public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator
    */
   @Override
   public void populateStepsToExecuteMap() {
-    stepBuilder()
+    this.stepBuilder()
       .step(INITIATED, INITIATE_SUCCESS, GET_DIGITAL_ID, this::executeGetDigitalId)
       .step(GET_DIGITAL_ID, DIGITAL_ID_FOUND, UPDATE_DIGITAL_ID, this::executeUpdateDigitalId)
       .step(UPDATE_DIGITAL_ID, DIGITAL_ID_UPDATED, GET_PEN_REQUEST, this::executeGetPenRequest)
@@ -45,7 +43,7 @@ public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator
   }
 
   @Override
-  protected void updatePenRequestPayload(PenRequestSagaData penRequestSagaData, PenRequestUnlinkSagaData penRequestUnlinkSagaData) {
+  protected void updatePenRequestPayload(final PenRequestSagaData penRequestSagaData, final PenRequestUnlinkSagaData penRequestUnlinkSagaData) {
     penRequestSagaData.setReviewer(penRequestUnlinkSagaData.getReviewer());
     penRequestSagaData.setPenRequestStatusCode(penRequestUnlinkSagaData.getPenRequestStatusCode());
     penRequestSagaData.setUpdateUser(penRequestUnlinkSagaData.getUpdateUser());
@@ -54,7 +52,7 @@ public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator
   }
 
   @Override
-  protected String updateGetPenRequestPayload(PenRequestUnlinkSagaData penRequestUnlinkSagaData) {
+  protected String updateGetPenRequestPayload(final PenRequestUnlinkSagaData penRequestUnlinkSagaData) {
     return penRequestUnlinkSagaData.getPenRetrievalRequestID();
   }
 
@@ -66,17 +64,17 @@ public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  protected void executeGetDigitalId(Event event, Saga saga, PenRequestUnlinkSagaData penRequestUnlinkSagaData) throws InterruptedException, TimeoutException, IOException {
+  protected void executeGetDigitalId(final Event event, final Saga saga, final PenRequestUnlinkSagaData penRequestUnlinkSagaData) throws InterruptedException, TimeoutException, IOException {
 
-    var eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    final var eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(GET_DIGITAL_ID.toString()); // set current event as saga state.
-    getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    var nextEvent = Event.builder().sagaId(saga.getSagaId())
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
+    final var nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(GET_DIGITAL_ID)
-      .replyTo(getTopicToSubscribe())
+      .replyTo(this.getTopicToSubscribe())
       .eventPayload(penRequestUnlinkSagaData.getDigitalID())
       .build();
-    postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
+    this.postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
     log.info("message sent to DIGITAL_ID_API_TOPIC for GET_DIGITAL_ID Event.");
   }
 
@@ -90,19 +88,19 @@ public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  protected void executeUpdateDigitalId(Event event, Saga saga, PenRequestUnlinkSagaData penRequestUnlinkSagaData) throws IOException, InterruptedException, TimeoutException {
-    var eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+  protected void executeUpdateDigitalId(final Event event, final Saga saga, final PenRequestUnlinkSagaData penRequestUnlinkSagaData) throws IOException, InterruptedException, TimeoutException {
+    final var eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(UPDATE_DIGITAL_ID.toString());
-    getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    var digitalIdSagaData = JsonUtil.getJsonObjectFromString(DigitalIdSagaData.class, event.getEventPayload());
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
+    final var digitalIdSagaData = JsonUtil.getJsonObjectFromString(DigitalIdSagaData.class, event.getEventPayload());
     digitalIdSagaData.setStudentID(null);
     digitalIdSagaData.setUpdateUser(penRequestUnlinkSagaData.getUpdateUser());
-    var nextEvent = Event.builder().sagaId(saga.getSagaId())
+    final var nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(UPDATE_DIGITAL_ID)
-      .replyTo(getTopicToSubscribe())
+      .replyTo(this.getTopicToSubscribe())
       .eventPayload(JsonUtil.getJsonStringFromObject(digitalIdSagaData))
       .build();
-    postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
+    this.postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
     log.info("message sent to DIGITAL_ID_API_TOPIC for UPDATE_DIGITAL_ID Event.");
 
   }
