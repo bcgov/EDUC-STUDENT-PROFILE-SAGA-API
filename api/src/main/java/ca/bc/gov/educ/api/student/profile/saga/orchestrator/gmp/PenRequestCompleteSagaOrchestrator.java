@@ -168,10 +168,9 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     studentDataFromEventResponse.setGenderCode(penRequestCompleteSagaData.getSexCode());
     studentDataFromEventResponse.setSexCode(penRequestCompleteSagaData.getSexCode());
     studentDataFromEventResponse.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
-    studentDataFromEventResponse.setHistoryActivityCode(penRequestCompleteSagaData.getHistoryActivityCode());
+    studentDataFromEventResponse.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_GMP); // always GMP
     if (penRequestCompleteSagaData.getIsDocumentReviewed() != null && penRequestCompleteSagaData.getIsDocumentReviewed()) {
       studentDataFromEventResponse.setDemogCode(DEMOG_CODE_CONFIRMED);
-      studentDataFromEventResponse.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_GMP); // override if it is confirmed demog code.
     }
     penRequestCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
     saga.setSagaState(UPDATE_STUDENT.toString());
@@ -197,9 +196,9 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     saga.setSagaState(CREATE_STUDENT.toString());
     this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     final StudentSagaData studentSagaData = studentSagaDataMapper.toStudentSaga(penRequestCompleteSagaData);
+    studentSagaData.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_GMP); // always GMP
     if (penRequestCompleteSagaData.getIsDocumentReviewed() != null && penRequestCompleteSagaData.getIsDocumentReviewed()) {
       studentSagaData.setDemogCode(DEMOG_CODE_CONFIRMED);
-      studentSagaData.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_GMP); // override if it is confirmed demog code.
     }
     studentSagaData.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
     studentSagaData.setCreateUser(penRequestCompleteSagaData.getCreateUser());
