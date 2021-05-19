@@ -30,6 +30,7 @@ import static lombok.AccessLevel.PROTECTED;
 
 @Slf4j
 public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestrator {
+  protected static final String DEMOG_CODE_CONFIRMED = "C";
   protected static final String SYSTEM_IS_GOING_TO_EXECUTE_NEXT_EVENT_FOR_CURRENT_EVENT = "system is going to execute next event :: {} for current event {}";
   public static final String SELF = "SELF";
   @Getter(PROTECTED)
@@ -290,7 +291,7 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
   public void executeSagaEvent(@NotNull final Event event) throws InterruptedException, IOException, TimeoutException {
     log.trace("executing saga event {}", event);
     if (this.sagaEventExecutionNotRequired(event)) {
-      log.trace("Execution is not required for this message returning EVENT is :: {}", event.toString());
+      log.trace("Execution is not required for this message returning EVENT is :: {}", event);
       return;
     }
     this.broadcastSagaInitiatedMessage(event);
@@ -303,7 +304,7 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
         if (sagaEventState.isPresent()) {
           this.process(event, saga, sagaEventState.get());
         } else {
-          log.error("This should not have happened, please check that both the saga api and all the participating apis are in sync in terms of events and their outcomes. {}", event.toString()); // more explicit error message,
+          log.error("This should not have happened, please check that both the saga api and all the participating apis are in sync in terms of events and their outcomes. {}", event); // more explicit error message,
         }
       } else {
         log.info("got message to process saga for saga ID :: {} but saga is already :: {}", saga.getSagaId(), saga.getStatus());
@@ -363,7 +364,7 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
     final T sagaData = JsonUtil.getJsonObjectFromString(this.clazz, saga.getPayload());
     if (!saga.getSagaState().equalsIgnoreCase(COMPLETED.toString())
       && this.isNotProcessedEvent(event.getEventType(), saga, this.nextStepsToExecute.keySet())) {
-      log.info(SYSTEM_IS_GOING_TO_EXECUTE_NEXT_EVENT_FOR_CURRENT_EVENT, sagaEventState.getNextEventType(), event.toString());
+      log.info(SYSTEM_IS_GOING_TO_EXECUTE_NEXT_EVENT_FOR_CURRENT_EVENT, sagaEventState.getNextEventType(), event);
       this.invokeNextEvent(event, saga, sagaData, sagaEventState);
     } else {
       log.info("ignoring this message as we have already processed it or it is completed. {}", event.toString()); // it is expected to receive duplicate message in saga pattern, system should be designed to handle duplicates.

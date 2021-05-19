@@ -37,6 +37,8 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.*
 @Slf4j
 public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrator<PenRequestCompleteSagaData> {
   private static final StudentSagaDataMapper studentSagaDataMapper = StudentSagaDataMapper.mapper;
+  private static final String HISTORY_ACTIVITY_CODE_GMP = "GMP";
+
 
   @Autowired
   public PenRequestCompleteSagaOrchestrator(final SagaService sagaService, final MessagePublisher messagePublisher) {
@@ -48,8 +50,10 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    */
   @Override
   public void populateStepsToExecuteMap() {
-    stepBuilder()
-      .step(INITIATED, INITIATE_SUCCESS, GET_STUDENT, this::executeGetStudent)
+    this.stepBuilder()
+      .step(INITIATED, INITIATE_SUCCESS, GET_PEN_REQUEST_DOCUMENT_METADATA, this::executeGetPenRequestDocuments)
+      .step(GET_PEN_REQUEST_DOCUMENT_METADATA, PEN_REQUEST_DOCUMENTS_FOUND, GET_STUDENT, this::executeGetStudent)
+      .step(GET_PEN_REQUEST_DOCUMENT_METADATA, PEN_REQUEST_DOCUMENTS_NOT_FOUND, GET_STUDENT, this::executeGetStudent)
       .step(GET_STUDENT, STUDENT_FOUND, UPDATE_STUDENT, this::executeUpdateStudent)
       .step(GET_STUDENT, STUDENT_NOT_FOUND, CREATE_STUDENT, this::executeCreateStudent)
       .step(CREATE_STUDENT, STUDENT_CREATED, GET_DIGITAL_ID, this::executeGetDigitalId)
@@ -61,6 +65,20 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
       .step(NOTIFY_STUDENT_PEN_REQUEST_COMPLETE, STUDENT_NOTIFIED, MARK_SAGA_COMPLETE, this::markSagaComplete);
   }
 
+  private void executeGetPenRequestDocuments(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
+    final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    saga.setStatus(IN_PROGRESS.toString());
+    saga.setSagaState(GET_PEN_REQUEST_DOCUMENT_METADATA.toString()); // set current event as saga state.
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
+    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+      .eventType(GET_PEN_REQUEST_DOCUMENT_METADATA)
+      .replyTo(this.getTopicToSubscribe())
+      .eventPayload(penRequestCompleteSagaData.getPenRequestID())
+      .build();
+    this.postMessageToTopic(PEN_REQUEST_API_TOPIC.toString(), nextEvent);
+    log.info("message sent to PEN_REQUEST_API_TOPIC for GET_PEN_REQUEST_DOCUMENT_METADATA Event.");
+  }
+
   /**
    * this method will update the payload according the saga type. here it will update for comment saga.
    *
@@ -68,7 +86,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @param penRequestCompleteSagaData the payload as the object.
    */
   @Override
-  protected void updatePenRequestPayload(PenRequestSagaData penRequestSagaData, PenRequestCompleteSagaData penRequestCompleteSagaData) {
+  protected void updatePenRequestPayload(final PenRequestSagaData penRequestSagaData, final PenRequestCompleteSagaData penRequestCompleteSagaData) {
     penRequestSagaData.setPen(penRequestCompleteSagaData.getPen());
     penRequestSagaData.setReviewer(penRequestCompleteSagaData.getReviewer());
     penRequestSagaData.setCompleteComment(penRequestCompleteSagaData.getCompleteComment());
@@ -87,7 +105,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @return pen request id as string value.
    */
   @Override
-  protected String updateGetPenRequestPayload(PenRequestCompleteSagaData penRequestCompleteSagaData) {
+  protected String updateGetPenRequestPayload(final PenRequestCompleteSagaData penRequestCompleteSagaData) {
     return penRequestCompleteSagaData.getPenRequestID();
   }
 
@@ -104,28 +122,29 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  protected void executeGetDigitalId(Event event, Saga saga, PenRequestCompleteSagaData penRequestCompleteSagaData) throws InterruptedException, TimeoutException, IOException {
+  protected void executeGetDigitalId(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws InterruptedException, TimeoutException, IOException {
 
     if (event.getEventType() == CREATE_STUDENT) {
-      StudentSagaData studentDataFromEventResponse = JsonUtil.getJsonObjectFromString(StudentSagaData.class, event.getEventPayload());
+      final StudentSagaData studentDataFromEventResponse = JsonUtil.getJsonObjectFromString(StudentSagaData.class, event.getEventPayload());
       penRequestCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
       saga.setPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData));
     }
-    SagaEvent eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(GET_DIGITAL_ID.toString()); // set current event as saga state.
-    getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
+    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(GET_DIGITAL_ID)
       .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
       .eventPayload(penRequestCompleteSagaData.getDigitalID())
       .build();
-    postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
+    this.postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
     log.info("message sent to DIGITAL_ID_API_TOPIC for GET_DIGITAL_ID Event.");
   }
 
   /**
    * This event will be after get student event, if student is found via pen.
    * we will be passing in the student data to update which we got from saga payload.
+   * IF there were attached documents to the pen request just mark the student demog code as C
    *
    * @param event                      current event
    * @param saga                       the model object.
@@ -134,8 +153,8 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  protected void executeUpdateStudent(Event event, Saga saga, PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    StudentSagaData studentDataFromEventResponse = JsonUtil.getJsonObjectFromString(StudentSagaData.class, event.getEventPayload());
+  protected void executeUpdateStudent(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
+    final StudentSagaData studentDataFromEventResponse = JsonUtil.getJsonObjectFromString(StudentSagaData.class, event.getEventPayload());
     //update only the fields which are updated through gmp form.
     studentDataFromEventResponse.setLegalFirstName(penRequestCompleteSagaData.getLegalFirstName());
     studentDataFromEventResponse.setLegalLastName(penRequestCompleteSagaData.getLegalLastName());
@@ -150,13 +169,17 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     studentDataFromEventResponse.setSexCode(penRequestCompleteSagaData.getSexCode());
     studentDataFromEventResponse.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
     studentDataFromEventResponse.setHistoryActivityCode(penRequestCompleteSagaData.getHistoryActivityCode());
+    if (penRequestCompleteSagaData.getIsDocumentReviewed() != null && penRequestCompleteSagaData.getIsDocumentReviewed()) {
+      studentDataFromEventResponse.setDemogCode(DEMOG_CODE_CONFIRMED);
+      studentDataFromEventResponse.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_GMP); // override if it is confirmed demog code.
+    }
     penRequestCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
     saga.setSagaState(UPDATE_STUDENT.toString());
     saga.setPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData));
-    SagaEvent eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
-    getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
+    final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     log.info("message sent to STUDENT_API_TOPIC for UPDATE_STUDENT Event.");
-    delegateMessagePostingForStudent(saga, studentDataFromEventResponse, UPDATE_STUDENT);
+    this.delegateMessagePostingForStudent(saga, studentDataFromEventResponse, UPDATE_STUDENT);
   }
 
   /**
@@ -169,15 +192,19 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  protected void executeCreateStudent(Event event, Saga saga, PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    SagaEvent eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+  protected void executeCreateStudent(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
+    final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(CREATE_STUDENT.toString());
-    getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    StudentSagaData studentSagaData = studentSagaDataMapper.toStudentSaga(penRequestCompleteSagaData);
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
+    final StudentSagaData studentSagaData = studentSagaDataMapper.toStudentSaga(penRequestCompleteSagaData);
+    if (penRequestCompleteSagaData.getIsDocumentReviewed() != null && penRequestCompleteSagaData.getIsDocumentReviewed()) {
+      studentSagaData.setDemogCode(DEMOG_CODE_CONFIRMED);
+      studentSagaData.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_GMP); // override if it is confirmed demog code.
+    }
     studentSagaData.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
     studentSagaData.setCreateUser(penRequestCompleteSagaData.getCreateUser());
     log.info("message sent to STUDENT_API_TOPIC for CREATE_STUDENT Event.");
-    delegateMessagePostingForStudent(saga, studentSagaData, CREATE_STUDENT);
+    this.delegateMessagePostingForStudent(saga, studentSagaData, CREATE_STUDENT);
 
   }
 
@@ -191,13 +218,13 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  private void delegateMessagePostingForStudent(Saga saga, StudentSagaData studentSagaData, EventType eventType) throws InterruptedException, IOException, TimeoutException {
-    Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+  private void delegateMessagePostingForStudent(final Saga saga, final StudentSagaData studentSagaData, final EventType eventType) throws InterruptedException, IOException, TimeoutException {
+    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(eventType)
       .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
       .eventPayload(JsonUtil.getJsonStringFromObject(studentSagaData))
       .build();
-    postMessageToTopic(STUDENT_API_TOPIC.toString(), nextEvent);
+    this.postMessageToTopic(STUDENT_API_TOPIC.toString(), nextEvent);
 
   }
 
@@ -211,17 +238,20 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  protected void executeGetStudent(Event event, Saga saga, PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    SagaEvent eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
-    saga.setStatus(IN_PROGRESS.toString());
+  protected void executeGetStudent(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
+    if (event.getEventOutcome() == PEN_REQUEST_DOCUMENTS_FOUND) {
+      penRequestCompleteSagaData.setIsDocumentReviewed(true);
+    }
+    final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(GET_STUDENT.toString()); // set current event as saga state.
-    getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    saga.setPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData)); // save the updated payload to DB.
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
+    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(GET_STUDENT)
       .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
       .eventPayload(penRequestCompleteSagaData.getPen())
       .build();
-    postMessageToTopic(STUDENT_API_TOPIC.toString(), nextEvent);
+    this.postMessageToTopic(STUDENT_API_TOPIC.toString(), nextEvent);
     log.info("message sent to STUDENT_API_TOPIC for GET_STUDENT Event.");
   }
 
@@ -236,19 +266,19 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  protected void executeUpdateDigitalId(Event event, Saga saga, PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    SagaEvent eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+  protected void executeUpdateDigitalId(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
+    final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(UPDATE_DIGITAL_ID.toString());
-    getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    DigitalIdSagaData digitalIdSagaData = JsonUtil.getJsonObjectFromString(DigitalIdSagaData.class, event.getEventPayload());
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
+    final DigitalIdSagaData digitalIdSagaData = JsonUtil.getJsonObjectFromString(DigitalIdSagaData.class, event.getEventPayload());
     digitalIdSagaData.setStudentID(penRequestCompleteSagaData.getStudentID());
     digitalIdSagaData.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
-    Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(UPDATE_DIGITAL_ID)
       .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
       .eventPayload(JsonUtil.getJsonStringFromObject(digitalIdSagaData))
       .build();
-    postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
+    this.postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
     log.info("message sent to DIGITAL_ID_API_TOPIC for UPDATE_DIGITAL_ID Event.");
 
   }
@@ -263,16 +293,16 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  protected void executeNotifyStudentPenRequestComplete(Event event, Saga saga, PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    SagaEvent eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+  protected void executeNotifyStudentPenRequestComplete(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
+    final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(NOTIFY_STUDENT_PEN_REQUEST_COMPLETE.toString());
-    getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
+    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(NOTIFY_STUDENT_PEN_REQUEST_COMPLETE)
       .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
-      .eventPayload(buildPenReqEmailSagaData(penRequestCompleteSagaData))
+      .eventPayload(this.buildPenReqEmailSagaData(penRequestCompleteSagaData))
       .build();
-    postMessageToTopic(PROFILE_REQUEST_EMAIL_API_TOPIC.toString(), nextEvent);
+    this.postMessageToTopic(PROFILE_REQUEST_EMAIL_API_TOPIC.toString(), nextEvent);
     log.info("message sent to PROFILE_REQUEST_EMAIL_API_TOPIC for NOTIFY_STUDENT_PEN_REQUEST_COMPLETE Event.");
 
   }
@@ -284,8 +314,8 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @return the string representation of the json object.
    * @throws JsonProcessingException if it is unable to convert the object to json string.
    */
-  private String buildPenReqEmailSagaData(PenRequestCompleteSagaData penRequestCompleteSagaData) throws JsonProcessingException {
-    PenReqEmailSagaData penReqEmailSagaData = PenReqEmailSagaData.builder()
+  private String buildPenReqEmailSagaData(final PenRequestCompleteSagaData penRequestCompleteSagaData) throws JsonProcessingException {
+    final PenReqEmailSagaData penReqEmailSagaData = PenReqEmailSagaData.builder()
       .emailAddress(penRequestCompleteSagaData.getEmail())
       .firstName(penRequestCompleteSagaData.getLegalFirstName())
       .demographicsChanged("Y".equalsIgnoreCase(penRequestCompleteSagaData.getDemogChanged()))
@@ -305,14 +335,14 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
   @Transactional
   public void publishSagaForceStopped(final Saga saga) throws InterruptedException, TimeoutException, IOException {
 
-    var forceStoppedEvent = new NotificationEvent();
+    final var forceStoppedEvent = new NotificationEvent();
     forceStoppedEvent.setEventType(UNLINK_PEN_REQUEST);
     forceStoppedEvent.setEventOutcome(SAGA_FORCE_STOPPED);
     forceStoppedEvent.setSagaStatus(FORCE_STOPPED.toString());
     forceStoppedEvent.setPenRequestID(saga.getPenRequestId() != null ? saga.getPenRequestId().toString() : "");
-    forceStoppedEvent.setSagaName(getSagaName());
+    forceStoppedEvent.setSagaName(this.getSagaName());
     forceStoppedEvent.setSagaId(saga.getSagaId());
-    postMessageToTopic(getTopicToSubscribe(), forceStoppedEvent);
+    this.postMessageToTopic(this.getTopicToSubscribe(), forceStoppedEvent);
   }
 
 }

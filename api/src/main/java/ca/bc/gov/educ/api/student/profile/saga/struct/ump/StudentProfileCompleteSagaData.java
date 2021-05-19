@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.profile.saga.struct.ump;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 
 import javax.validation.constraints.NotNull;
@@ -11,14 +12,13 @@ import javax.validation.constraints.Size;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class StudentProfileCompleteSagaData extends StudentProfileRequestActionSagaData {
   //Student Api/Digitalid Api
   private String studentID;
   @NotNull(message = "digitalID can not be null.")
   private String digitalID;
-  //Student Api
-  @NotNull(message = "PEN Number can not be null.")
-  private String pen;
+  Boolean isDocumentReviewed; // internal place holder for logic to check if Demog code should be `C` for student.
   @Size(max = 25)
   private String legalFirstName;
   @Size(max = 25)
@@ -53,4 +53,8 @@ public class StudentProfileCompleteSagaData extends StudentProfileRequestActionS
   String localID;
   @NotNull(message = "History Activity Code can not be null.")
   String historyActivityCode;
+  //Student Api
+  @NotNull(message = "PEN Number can not be null.")
+  @Size(max = 9, min = 9)
+  private String pen;
 }

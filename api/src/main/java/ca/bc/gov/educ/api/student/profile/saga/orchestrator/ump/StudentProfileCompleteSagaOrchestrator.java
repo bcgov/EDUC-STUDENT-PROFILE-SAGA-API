@@ -15,6 +15,7 @@ import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileSagaData
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -33,11 +34,14 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.*
 @Slf4j
 public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOrchestrator<StudentProfileCompleteSagaData> {
   private static final StudentSagaDataMapper studentSagaDataMapper = StudentSagaDataMapper.mapper;
+  public static final String HISTORY_ACTIVITY_CODE_UMP = "UMP";
 
   @Override
   public void populateStepsToExecuteMap() {
-    stepBuilder()
-      .step(INITIATED, INITIATE_SUCCESS, GET_STUDENT, this::executeGetStudent)
+    this.stepBuilder()
+      .step(INITIATED, INITIATE_SUCCESS, GET_PROFILE_REQUEST_DOCUMENT_METADATA, this::executeGetProfileRequestDocuments)
+      .step(GET_PROFILE_REQUEST_DOCUMENT_METADATA, PROFILE_REQUEST_DOCUMENTS_FOUND, GET_STUDENT, this::executeGetStudent)
+      .step(GET_PROFILE_REQUEST_DOCUMENT_METADATA, PROFILE_REQUEST_DOCUMENTS_NOT_FOUND, GET_STUDENT, this::executeGetStudent)
       .step(GET_STUDENT, STUDENT_FOUND, UPDATE_STUDENT, this::executeUpdateStudent)
       .step(GET_STUDENT, STUDENT_NOT_FOUND, CREATE_STUDENT, this::executeCreateStudent)
       .step(CREATE_STUDENT, STUDENT_CREATED, GET_DIGITAL_ID, this::executeGetDigitalId)
@@ -49,23 +53,37 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
       .step(NOTIFY_STUDENT_PROFILE_REQUEST_COMPLETE, STUDENT_NOTIFIED, MARK_SAGA_COMPLETE, this::markSagaComplete);
   }
 
+  private void executeGetProfileRequestDocuments(final Event event, final Saga saga, final StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
+    final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    saga.setStatus(IN_PROGRESS.toString());
+    saga.setSagaState(GET_PROFILE_REQUEST_DOCUMENT_METADATA.toString()); // set current event as saga state.
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
+    val nextEvent = Event.builder().sagaId(saga.getSagaId())
+      .eventType(GET_PROFILE_REQUEST_DOCUMENT_METADATA)
+      .replyTo(this.getTopicToSubscribe())
+      .eventPayload(studentProfileCompleteSagaData.getStudentProfileRequestID())
+      .build();
+    this.postMessageToTopic(STUDENT_PROFILE_API_TOPIC.toString(), nextEvent);
+    log.info("message sent to STUDENT_PROFILE_API_TOPIC for GET_PROFILE_REQUEST_DOCUMENT_METADATA Event.");
+  }
+
   @Autowired
   public StudentProfileCompleteSagaOrchestrator(final SagaService sagaService, final MessagePublisher messagePublisher) {
     super(sagaService, messagePublisher, StudentProfileCompleteSagaData.class, STUDENT_PROFILE_COMPLETE_SAGA.toString(), STUDENT_PROFILE_COMPLETE_SAGA_TOPIC.toString());
   }
 
   @Override
-  protected void updateProfileRequestPayload(StudentProfileSagaData studentProfileSagaData, StudentProfileCompleteSagaData studentProfileCompleteSagaData) {
+  protected void updateProfileRequestPayload(final StudentProfileSagaData studentProfileSagaData, final StudentProfileCompleteSagaData studentProfileCompleteSagaData) {
     studentProfileSagaData.setStudentRequestStatusCode(COMPLETED.toString());
     studentProfileSagaData.setReviewer(studentProfileCompleteSagaData.getReviewer());
     studentProfileSagaData.setCompleteComment(studentProfileCompleteSagaData.getCompleteComment());
     studentProfileSagaData.setStatusUpdateDate(LocalDateTime.now().toString());
-    studentProfileSagaData.setUpdateUser(getSagaName());
+    studentProfileSagaData.setUpdateUser(this.getSagaName());
     studentProfileSagaData.setUpdateUser(studentProfileCompleteSagaData.getUpdateUser());
   }
 
   @Override
-  protected String updateGetProfileRequestPayload(StudentProfileCompleteSagaData studentProfileCompleteSagaData) {
+  protected String updateGetProfileRequestPayload(final StudentProfileCompleteSagaData studentProfileCompleteSagaData) {
     return studentProfileCompleteSagaData.getStudentProfileRequestID();
   }
 
@@ -75,22 +93,22 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
    * system has already updated the student id in original payload, please look at {@link #executeUpdateStudent method}.
    */
 
-  protected void executeGetDigitalId(Event event, Saga saga, StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws InterruptedException, TimeoutException, IOException {
+  protected void executeGetDigitalId(final Event event, final Saga saga, final StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws InterruptedException, TimeoutException, IOException {
 
     if (event.getEventType() == CREATE_STUDENT) {
-      StudentSagaData studentDataFromEventResponse = JsonUtil.getJsonObjectFromString(StudentSagaData.class, event.getEventPayload());
+      final StudentSagaData studentDataFromEventResponse = JsonUtil.getJsonObjectFromString(StudentSagaData.class, event.getEventPayload());
       studentProfileCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
       saga.setPayload(JsonUtil.getJsonStringFromObject(studentProfileCompleteSagaData));
     }
-    SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    final SagaEvent eventState = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(GET_DIGITAL_ID.toString()); // set current event as saga state.
-    getSagaService().updateAttachedSagaWithEvents(saga, eventState);
-    Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventState);
+    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(GET_DIGITAL_ID)
-      .replyTo(getTopicToSubscribe())
+      .replyTo(this.getTopicToSubscribe())
       .eventPayload(studentProfileCompleteSagaData.getDigitalID())
       .build();
-    postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
+    this.postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
     log.info("message sent to DIGITAL_ID_API_TOPIC for GET_DIGITAL_ID Event.");
   }
 
@@ -98,8 +116,8 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
    * This event will be after get student event, if student is found via pen.
    * we will be passing in the student data to update which we got from saga payload.
    */
-  protected void executeUpdateStudent(Event event, Saga saga, StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    StudentSagaData studentDataFromEventResponse = JsonUtil.getJsonObjectFromString(StudentSagaData.class, event.getEventPayload());
+  protected void executeUpdateStudent(final Event event, final Saga saga, final StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
+    final StudentSagaData studentDataFromEventResponse = JsonUtil.getJsonObjectFromString(StudentSagaData.class, event.getEventPayload());
     //update only the fields which are updated through ump form.
     studentDataFromEventResponse.setLegalFirstName(studentProfileCompleteSagaData.getLegalFirstName());
     studentDataFromEventResponse.setLegalLastName(studentProfileCompleteSagaData.getLegalLastName());
@@ -114,51 +132,62 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
     studentDataFromEventResponse.setSexCode(studentProfileCompleteSagaData.getSexCode());
     studentDataFromEventResponse.setUpdateUser(studentProfileCompleteSagaData.getUpdateUser());
     studentDataFromEventResponse.setHistoryActivityCode(studentProfileCompleteSagaData.getHistoryActivityCode());
+    if (studentProfileCompleteSagaData.getIsDocumentReviewed() != null && studentProfileCompleteSagaData.getIsDocumentReviewed()) {
+      studentDataFromEventResponse.setDemogCode(DEMOG_CODE_CONFIRMED);
+      studentDataFromEventResponse.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_UMP);
+    }
     studentProfileCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
     saga.setSagaState(UPDATE_STUDENT.toString());
     saga.setPayload(JsonUtil.getJsonStringFromObject(studentProfileCompleteSagaData));
-    SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
-    getSagaService().updateAttachedSagaWithEvents(saga, eventState);
+    final SagaEvent eventState = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventState);
     log.info("message sent to STUDENT_API_TOPIC for UPDATE_STUDENT Event.");
-    delegateMessagePostingForStudent(saga, studentDataFromEventResponse, UPDATE_STUDENT);
+    this.delegateMessagePostingForStudent(saga, studentDataFromEventResponse, UPDATE_STUDENT);
   }
 
   /**
    * This event will be after get student event, if student is not found via pen.
    */
-  protected void executeCreateStudent(Event event, Saga saga, StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+  protected void executeCreateStudent(final Event event, final Saga saga, final StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
+    final SagaEvent eventState = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(CREATE_STUDENT.toString());
-    getSagaService().updateAttachedSagaWithEvents(saga, eventState);
-    StudentSagaData studentSagaData = studentSagaDataMapper.toStudentSaga(studentProfileCompleteSagaData);
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventState);
+    final StudentSagaData studentSagaData = studentSagaDataMapper.toStudentSaga(studentProfileCompleteSagaData);
     studentSagaData.setUpdateUser(studentProfileCompleteSagaData.getUpdateUser());
     studentSagaData.setCreateUser(studentProfileCompleteSagaData.getCreateUser());
+    if (studentProfileCompleteSagaData.getIsDocumentReviewed() != null && studentProfileCompleteSagaData.getIsDocumentReviewed()) {
+      studentSagaData.setDemogCode(DEMOG_CODE_CONFIRMED);
+      studentSagaData.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_UMP);
+    }
     log.info("message sent to STUDENT_API_TOPIC for CREATE_STUDENT Event.");
-    delegateMessagePostingForStudent(saga, studentSagaData, CREATE_STUDENT);
+    this.delegateMessagePostingForStudent(saga, studentSagaData, CREATE_STUDENT);
   }
 
-  private void delegateMessagePostingForStudent(Saga saga, StudentSagaData studentSagaData, EventType eventType) throws InterruptedException, IOException, TimeoutException {
-    Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+  private void delegateMessagePostingForStudent(final Saga saga, final StudentSagaData studentSagaData, final EventType eventType) throws InterruptedException, IOException, TimeoutException {
+    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(eventType)
-      .replyTo(getTopicToSubscribe())
+      .replyTo(this.getTopicToSubscribe())
       .eventPayload(JsonUtil.getJsonStringFromObject(studentSagaData))
       .build();
-    postMessageToTopic(STUDENT_API_TOPIC.toString(), nextEvent);
+    this.postMessageToTopic(STUDENT_API_TOPIC.toString(), nextEvent);
 
   }
 
 
-  protected void executeGetStudent(Event event, Saga saga, StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+  protected void executeGetStudent(final Event event, final Saga saga, final StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
+    if (event.getEventOutcome() == PEN_REQUEST_DOCUMENTS_FOUND) {
+      studentProfileCompleteSagaData.setIsDocumentReviewed(true);
+    }
+    final SagaEvent eventState = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setStatus(IN_PROGRESS.toString());
     saga.setSagaState(GET_STUDENT.toString()); // set current event as saga state.
-    getSagaService().updateAttachedSagaWithEvents(saga, eventState);
-    Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventState);
+    val nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(GET_STUDENT)
-      .replyTo(getTopicToSubscribe())
+      .replyTo(this.getTopicToSubscribe())
       .eventPayload(studentProfileCompleteSagaData.getPen())
       .build();
-    postMessageToTopic(STUDENT_API_TOPIC.toString(), nextEvent);
+    this.postMessageToTopic(STUDENT_API_TOPIC.toString(), nextEvent);
     log.info("message sent to STUDENT_API_TOPIC for GET_STUDENT Event.");
   }
 
@@ -166,39 +195,39 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
   /**
    * this is executed after get digital id, so the event response would contain the entire digital id payload, this method will only update the student Id.
    */
-  protected void executeUpdateDigitalId(Event event, Saga saga, StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+  protected void executeUpdateDigitalId(final Event event, final Saga saga, final StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
+    final SagaEvent eventState = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(UPDATE_DIGITAL_ID.toString());
-    getSagaService().updateAttachedSagaWithEvents(saga, eventState);
-    DigitalIdSagaData digitalIdSagaData = JsonUtil.getJsonObjectFromString(DigitalIdSagaData.class, event.getEventPayload());
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventState);
+    final DigitalIdSagaData digitalIdSagaData = JsonUtil.getJsonObjectFromString(DigitalIdSagaData.class, event.getEventPayload());
     digitalIdSagaData.setStudentID(studentProfileCompleteSagaData.getStudentID());
     digitalIdSagaData.setUpdateUser(studentProfileCompleteSagaData.getUpdateUser());
-    Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(UPDATE_DIGITAL_ID)
-      .replyTo(getTopicToSubscribe())
+      .replyTo(this.getTopicToSubscribe())
       .eventPayload(JsonUtil.getJsonStringFromObject(digitalIdSagaData))
       .build();
-    postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
+    this.postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
     log.info("message sent to DIGITAL_ID_API_TOPIC for UPDATE_DIGITAL_ID Event.");
 
   }
 
-  protected void executeNotifyStudentProfileComplete(Event event, Saga saga, StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+  protected void executeNotifyStudentProfileComplete(final Event event, final Saga saga, final StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
+    final SagaEvent eventState = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(NOTIFY_STUDENT_PROFILE_REQUEST_COMPLETE.toString());
-    getSagaService().updateAttachedSagaWithEvents(saga, eventState);
-    Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventState);
+    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(NOTIFY_STUDENT_PROFILE_REQUEST_COMPLETE)
-      .replyTo(getTopicToSubscribe())
-      .eventPayload(buildPenReqEmailSagaData(studentProfileCompleteSagaData))
+      .replyTo(this.getTopicToSubscribe())
+      .eventPayload(this.buildPenReqEmailSagaData(studentProfileCompleteSagaData))
       .build();
-    postMessageToTopic(PROFILE_REQUEST_EMAIL_API_TOPIC.toString(), nextEvent);
+    this.postMessageToTopic(PROFILE_REQUEST_EMAIL_API_TOPIC.toString(), nextEvent);
     log.info("message sent to PROFILE_REQUEST_EMAIL_API_TOPIC for NOTIFY_STUDENT_PROFILE_REQUEST_COMPLETE Event.");
 
   }
 
-  private String buildPenReqEmailSagaData(StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws JsonProcessingException {
-    StudentProfileEmailSagaData penReqEmailSagaData = StudentProfileEmailSagaData.builder()
+  private String buildPenReqEmailSagaData(final StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws JsonProcessingException {
+    final StudentProfileEmailSagaData penReqEmailSagaData = StudentProfileEmailSagaData.builder()
       .emailAddress(studentProfileCompleteSagaData.getEmail())
       .firstName(studentProfileCompleteSagaData.getLegalFirstName())
       .identityType(studentProfileCompleteSagaData.getIdentityType())
