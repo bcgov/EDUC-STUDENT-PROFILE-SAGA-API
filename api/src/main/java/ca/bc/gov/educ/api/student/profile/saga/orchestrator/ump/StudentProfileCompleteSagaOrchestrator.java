@@ -131,10 +131,9 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
     studentDataFromEventResponse.setGenderCode(studentProfileCompleteSagaData.getSexCode());
     studentDataFromEventResponse.setSexCode(studentProfileCompleteSagaData.getSexCode());
     studentDataFromEventResponse.setUpdateUser(studentProfileCompleteSagaData.getUpdateUser());
-    studentDataFromEventResponse.setHistoryActivityCode(studentProfileCompleteSagaData.getHistoryActivityCode());
+    studentDataFromEventResponse.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_UMP); // always UMP
     if (studentProfileCompleteSagaData.getIsDocumentReviewed() != null && studentProfileCompleteSagaData.getIsDocumentReviewed()) {
       studentDataFromEventResponse.setDemogCode(DEMOG_CODE_CONFIRMED);
-      studentDataFromEventResponse.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_UMP);
     }
     studentProfileCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
     saga.setSagaState(UPDATE_STUDENT.toString());
@@ -155,9 +154,9 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
     final StudentSagaData studentSagaData = studentSagaDataMapper.toStudentSaga(studentProfileCompleteSagaData);
     studentSagaData.setUpdateUser(studentProfileCompleteSagaData.getUpdateUser());
     studentSagaData.setCreateUser(studentProfileCompleteSagaData.getCreateUser());
+    studentSagaData.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_UMP); // always UMP
     if (studentProfileCompleteSagaData.getIsDocumentReviewed() != null && studentProfileCompleteSagaData.getIsDocumentReviewed()) {
       studentSagaData.setDemogCode(DEMOG_CODE_CONFIRMED);
-      studentSagaData.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_UMP);
     }
     log.info("message sent to STUDENT_API_TOPIC for CREATE_STUDENT Event.");
     this.delegateMessagePostingForStudent(saga, studentSagaData, CREATE_STUDENT);
