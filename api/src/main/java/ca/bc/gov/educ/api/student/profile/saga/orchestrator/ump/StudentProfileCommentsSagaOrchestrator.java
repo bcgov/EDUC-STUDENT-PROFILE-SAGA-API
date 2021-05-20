@@ -3,14 +3,13 @@ package ca.bc.gov.educ.api.student.profile.saga.orchestrator.ump;
 import ca.bc.gov.educ.api.student.profile.saga.mappers.StudentProfileCommentsMapper;
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
-import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
-import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileComments;
 import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileCommentsSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -30,13 +29,13 @@ public class StudentProfileCommentsSagaOrchestrator extends BaseProfileReqSagaOr
   private static final StudentProfileCommentsMapper mapper = StudentProfileCommentsMapper.mapper;
 
   @Autowired
-  public StudentProfileCommentsSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher) {
+  public StudentProfileCommentsSagaOrchestrator(final SagaService sagaService, final MessagePublisher messagePublisher) {
     super(sagaService, messagePublisher, StudentProfileCommentsSagaData.class, STUDENT_PROFILE_COMMENTS_SAGA.toString(), STUDENT_PROFILE_COMMENTS_SAGA_TOPIC.toString());
   }
 
   @Override
   public void populateStepsToExecuteMap() {
-    stepBuilder()
+    this.stepBuilder()
       .step(INITIATED, INITIATE_SUCCESS, ADD_STUDENT_PROFILE_COMMENT, this::executeAddStudentProfileRequestComments)
       .step(ADD_STUDENT_PROFILE_COMMENT, STUDENT_PROFILE_COMMENT_ADDED, GET_STUDENT_PROFILE, this::executeGetProfileRequest)
       .step(ADD_STUDENT_PROFILE_COMMENT, STUDENT_PROFILE_COMMENT_ALREADY_EXIST, GET_STUDENT_PROFILE, this::executeGetProfileRequest)
@@ -55,17 +54,17 @@ public class StudentProfileCommentsSagaOrchestrator extends BaseProfileReqSagaOr
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  protected void executeAddStudentProfileRequestComments(Event event, Saga saga, StudentProfileCommentsSagaData studentProfileCommentsSagaData) throws IOException, InterruptedException, TimeoutException {
-    SagaEvent eventState = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+  protected void executeAddStudentProfileRequestComments(final Event event, final Saga saga, final StudentProfileCommentsSagaData studentProfileCommentsSagaData) throws IOException, InterruptedException, TimeoutException {
+    val eventState = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(ADD_STUDENT_PROFILE_COMMENT.toString());
-    getSagaService().updateAttachedSagaWithEvents(saga, eventState);
-    StudentProfileComments studentProfileComments = mapper.toComments(studentProfileCommentsSagaData);
-    Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventState);
+    val studentProfileComments = mapper.toComments(studentProfileCommentsSagaData);
+    val nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(ADD_STUDENT_PROFILE_COMMENT)
-      .replyTo(getTopicToSubscribe())
+      .replyTo(this.getTopicToSubscribe())
       .eventPayload(JsonUtil.getJsonStringFromObject(studentProfileComments))
       .build();
-    postMessageToTopic(STUDENT_PROFILE_API_TOPIC.toString(), nextEvent);
+    this.postMessageToTopic(STUDENT_PROFILE_API_TOPIC.toString(), nextEvent);
     log.info("message sent to STUDENT_PROFILE_API_TOPIC for ADD_STUDENT_PROFILE_COMMENT Event.");
   }
 
@@ -76,7 +75,7 @@ public class StudentProfileCommentsSagaOrchestrator extends BaseProfileReqSagaOr
    * @param studentProfileCommentsSagaData the payload as the object.
    */
   @Override
-  protected void updateProfileRequestPayload(StudentProfileSagaData studentProfileSagaData, StudentProfileCommentsSagaData studentProfileCommentsSagaData) {
+  protected void updateProfileRequestPayload(final StudentProfileSagaData studentProfileSagaData, final StudentProfileCommentsSagaData studentProfileCommentsSagaData) {
     studentProfileSagaData.setStudentRequestStatusCode(studentProfileCommentsSagaData.getStudentProfileRequestStatusCode());
     studentProfileSagaData.setUpdateUser(studentProfileCommentsSagaData.getUpdateUser());
     studentProfileSagaData.setStatusUpdateDate(LocalDateTime.now().withNano(0).toString());
@@ -89,7 +88,7 @@ public class StudentProfileCommentsSagaOrchestrator extends BaseProfileReqSagaOr
    * @return student profile request id as string value.
    */
   @Override
-  protected String updateGetProfileRequestPayload(StudentProfileCommentsSagaData studentProfileCommentsSagaData) {
+  protected String updateGetProfileRequestPayload(final StudentProfileCommentsSagaData studentProfileCommentsSagaData) {
     return studentProfileCommentsSagaData.getStudentProfileRequestID();
   }
 

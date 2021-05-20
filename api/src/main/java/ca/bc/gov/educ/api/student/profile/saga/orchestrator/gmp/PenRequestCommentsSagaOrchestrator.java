@@ -3,14 +3,13 @@ package ca.bc.gov.educ.api.student.profile.saga.orchestrator.gmp;
 import ca.bc.gov.educ.api.student.profile.saga.mappers.PenRequestCommentsMapper;
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
-import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
-import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestComments;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestCommentsSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -59,11 +58,11 @@ public class PenRequestCommentsSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws TimeoutException     if connection to messaging system times out.
    */
   protected void executeAddPenRequestComments(final Event event, final Saga saga, final PenRequestCommentsSagaData penRequestCommentsSagaData) throws IOException, InterruptedException, TimeoutException {
-    final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    val eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(ADD_PEN_REQUEST_COMMENT.toString());
     this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    final PenRequestComments penRequestComments = mapper.toPenReqComments(penRequestCommentsSagaData);
-    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    val penRequestComments = mapper.toPenReqComments(penRequestCommentsSagaData);
+    val nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(ADD_PEN_REQUEST_COMMENT)
       .replyTo(this.getTopicToSubscribe())
       .eventPayload(JsonUtil.getJsonStringFromObject(penRequestComments))

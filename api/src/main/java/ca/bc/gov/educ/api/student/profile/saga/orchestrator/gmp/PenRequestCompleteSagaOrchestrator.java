@@ -5,7 +5,6 @@ import ca.bc.gov.educ.api.student.profile.saga.constants.EventType;
 import ca.bc.gov.educ.api.student.profile.saga.mappers.StudentSagaDataMapper;
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
-import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.DigitalIdSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
@@ -17,6 +16,7 @@ import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,11 +66,11 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
   }
 
   private void executeGetPenRequestDocuments(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    val eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setStatus(IN_PROGRESS.toString());
     saga.setSagaState(GET_PEN_REQUEST_DOCUMENT_METADATA.toString()); // set current event as saga state.
     this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    val nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(GET_PEN_REQUEST_DOCUMENT_METADATA)
       .replyTo(this.getTopicToSubscribe())
       .eventPayload(penRequestCompleteSagaData.getPenRequestID())
@@ -125,14 +125,14 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
   protected void executeGetDigitalId(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws InterruptedException, TimeoutException, IOException {
 
     if (event.getEventType() == CREATE_STUDENT) {
-      final StudentSagaData studentDataFromEventResponse = JsonUtil.getJsonObjectFromString(StudentSagaData.class, event.getEventPayload());
+      val studentDataFromEventResponse = JsonUtil.getJsonObjectFromString(StudentSagaData.class, event.getEventPayload());
       penRequestCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
       saga.setPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData));
     }
-    final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    val eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(GET_DIGITAL_ID.toString()); // set current event as saga state.
     this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    val nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(GET_DIGITAL_ID)
       .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
       .eventPayload(penRequestCompleteSagaData.getDigitalID())
@@ -154,7 +154,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws TimeoutException     if connection to messaging system times out.
    */
   protected void executeUpdateStudent(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    final StudentSagaData studentDataFromEventResponse = JsonUtil.getJsonObjectFromString(StudentSagaData.class, event.getEventPayload());
+    val studentDataFromEventResponse = JsonUtil.getJsonObjectFromString(StudentSagaData.class, event.getEventPayload());
     //update only the fields which are updated through gmp form.
     studentDataFromEventResponse.setLegalFirstName(penRequestCompleteSagaData.getLegalFirstName());
     studentDataFromEventResponse.setLegalLastName(penRequestCompleteSagaData.getLegalLastName());
@@ -175,7 +175,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     penRequestCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
     saga.setSagaState(UPDATE_STUDENT.toString());
     saga.setPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData));
-    final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    val eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     log.info("message sent to STUDENT_API_TOPIC for UPDATE_STUDENT Event.");
     this.delegateMessagePostingForStudent(saga, studentDataFromEventResponse, UPDATE_STUDENT);
@@ -192,10 +192,10 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws TimeoutException     if connection to messaging system times out.
    */
   protected void executeCreateStudent(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    val eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(CREATE_STUDENT.toString());
     this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    final StudentSagaData studentSagaData = studentSagaDataMapper.toStudentSaga(penRequestCompleteSagaData);
+    val studentSagaData = studentSagaDataMapper.toStudentSaga(penRequestCompleteSagaData);
     studentSagaData.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_GMP); // always GMP
     if (penRequestCompleteSagaData.getIsDocumentReviewed() != null && penRequestCompleteSagaData.getIsDocumentReviewed()) {
       studentSagaData.setDemogCode(DEMOG_CODE_CONFIRMED);
@@ -218,7 +218,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws TimeoutException     if connection to messaging system times out.
    */
   private void delegateMessagePostingForStudent(final Saga saga, final StudentSagaData studentSagaData, final EventType eventType) throws InterruptedException, IOException, TimeoutException {
-    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    val nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(eventType)
       .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
       .eventPayload(JsonUtil.getJsonStringFromObject(studentSagaData))
@@ -241,11 +241,11 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     if (event.getEventOutcome() == PEN_REQUEST_DOCUMENTS_FOUND) {
       penRequestCompleteSagaData.setIsDocumentReviewed(true);
     }
-    final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    val eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(GET_STUDENT.toString()); // set current event as saga state.
     saga.setPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData)); // save the updated payload to DB.
     this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    val nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(GET_STUDENT)
       .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
       .eventPayload(penRequestCompleteSagaData.getPen())
@@ -266,13 +266,13 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws TimeoutException     if connection to messaging system times out.
    */
   protected void executeUpdateDigitalId(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    val eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(UPDATE_DIGITAL_ID.toString());
     this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    final DigitalIdSagaData digitalIdSagaData = JsonUtil.getJsonObjectFromString(DigitalIdSagaData.class, event.getEventPayload());
+    val digitalIdSagaData = JsonUtil.getJsonObjectFromString(DigitalIdSagaData.class, event.getEventPayload());
     digitalIdSagaData.setStudentID(penRequestCompleteSagaData.getStudentID());
     digitalIdSagaData.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
-    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    val nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(UPDATE_DIGITAL_ID)
       .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
       .eventPayload(JsonUtil.getJsonStringFromObject(digitalIdSagaData))
@@ -293,10 +293,10 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws TimeoutException     if connection to messaging system times out.
    */
   protected void executeNotifyStudentPenRequestComplete(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    val eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(NOTIFY_STUDENT_PEN_REQUEST_COMPLETE.toString());
     this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    val nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(NOTIFY_STUDENT_PEN_REQUEST_COMPLETE)
       .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
       .eventPayload(this.buildPenReqEmailSagaData(penRequestCompleteSagaData))
@@ -314,7 +314,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws JsonProcessingException if it is unable to convert the object to json string.
    */
   private String buildPenReqEmailSagaData(final PenRequestCompleteSagaData penRequestCompleteSagaData) throws JsonProcessingException {
-    final PenReqEmailSagaData penReqEmailSagaData = PenReqEmailSagaData.builder()
+    val penReqEmailSagaData = PenReqEmailSagaData.builder()
       .emailAddress(penRequestCompleteSagaData.getEmail())
       .firstName(penRequestCompleteSagaData.getLegalFirstName())
       .demographicsChanged("Y".equalsIgnoreCase(penRequestCompleteSagaData.getDemogChanged()))

@@ -9,6 +9,7 @@ import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
@@ -36,9 +37,9 @@ public abstract class BasePenReqSagaOrchestrator<T> extends BaseOrchestrator<T> 
     final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(UPDATE_PEN_REQUEST.toString());
     this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    final PenRequestSagaData penRequestSagaData = JsonUtil.getJsonObjectFromString(PenRequestSagaData.class, event.getEventPayload());
+    val penRequestSagaData = JsonUtil.getJsonObjectFromString(PenRequestSagaData.class, event.getEventPayload());
     this.updatePenRequestPayload(penRequestSagaData, t);
-    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    val nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(UPDATE_PEN_REQUEST)
       .replyTo(this.getTopicToSubscribe())
       .eventPayload(JsonUtil.getJsonStringFromObject(penRequestSagaData))
@@ -48,10 +49,10 @@ public abstract class BasePenReqSagaOrchestrator<T> extends BaseOrchestrator<T> 
   }
 
   protected void executeGetPenRequest(final Event event, final Saga saga, final T t) throws InterruptedException, TimeoutException, IOException {
-    final SagaEvent eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    val eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(GET_PEN_REQUEST.toString()); // set current event as saga state.
     this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    final Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    val nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(GET_PEN_REQUEST)
       .replyTo(this.getTopicToSubscribe())
       .eventPayload(this.updateGetPenRequestPayload(t))

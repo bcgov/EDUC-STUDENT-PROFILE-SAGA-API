@@ -2,7 +2,6 @@ package ca.bc.gov.educ.api.student.profile.saga.orchestrator.gmp;
 
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
-import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenReqEmailSagaData;
@@ -11,6 +10,7 @@ import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -30,7 +30,7 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.P
 public class PenRequestRejectSagaOrchestrator extends BasePenReqSagaOrchestrator<PenRequestRejectSagaData> {
 
   @Autowired
-  public PenRequestRejectSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher) {
+  public PenRequestRejectSagaOrchestrator(final SagaService sagaService, final MessagePublisher messagePublisher) {
     super(sagaService, messagePublisher, PenRequestRejectSagaData.class, PEN_REQUEST_REJECT_SAGA.toString(), PEN_REQUEST_REJECT_SAGA_TOPIC.toString());
   }
 
@@ -39,7 +39,7 @@ public class PenRequestRejectSagaOrchestrator extends BasePenReqSagaOrchestrator
    */
   @Override
   public void populateStepsToExecuteMap() {
-    stepBuilder()
+    this.stepBuilder()
       .step(INITIATED, INITIATE_SUCCESS, GET_PEN_REQUEST, this::executeGetPenRequest)
       .step(GET_PEN_REQUEST, PEN_REQUEST_FOUND, UPDATE_PEN_REQUEST, this::executeUpdatePenRequest)
       .step(UPDATE_PEN_REQUEST, PEN_REQUEST_UPDATED, NOTIFY_STUDENT_PEN_REQUEST_REJECT, this::executeNotifyStudentPenRequestReject)
@@ -47,7 +47,7 @@ public class PenRequestRejectSagaOrchestrator extends BasePenReqSagaOrchestrator
   }
 
   @Override
-  protected void updatePenRequestPayload(PenRequestSagaData penRequestSagaData, PenRequestRejectSagaData penRequestRejectSagaData) {
+  protected void updatePenRequestPayload(final PenRequestSagaData penRequestSagaData, final PenRequestRejectSagaData penRequestRejectSagaData) {
     penRequestSagaData.setPenRequestStatusCode(penRequestRejectSagaData.getPenRequestStatusCode());
     penRequestSagaData.setFailureReason(penRequestRejectSagaData.getRejectionReason());
     penRequestSagaData.setStatusUpdateDate(LocalDateTime.now().toString());
@@ -56,7 +56,7 @@ public class PenRequestRejectSagaOrchestrator extends BasePenReqSagaOrchestrator
   }
 
   @Override
-  protected String updateGetPenRequestPayload(PenRequestRejectSagaData penRequestRejectSagaData) {
+  protected String updateGetPenRequestPayload(final PenRequestRejectSagaData penRequestRejectSagaData) {
     return penRequestRejectSagaData.getPenRetrievalRequestID();
   }
 
@@ -70,16 +70,16 @@ public class PenRequestRejectSagaOrchestrator extends BasePenReqSagaOrchestrator
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  protected void executeNotifyStudentPenRequestReject(Event event, Saga saga, PenRequestRejectSagaData penRequestRejectSagaData) throws IOException, InterruptedException, TimeoutException {
-    SagaEvent eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+  protected void executeNotifyStudentPenRequestReject(final Event event, final Saga saga, final PenRequestRejectSagaData penRequestRejectSagaData) throws IOException, InterruptedException, TimeoutException {
+    val eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(NOTIFY_STUDENT_PEN_REQUEST_REJECT.toString());
-    getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
+    val nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(NOTIFY_STUDENT_PEN_REQUEST_REJECT)
-      .replyTo(getTopicToSubscribe())
-      .eventPayload(buildPenReqEmailSagaData(penRequestRejectSagaData))
+      .replyTo(this.getTopicToSubscribe())
+      .eventPayload(this.buildPenReqEmailSagaData(penRequestRejectSagaData))
       .build();
-    postMessageToTopic(PROFILE_REQUEST_EMAIL_API_TOPIC.toString(), nextEvent);
+    this.postMessageToTopic(PROFILE_REQUEST_EMAIL_API_TOPIC.toString(), nextEvent);
     log.info("message sent to PROFILE_REQUEST_EMAIL_API_TOPIC for NOTIFY_STUDENT_PEN_REQUEST_REJECT Event.");
 
   }
@@ -91,8 +91,8 @@ public class PenRequestRejectSagaOrchestrator extends BasePenReqSagaOrchestrator
    * @return the string representation of the json object.
    * @throws JsonProcessingException if it is unable to convert the object to json string.
    */
-  private String buildPenReqEmailSagaData(PenRequestRejectSagaData penRequestRejectSagaData) throws JsonProcessingException {
-    PenReqEmailSagaData penReqEmailSagaData = PenReqEmailSagaData.builder()
+  private String buildPenReqEmailSagaData(final PenRequestRejectSagaData penRequestRejectSagaData) throws JsonProcessingException {
+    val penReqEmailSagaData = PenReqEmailSagaData.builder()
       .emailAddress(penRequestRejectSagaData.getEmail())
       .identityType(penRequestRejectSagaData.getIdentityType())
       .rejectionReason(penRequestRejectSagaData.getRejectionReason())

@@ -4,16 +4,15 @@ package ca.bc.gov.educ.api.student.profile.saga.orchestrator.gmp;
 import ca.bc.gov.educ.api.student.profile.saga.mappers.PenRequestCommentsMapper;
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
 import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
-import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenReqEmailSagaData;
-import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestComments;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestReturnSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -31,7 +30,7 @@ import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaTopicsEnum.*
 public class PenRequestReturnSagaOrchestrator extends BasePenReqSagaOrchestrator<PenRequestReturnSagaData> {
 
   @Autowired
-  public PenRequestReturnSagaOrchestrator(SagaService sagaService, MessagePublisher messagePublisher) {
+  public PenRequestReturnSagaOrchestrator(final SagaService sagaService, final MessagePublisher messagePublisher) {
     super(sagaService, messagePublisher, PenRequestReturnSagaData.class, PEN_REQUEST_RETURN_SAGA.toString(), PEN_REQUEST_RETURN_SAGA_TOPIC.toString());
   }
 
@@ -40,7 +39,7 @@ public class PenRequestReturnSagaOrchestrator extends BasePenReqSagaOrchestrator
    */
   @Override
   public void populateStepsToExecuteMap() {
-    stepBuilder()
+    this.stepBuilder()
       .step(INITIATED, INITIATE_SUCCESS, ADD_PEN_REQUEST_COMMENT, this::executeAddPenRequestComments)
       .step(ADD_PEN_REQUEST_COMMENT, PEN_REQUEST_COMMENT_ADDED, GET_PEN_REQUEST, this::executeGetPenRequest)
       .step(ADD_PEN_REQUEST_COMMENT, PEN_REQUEST_COMMENT_ALREADY_EXIST, GET_PEN_REQUEST, this::executeGetPenRequest)
@@ -59,22 +58,22 @@ public class PenRequestReturnSagaOrchestrator extends BasePenReqSagaOrchestrator
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  protected void executeAddPenRequestComments(Event event, Saga saga, PenRequestReturnSagaData penRequestReturnSagaData) throws IOException, InterruptedException, TimeoutException {
-    SagaEvent eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+  protected void executeAddPenRequestComments(final Event event, final Saga saga, final PenRequestReturnSagaData penRequestReturnSagaData) throws IOException, InterruptedException, TimeoutException {
+    val eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(ADD_PEN_REQUEST_COMMENT.toString());
-    getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    PenRequestComments penRequestComments = PenRequestCommentsMapper.mapper.toPenReqComments(penRequestReturnSagaData);
-    Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
+    val penRequestComments = PenRequestCommentsMapper.mapper.toPenReqComments(penRequestReturnSagaData);
+    val nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(ADD_PEN_REQUEST_COMMENT)
-      .replyTo(getTopicToSubscribe())
+      .replyTo(this.getTopicToSubscribe())
       .eventPayload(JsonUtil.getJsonStringFromObject(penRequestComments))
       .build();
-    postMessageToTopic(PEN_REQUEST_API_TOPIC.toString(), nextEvent);
+    this.postMessageToTopic(PEN_REQUEST_API_TOPIC.toString(), nextEvent);
     log.info("message sent to PEN_REQUEST_API_TOPIC for ADD_PEN_REQUEST_COMMENT Event.");
   }
 
   @Override
-  protected void updatePenRequestPayload(PenRequestSagaData penRequestSagaData, PenRequestReturnSagaData penRequestReturnSagaData) {
+  protected void updatePenRequestPayload(final PenRequestSagaData penRequestSagaData, final PenRequestReturnSagaData penRequestReturnSagaData) {
     penRequestSagaData.setPenRequestStatusCode(penRequestReturnSagaData.getPenRequestStatusCode());
     penRequestSagaData.setStatusUpdateDate(LocalDateTime.now().toString());
     penRequestSagaData.setReviewer(penRequestReturnSagaData.getReviewer());
@@ -82,7 +81,7 @@ public class PenRequestReturnSagaOrchestrator extends BasePenReqSagaOrchestrator
   }
 
   @Override
-  protected String updateGetPenRequestPayload(PenRequestReturnSagaData penRequestReturnSagaData) {
+  protected String updateGetPenRequestPayload(final PenRequestReturnSagaData penRequestReturnSagaData) {
     return penRequestReturnSagaData.getPenRetrievalRequestID();
   }
 
@@ -96,16 +95,16 @@ public class PenRequestReturnSagaOrchestrator extends BasePenReqSagaOrchestrator
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
    */
-  protected void executeNotifyStudentPenRequestReturn(Event event, Saga saga, PenRequestReturnSagaData penRequestReturnSagaData) throws IOException, InterruptedException, TimeoutException {
-    SagaEvent eventStates = createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+  protected void executeNotifyStudentPenRequestReturn(final Event event, final Saga saga, final PenRequestReturnSagaData penRequestReturnSagaData) throws IOException, InterruptedException, TimeoutException {
+    val eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(NOTIFY_STUDENT_PEN_REQUEST_RETURN.toString());
-    getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
-    Event nextEvent = Event.builder().sagaId(saga.getSagaId())
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
+    val nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(NOTIFY_STUDENT_PEN_REQUEST_RETURN)
-      .replyTo(getTopicToSubscribe())
-      .eventPayload(buildPenReqEmailSagaData(penRequestReturnSagaData))
+      .replyTo(this.getTopicToSubscribe())
+      .eventPayload(this.buildPenReqEmailSagaData(penRequestReturnSagaData))
       .build();
-    postMessageToTopic(PROFILE_REQUEST_EMAIL_API_TOPIC.toString(), nextEvent);
+    this.postMessageToTopic(PROFILE_REQUEST_EMAIL_API_TOPIC.toString(), nextEvent);
     log.info("message sent to PROFILE_REQUEST_EMAIL_API_TOPIC for NOTIFY_STUDENT_PEN_REQUEST_RETURN Event.");
 
   }
@@ -117,8 +116,8 @@ public class PenRequestReturnSagaOrchestrator extends BasePenReqSagaOrchestrator
    * @return the string representation of the json object.
    * @throws JsonProcessingException if it is unable to convert the object to json string.
    */
-  private String buildPenReqEmailSagaData(PenRequestReturnSagaData penRequestReturnSagaData) throws JsonProcessingException {
-    PenReqEmailSagaData penReqEmailSagaData = PenReqEmailSagaData.builder()
+  private String buildPenReqEmailSagaData(final PenRequestReturnSagaData penRequestReturnSagaData) throws JsonProcessingException {
+    val penReqEmailSagaData = PenReqEmailSagaData.builder()
       .emailAddress(penRequestReturnSagaData.getEmail())
       .identityType(penRequestReturnSagaData.getIdentityType())
       .build();

@@ -69,7 +69,7 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
 
   protected BaseOrchestrator<T> registerStepToExecute(final EventType initEvent, final EventOutcome outcome, final Boolean isCompensating, final EventType nextEvent, final SagaStep<T> stepToExecute) {
     if (this.nextStepsToExecute.containsKey(initEvent)) {
-      final List<SagaEventState<T>> states = this.nextStepsToExecute.get(initEvent);
+      val states = this.nextStepsToExecute.get(initEvent);
       states.add(this.buildSagaEventState(outcome, isCompensating, nextEvent, stepToExecute));
     } else {
       this.nextStepsToExecute.put(initEvent, this.createSingleCollectionEventState(outcome, isCompensating, nextEvent, stepToExecute));
@@ -107,10 +107,10 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
    * @return true or false based on whether the current event with outcome received from the queue is already processed or not.
    */
   protected boolean isNotProcessedEvent(final EventType currentEventType, final Saga saga, final Set<EventType> eventTypes) {
-    final EventType eventTypeInDB = EventType.valueOf(saga.getSagaState());
-    final List<EventType> events = new LinkedList<>(eventTypes);
-    final int dbEventIndex = events.indexOf(eventTypeInDB);
-    final int currentEventIndex = events.indexOf(currentEventType);
+    val eventTypeInDB = EventType.valueOf(saga.getSagaState());
+    val events = new LinkedList<>(eventTypes);
+    val dbEventIndex = events.indexOf(eventTypeInDB);
+    val currentEventIndex = events.indexOf(currentEventType);
     return currentEventIndex >= dbEventIndex;
   }
 
@@ -147,7 +147,7 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
    */
   protected void markSagaComplete(final Event event, final Saga saga, final T sagaData) throws InterruptedException, TimeoutException, IOException {
     log.trace("payload is {}", sagaData);
-    final var finalEvent = new NotificationEvent();
+    val finalEvent = new NotificationEvent();
     BeanUtils.copyProperties(event, finalEvent);
     finalEvent.setEventType(MARK_SAGA_COMPLETE);
     finalEvent.setEventOutcome(SAGA_COMPLETED);
@@ -157,7 +157,7 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
     finalEvent.setSagaName(this.getSagaName());
     finalEvent.setEventPayload(""); // no need to send payload as it is not required by the subscribers.
     this.postMessageToTopic(this.getTopicToSubscribe(), finalEvent);
-    final SagaEvent sagaEvent = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    val sagaEvent = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(COMPLETED.toString());
     saga.setStatus(COMPLETED.toString());
     saga.setUpdateDate(LocalDateTime.now());
@@ -196,7 +196,7 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
    * @return {@link SagaEvent} if found else null.
    */
   protected Optional<SagaEvent> findTheLastEventOccurred(final List<SagaEvent> eventStates) {
-    final int step = eventStates.stream().map(SagaEvent::getSagaStepNumber).mapToInt(x -> x).max().orElse(0);
+    val step = eventStates.stream().map(SagaEvent::getSagaStepNumber).mapToInt(x -> x).max().orElse(0);
     return eventStates.stream().filter(element -> element.getSagaStepNumber() == step).findFirst();
   }
 
@@ -212,8 +212,8 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
   @Async("async-task-executor")
   @Transactional
   public void replaySaga(final Saga saga) throws IOException, InterruptedException, TimeoutException {
-    final var eventStates = this.getSagaService().findAllSagaStates(saga);
-    final T t = JsonUtil.getJsonObjectFromString(this.clazz, saga.getPayload());
+    val eventStates = this.getSagaService().findAllSagaStates(saga);
+    val t = JsonUtil.getJsonObjectFromString(this.clazz, saga.getPayload());
     if (eventStates.isEmpty()) { //process did not start last time, lets start from beginning.
       this.replayFromBeginning(saga, t);
     } else {
@@ -236,15 +236,15 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
     if (sagaEventOptional.isPresent()) {
       val sagaEvent = sagaEventOptional.get();
       log.trace(sagaEventOptional.toString());
-      final EventType currentEvent = EventType.valueOf(sagaEvent.getSagaEventState());
-      final EventOutcome eventOutcome = EventOutcome.valueOf(sagaEvent.getSagaEventOutcome());
-      final Event event = Event.builder()
+      val currentEvent = EventType.valueOf(sagaEvent.getSagaEventState());
+      val eventOutcome = EventOutcome.valueOf(sagaEvent.getSagaEventOutcome());
+      val event = Event.builder()
         .sagaId(saga.getSagaId())
         .eventOutcome(eventOutcome)
         .eventType(currentEvent)
         .eventPayload(sagaEvent.getSagaEventResponse())
         .build();
-      final Optional<SagaEventState<T>> sagaEventState = this.findNextSagaEventState(currentEvent, eventOutcome);
+      val sagaEventState = this.findNextSagaEventState(currentEvent, eventOutcome);
       if (sagaEventState.isPresent()) {
         log.trace(SYSTEM_IS_GOING_TO_EXECUTE_NEXT_EVENT_FOR_CURRENT_EVENT, sagaEventState.get().getNextEventType(), event.toString());
         this.invokeNextEvent(event, saga, t, sagaEventState.get());
@@ -262,14 +262,14 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
    * @throws TimeoutException     if connection to messaging system times out.
    */
   private void replayFromBeginning(final Saga saga, final T t) throws InterruptedException, TimeoutException, IOException {
-    final Event event = Event.builder()
+    val event = Event.builder()
       .eventOutcome(INITIATE_SUCCESS)
       .eventType(INITIATED)
       .sagaId(saga.getSagaId())
       .penRequestID(saga.getPenRequestId() != null ? saga.getPenRequestId().toString() : "")
       .studentRequestID(saga.getProfileRequestId() != null ? saga.getProfileRequestId().toString() : "")
       .build();
-    final Optional<SagaEventState<T>> sagaEventState = this.findNextSagaEventState(INITIATED, INITIATE_SUCCESS);
+    val sagaEventState = this.findNextSagaEventState(INITIATED, INITIATE_SUCCESS);
     if (sagaEventState.isPresent()) {
       log.trace(SYSTEM_IS_GOING_TO_EXECUTE_NEXT_EVENT_FOR_CURRENT_EVENT, sagaEventState.get().getNextEventType(), event.toString());
       this.invokeNextEvent(event, saga, t, sagaEventState.get());
@@ -295,7 +295,7 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
       return;
     }
     this.broadcastSagaInitiatedMessage(event);
-    final var sagaOptional = this.getSagaService().findSagaById(event.getSagaId());
+    val sagaOptional = this.getSagaService().findSagaById(event.getSagaId());
     if (sagaOptional.isPresent()) {
       val saga = sagaOptional.get();
       if (!COMPLETED.toString().equalsIgnoreCase(sagaOptional.get().getStatus()) && !FORCE_STOPPED.toString().equalsIgnoreCase(sagaOptional.get().getStatus())) {//possible duplicate message or force stop scenario check
@@ -361,7 +361,7 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
    * @throws TimeoutException     if connection to messaging system times out.
    */
   protected void process(@NotNull final Event event, final Saga saga, final SagaEventState<T> sagaEventState) throws InterruptedException, TimeoutException, IOException {
-    final T sagaData = JsonUtil.getJsonObjectFromString(this.clazz, saga.getPayload());
+    val sagaData = JsonUtil.getJsonObjectFromString(this.clazz, saga.getPayload());
     if (!saga.getSagaState().equalsIgnoreCase(COMPLETED.toString())
       && this.isNotProcessedEvent(event.getEventType(), saga, this.nextStepsToExecute.keySet())) {
       log.info(SYSTEM_IS_GOING_TO_EXECUTE_NEXT_EVENT_FOR_CURRENT_EVENT, sagaEventState.getNextEventType(), event);
@@ -383,7 +383,7 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
    * @throws TimeoutException     if connection to messaging system times out.
    */
   protected void invokeNextEvent(final Event event, final Saga saga, final T sagaData, final SagaEventState<T> sagaEventState) throws InterruptedException, TimeoutException, IOException {
-    final SagaStep<T> stepToExecute = sagaEventState.getStepToExecute();
+    val stepToExecute = sagaEventState.getStepToExecute();
     stepToExecute.apply(event, saga, sagaData);
   }
 
