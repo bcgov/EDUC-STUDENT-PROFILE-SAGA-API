@@ -1,3 +1,4 @@
+![Lifecycle:Stable](https://img.shields.io/badge/Lifecycle-Stable-97ca00)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=bcgov_EDUC-STUDENT-PROFILE-SAGA-API&metric=alert_status)](https://sonarcloud.io/dashboard?id=bcgov_EDUC-STUDENT-PROFILE-SAGA-API)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=bcgov_EDUC-STUDENT-PROFILE-SAGA-API&metric=coverage)](https://sonarcloud.io/dashboard?id=bcgov_EDUC-STUDENT-PROFILE-SAGA-API)
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=bcgov_EDUC-STUDENT-PROFILE-SAGA-API&metric=ncloc)](https://sonarcloud.io/dashboard?id=bcgov_EDUC-STUDENT-PROFILE-SAGA-API)
