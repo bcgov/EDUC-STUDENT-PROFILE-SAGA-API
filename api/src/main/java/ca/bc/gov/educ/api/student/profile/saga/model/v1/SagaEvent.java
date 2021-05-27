@@ -1,4 +1,4 @@
-package ca.bc.gov.educ.api.student.profile.saga.model;
+package ca.bc.gov.educ.api.student.profile.saga.model.v1;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,35 +19,35 @@ import java.util.UUID;
 @NoArgsConstructor
 @Data
 @Entity
-@Table(name = "STUDENT_PROFILE_SAGA")
+@Table(name = "STUDENT_PROFILE_SAGA_EVENT_STATES")
 @DynamicUpdate
-public class Saga {
+public class SagaEvent {
+
   @Id
   @GeneratedValue(generator = "UUID")
   @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator", parameters = {
     @org.hibernate.annotations.Parameter(name = "uuid_gen_strategy_class", value = "org.hibernate.id.uuid.CustomVersionOneStrategy")})
-  @Column(name = "SAGA_ID", unique = true, updatable = false, columnDefinition = "BINARY(16)")
-  private UUID sagaId;
+  @Column(name = "SAGA_EVENT_ID", unique = true, updatable = false, columnDefinition = "BINARY(16)")
+  private UUID sagaEventId;
 
-  @NotNull(message = "saga name cannot be null")
-  @Column(name = "SAGA_NAME")
-  private String sagaName;
+  @ManyToOne
+  @JoinColumn(name = "SAGA_ID", updatable = false, columnDefinition = "BINARY(16)")
+  private Saga saga;
 
-  @NotNull(message = "saga state cannot be null")
-  @Column(name = "SAGA_STATE")
-  private String sagaState;
+  @NotNull(message = "saga_event_state cannot be null")
+  @Column(name = "SAGA_EVENT_STATE")
+  private String sagaEventState;
 
-  @NotNull(message = "payload cannot be null")
-  @Column(name = "PAYLOAD", length = 10485760)
-  private String payload;
+  @NotNull(message = "saga_event_outcome cannot be null")
+  @Column(name = "SAGA_EVENT_OUTCOME")
+  private String sagaEventOutcome;
 
-  @NotNull(message = "status cannot be null")
-  @Column(name = "STATUS")
-  private String status;
+  @NotNull(message = "saga_step_number cannot be null")
+  @Column(name = "SAGA_STEP_NUMBER")
+  private Integer sagaStepNumber;
 
-  @NotNull(message = "sagaCompensated cannot be null")
-  @Column(name = "SAGA_COMPENSATED")
-  private Boolean sagaCompensated;
+  @Column(name = "SAGA_EVENT_RESPONSE", length = 10485760)
+  private String sagaEventResponse;
 
   @NotNull(message = "create user cannot be null")
   @Column(name = "CREATE_USER", updatable = false)
@@ -66,10 +66,4 @@ public class Saga {
   @PastOrPresent
   @Column(name = "UPDATE_DATE")
   private LocalDateTime updateDate;
-
-  @Column(name = "PROFILE_REQUEST_ID", columnDefinition = "BINARY(16)")
-  private UUID profileRequestId;
-
-  @Column(name = "PEN_REQUEST_ID", columnDefinition = "BINARY(16)")
-  private UUID penRequestId;
 }

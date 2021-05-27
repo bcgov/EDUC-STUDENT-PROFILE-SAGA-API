@@ -1,6 +1,6 @@
 package ca.bc.gov.educ.api.student.profile.saga.orchestrator.base;
 
-import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
+import ca.bc.gov.educ.api.student.profile.saga.model.v1.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 
 import java.io.IOException;

@@ -1,7 +1,7 @@
 package ca.bc.gov.educ.api.student.profile.saga.repository;
 
-import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
-import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
+import ca.bc.gov.educ.api.student.profile.saga.model.v1.Saga;
+import ca.bc.gov.educ.api.student.profile.saga.model.v1.SagaEvent;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 

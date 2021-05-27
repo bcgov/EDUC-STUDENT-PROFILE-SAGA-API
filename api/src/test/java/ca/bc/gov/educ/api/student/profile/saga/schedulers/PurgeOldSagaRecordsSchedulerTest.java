@@ -1,8 +1,8 @@
 package ca.bc.gov.educ.api.student.profile.saga.schedulers;
 
 import ca.bc.gov.educ.api.student.profile.saga.BaseSagaApiTest;
-import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
-import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
+import ca.bc.gov.educ.api.student.profile.saga.model.v1.Saga;
+import ca.bc.gov.educ.api.student.profile.saga.model.v1.SagaEvent;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaEventRepository;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
 import org.junit.Test;

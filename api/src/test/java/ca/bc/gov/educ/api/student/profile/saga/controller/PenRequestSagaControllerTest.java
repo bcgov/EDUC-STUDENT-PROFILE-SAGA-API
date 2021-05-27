@@ -1,9 +1,10 @@
 package ca.bc.gov.educ.api.student.profile.saga.controller;
 
 import ca.bc.gov.educ.api.student.profile.saga.BaseSagaApiTest;
+import ca.bc.gov.educ.api.student.profile.saga.constants.v1.URL;
+import ca.bc.gov.educ.api.student.profile.saga.controller.v1.PenRequestSagaController;
 import ca.bc.gov.educ.api.student.profile.saga.exception.SagaRuntimeException;
-import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
-import ca.bc.gov.educ.api.student.profile.saga.repository.SagaEventRepository;
+import ca.bc.gov.educ.api.student.profile.saga.model.v1.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,8 +36,6 @@ public class PenRequestSagaControllerTest extends BaseSagaApiTest {
 
   @Autowired
   SagaRepository repository;
-  @Autowired
-  private SagaEventRepository sagaEventRepository;
 
   @Autowired
   SagaService service;
@@ -64,7 +63,7 @@ public class PenRequestSagaControllerTest extends BaseSagaApiTest {
         "  \"penRequestStatusCode\": \"MANUAL\",\n" +
         "  \"statusUpdateDate\": \"2020-04-17T22:29:00\"\n" +
         "}";
-    this.mockMvc.perform(post("/pen-request-complete-saga").with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_COMPLETE_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isBadRequest());
+    this.mockMvc.perform(post(URL.BASE_URL + URL.PEN_REQUEST_COMPLETE_SAGA).with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_COMPLETE_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isBadRequest());
   }
 
   @Test
@@ -88,7 +87,7 @@ public class PenRequestSagaControllerTest extends BaseSagaApiTest {
         "  \"historyActivityCode\": \"PEN\",\n" +
         "  \"identityType\": \"BASIC\"\n" +
         "}";
-    this.mockMvc.perform(post("/pen-request-complete-saga").with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_COMPLETE_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
+    this.mockMvc.perform(post(URL.BASE_URL + URL.PEN_REQUEST_COMPLETE_SAGA).with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_COMPLETE_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
     val result = this.repository.findAll();
     assertEquals(1, result.size());
   }
@@ -113,7 +112,7 @@ public class PenRequestSagaControllerTest extends BaseSagaApiTest {
         "  \"rejectionReason\": \"Can't find you\",\n" +
         "  \"statusUpdateDate\": \"2020-04-17T22:29:00\"\n" +
         "}";
-    this.mockMvc.perform(post("/pen-request-reject-saga").with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_REJECT_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
+    this.mockMvc.perform(post(URL.BASE_URL + URL.PEN_REQUEST_REJECT_SAGA).with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_REJECT_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
     val result = this.repository.findAll();
     assertEquals(1, result.size());
   }
@@ -139,7 +138,7 @@ public class PenRequestSagaControllerTest extends BaseSagaApiTest {
         "  \"statusUpdateDate\": \"2020-04-17T22:29:00\"\n" +
         "}";
     this.repository.save(this.getSaga(payload, "PEN_REQUEST_REJECT_SAGA", UUID.fromString("ac334a38-715f-1340-8171-607a59d0000a")));
-    this.mockMvc.perform(post("/pen-request-reject-saga").with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_REJECT_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isConflict());
+    this.mockMvc.perform(post(URL.BASE_URL + URL.PEN_REQUEST_REJECT_SAGA).with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_REJECT_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isConflict());
     val result = this.repository.findAll();
     assertEquals(1, result.size());
   }
@@ -156,7 +155,7 @@ public class PenRequestSagaControllerTest extends BaseSagaApiTest {
         "  \"createUser\": \"STAFF_ADMIN\",\n" +
         "  \"updateUser\": \"STAFF_ADMIN\"\n" +
         "}";
-    this.mockMvc.perform(post("/pen-request-comment-saga").with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_COMMENT_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isBadRequest());
+    this.mockMvc.perform(post(URL.BASE_URL + URL.PEN_REQUEST_COMMENT_SAGA).with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_COMMENT_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isBadRequest());
   }
 
 
@@ -172,7 +171,7 @@ public class PenRequestSagaControllerTest extends BaseSagaApiTest {
         "  \"createUser\": \"STAFF_ADMIN\",\n" +
         "  \"updateUser\": \"STAFF_ADMIN\"\n" +
         "}";
-    this.mockMvc.perform(post("/pen-request-comment-saga").with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_COMMENT_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
+    this.mockMvc.perform(post(URL.BASE_URL + URL.PEN_REQUEST_COMMENT_SAGA).with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_COMMENT_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
     val result = this.repository.findAll();
     assertEquals(1, result.size());
   }
@@ -182,7 +181,7 @@ public class PenRequestSagaControllerTest extends BaseSagaApiTest {
     final var payload = "{\n" +
 
         "}";
-    this.mockMvc.perform(post("/pen-request-unlink-saga").with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_UNLINK_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print())
+    this.mockMvc.perform(post(URL.BASE_URL + URL.PEN_REQUEST_UNLINK_SAGA).with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_UNLINK_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print())
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.subErrors", hasSize(6)));
   }
 
@@ -196,7 +195,7 @@ public class PenRequestSagaControllerTest extends BaseSagaApiTest {
         "  \"createUser\": \"STAFF_ADMIN\",\n" +
         "  \"updateUser\": \"STAFF_ADMIN\"\n" +
         "}";
-    this.mockMvc.perform(post("/pen-request-unlink-saga").with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_UNLINK_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$", notNullValue()));
+    this.mockMvc.perform(post(URL.BASE_URL + URL.PEN_REQUEST_UNLINK_SAGA).with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_UNLINK_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$", notNullValue()));
     val result = this.repository.findAll();
     assertEquals(1, result.size());
   }
@@ -213,7 +212,7 @@ public class PenRequestSagaControllerTest extends BaseSagaApiTest {
         "}";
     final var saga = this.getSaga(payload, "PEN_REQUEST_COMPLETE_SAGA", UUID.fromString("ac334a38-715f-1340-8171-607a59d0000a"));
     this.repository.save(saga);
-    this.mockMvc.perform(post("/pen-request-unlink-saga").with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_UNLINK_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$", notNullValue()));
+    this.mockMvc.perform(post(URL.BASE_URL + URL.PEN_REQUEST_UNLINK_SAGA).with(jwt().jwt((jwt) -> jwt.claim("scope", "PEN_REQUEST_UNLINK_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$", notNullValue()));
     val result = this.repository.findAll();
     assertEquals(2, result.size());
     final var updatedSaga = this.repository.findById(saga.getSagaId());

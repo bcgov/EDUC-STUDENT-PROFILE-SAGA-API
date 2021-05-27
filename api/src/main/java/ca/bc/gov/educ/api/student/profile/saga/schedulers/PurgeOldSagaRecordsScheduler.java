@@ -1,6 +1,6 @@
 package ca.bc.gov.educ.api.student.profile.saga.schedulers;
 
-import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
+import ca.bc.gov.educ.api.student.profile.saga.model.v1.SagaEvent;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaEventRepository;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
 import lombok.Getter;
@@ -34,7 +34,7 @@ public class PurgeOldSagaRecordsScheduler {
   @Getter
   Integer sagaRecordStaleInDays;
 
-  public PurgeOldSagaRecordsScheduler(SagaRepository sagaRepository, SagaEventRepository sagaEventRepository) {
+  public PurgeOldSagaRecordsScheduler(final SagaRepository sagaRepository, final SagaEventRepository sagaEventRepository) {
     this.sagaRepository = sagaRepository;
     this.sagaEventRepository = sagaEventRepository;
   }
@@ -49,20 +49,19 @@ public class PurgeOldSagaRecordsScheduler {
   @Transactional
   public void pollSagaTableAndPurgeOldRecords() {
     LockAssert.assertLocked();
-    LocalDateTime createDateToCompare = calculateCreateDateBasedOnStaleSagaRecordInDays();
-    List<SagaEvent> sagaEventList = new CopyOnWriteArrayList<>();
-    var sagas = getSagaRepository().findAllByCreateDateBefore(createDateToCompare);
+    val createDateToCompare = this.calculateCreateDateBasedOnStaleSagaRecordInDays();
+    final List<SagaEvent> sagaEventList = new CopyOnWriteArrayList<>();
+    final var sagas = this.getSagaRepository().findAllByCreateDateBefore(createDateToCompare);
     if (!sagas.isEmpty()) {
       for (val saga : sagas) {
-        sagaEventList.addAll(getSagaEventRepository().findBySaga(saga));
+        sagaEventList.addAll(this.getSagaEventRepository().findBySaga(saga));
       }
     }
-    sagaEventRepository.deleteAll(sagaEventList);
-    sagaRepository.deleteAll(sagas);
+    this.sagaEventRepository.deleteAll(sagaEventList);
+    this.sagaRepository.deleteAll(sagas);
   }
 
   private LocalDateTime calculateCreateDateBasedOnStaleSagaRecordInDays() {
-    LocalDateTime currentTime = LocalDateTime.now();
-    return currentTime.minusDays(getSagaRecordStaleInDays());
+    return LocalDateTime.now().minusDays(this.getSagaRecordStaleInDays());
   }
 }

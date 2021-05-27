@@ -4,7 +4,7 @@ import ca.bc.gov.educ.api.student.profile.saga.BaseSagaApiTest;
 import ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome;
 import ca.bc.gov.educ.api.student.profile.saga.constants.EventType;
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
-import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
+import ca.bc.gov.educ.api.student.profile.saga.model.v1.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaEventRepository;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;

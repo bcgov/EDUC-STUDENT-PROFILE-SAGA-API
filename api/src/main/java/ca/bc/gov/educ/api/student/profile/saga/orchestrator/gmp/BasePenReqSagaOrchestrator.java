@@ -1,8 +1,8 @@
 package ca.bc.gov.educ.api.student.profile.saga.orchestrator.gmp;
 
 import ca.bc.gov.educ.api.student.profile.saga.messaging.MessagePublisher;
-import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
-import ca.bc.gov.educ.api.student.profile.saga.model.SagaEvent;
+import ca.bc.gov.educ.api.student.profile.saga.model.v1.Saga;
+import ca.bc.gov.educ.api.student.profile.saga.model.v1.SagaEvent;
 import ca.bc.gov.educ.api.student.profile.saga.orchestrator.base.BaseOrchestrator;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
