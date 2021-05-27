@@ -53,7 +53,7 @@ public class SagaSearchService {
   private Specification<Saga> getStudentEntitySpecification(final List<SearchCriteria> criteriaList) {
     Specification<Saga> studentSpecs = null;
     if (!criteriaList.isEmpty()) {
-      int i = 0;
+      var i = 0;
       for (final SearchCriteria criteria : criteriaList) {
         if (criteria.getKey() != null && criteria.getOperation() != null && criteria.getValueType() != null) {
           final var criteriaValue = criteria.getValue();

@@ -2,11 +2,16 @@ package ca.bc.gov.educ.api.student.profile.saga.controller;
 
 import ca.bc.gov.educ.api.student.profile.saga.BaseSagaApiTest;
 import ca.bc.gov.educ.api.student.profile.saga.constants.v1.URL;
+import ca.bc.gov.educ.api.student.profile.saga.filter.FilterOperation;
 import ca.bc.gov.educ.api.student.profile.saga.model.v1.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.model.v1.SagaEvent;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaEventRepository;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
+import ca.bc.gov.educ.api.student.profile.saga.struct.Search;
+import ca.bc.gov.educ.api.student.profile.saga.struct.SearchCriteria;
+import ca.bc.gov.educ.api.student.profile.saga.struct.ValueType;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.val;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,15 +21,15 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.io.File;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.INITIATED;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -179,6 +184,48 @@ public class StudentProfileSagaControllerTest extends BaseSagaApiTest {
     }
     this.sagaEventRepository.saveAll(sagaEvents);
     this.mockMvc.perform(get(URL.BASE_URL + URL.SAGA_ID + URL.SAGA_EVENTS, saga.getSagaId()).with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_READ_SAGA")))).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$", hasSize(8)));
+  }
+
+  @Test
+  @SuppressWarnings("java:S100")
+  public void testGetSagaPaginated_givenNoSearchCriteria_shouldReturnStatusOk() throws Exception {
+    final File sagasFile = new File(
+      Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock-multiple-saga.json")).getFile()
+    );
+    val sagas = Arrays.asList(JsonUtil.objectMapper.readValue(sagasFile, Saga[].class));
+    for (val saga : sagas) {
+      saga.setSagaId(null);
+      saga.setSagaCompensated(false);
+      saga.setCreateDate(LocalDateTime.now());
+      saga.setUpdateDate(LocalDateTime.now());
+    }
+    this.repository.saveAll(sagas);
+    this.mockMvc.perform(get(URL.BASE_URL + URL.PAGINATED).with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_READ_SAGA")))).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(10)));
+  }
+
+  @Test
+  @SuppressWarnings("java:S100")
+  public void testGetSagaPaginated_givenSearchCriteria_shouldReturnStatusOk() throws Exception {
+    final File sagasFile = new File(
+      Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock-multiple-saga.json")).getFile()
+    );
+    val sagas = Arrays.asList(JsonUtil.objectMapper.readValue(sagasFile, Saga[].class));
+    for (val saga : sagas) {
+      saga.setSagaId(null);
+      saga.setSagaCompensated(false);
+      saga.setCreateDate(LocalDateTime.now());
+      saga.setUpdateDate(LocalDateTime.now());
+    }
+    this.repository.saveAll(sagas);
+    final SearchCriteria criteria = SearchCriteria.builder().key("sagaName").operation(FilterOperation.EQUAL).value("PEN_REQUEST_REJECT_SAGA").valueType(ValueType.STRING).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    final List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
+    this.mockMvc.perform(get(URL.BASE_URL + URL.PAGINATED).with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_READ_SAGA"))).param("searchCriteriaList", criteriaJSON)
+      .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(10))).andExpect(jsonPath("$.totalElements", is(15)));
   }
 
   private Saga getSaga(final String payload, final String sagaName, final String apiName, final UUID profileRequestId) {

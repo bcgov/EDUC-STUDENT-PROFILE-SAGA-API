@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.profile.saga.model.v1;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +22,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "STUDENT_PROFILE_SAGA")
 @DynamicUpdate
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Saga {
   @Id
   @GeneratedValue(generator = "UUID")

@@ -49,14 +49,14 @@ public class SagaService {
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public Saga createProfileRequestSagaRecord(final Object sagaData, final String sagaName, final String user, final UUID profileRequestId) throws JsonProcessingException {
-    final Saga saga = this.getSaga(JsonUtil.getJsonStringFromObject(sagaData), sagaName, user);
+    val saga = this.getSaga(JsonUtil.getJsonStringFromObject(sagaData), sagaName, user);
     saga.setProfileRequestId(profileRequestId);
     return this.getSagaRepository().save(saga);
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public Saga createPenRequestSagaRecord(final Object sagaData, final String sagaName, final String user, final UUID penRequestId) throws JsonProcessingException {
-    final Saga saga = this.getSaga(JsonUtil.getJsonStringFromObject(sagaData), sagaName, user);
+    val saga = this.getSaga(JsonUtil.getJsonStringFromObject(sagaData), sagaName, user);
     saga.setPenRequestId(penRequestId);
     return this.getSagaRepository().save(saga);
   }
