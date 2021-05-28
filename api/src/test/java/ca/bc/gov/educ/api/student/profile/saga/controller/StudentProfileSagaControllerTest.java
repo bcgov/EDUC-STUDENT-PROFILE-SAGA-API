@@ -147,6 +147,14 @@ public class StudentProfileSagaControllerTest extends BaseSagaApiTest {
   }
 
   @Test
+  public void test_completeStudentProfile_givenValidPayload_shouldReturnNoContent() throws Exception {
+    final String payload = "{\"studentProfileRequestID\":\"0a6112e6-75f0-1cae-8176-057a3bbe0008\",\"createUser\":\"RREDDY\",\"updateUser\":\"RREDDY\",\"reviewer\":\"RREDDY\",\"email\":\"penemail@mailsac.com\",\"identityType\":\"BASIC\",\"staffMemberIDIRGUID\":null,\"staffMemberName\":null,\"studentID\":\"ac334ce6-7600-1bc1-8176-004c3fdb0003\",\"digitalID\":\"0a612708-7602-1aea-8176-05774b800006\",\"pen\":\"200004562\",\"legalFirstName\":\"TESTER\",\"legalMiddleNames\":\"PEN\",\"legalLastName\":\"AUTOMATION\",\"dob\":\"1999-12-01\",\"sexCode\":\"M\",\"genderCode\":\"M\",\"usualFirstName\":null,\"usualMiddleNames\":null,\"usualLastName\":null,\"deceasedDate\":null,\"emailVerified\":\"N\",\"completeComment\":\"Your update my Pen request is approved\",\"postalCode\":null,\"gradeCode\":null,\"mincode\":null,\"localID\":null,\"historyActivityCode\":\"PEN\"}";
+    this.mockMvc.perform(post(URL.BASE_URL + URL.STUDENT_PROFILE_COMPLETE_SAGA).with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_COMPLETE_SAGA"))).contentType(MediaType.APPLICATION_JSON).content(payload)).andDo(print()).andExpect(status().isOk());
+    val result = this.repository.findAll();
+    assertEquals(1, result.size());
+  }
+
+  @Test
   @SuppressWarnings("java:S100")
   public void testGetSagaBySagaID_whenSagaIDIsValid_shouldReturnStatusNoContent() throws Exception {
     final String payload = "{\n" +
@@ -226,6 +234,56 @@ public class StudentProfileSagaControllerTest extends BaseSagaApiTest {
     final String criteriaJSON = objectMapper.writeValueAsString(searches);
     this.mockMvc.perform(get(URL.BASE_URL + URL.PAGINATED).with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_READ_SAGA"))).param("searchCriteriaList", criteriaJSON)
       .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(10))).andExpect(jsonPath("$.totalElements", is(15)));
+  }
+
+  @Test
+  @SuppressWarnings("java:S100")
+  public void testGetSagaPaginated_givenSearchCriteria2_shouldReturnStatusOk() throws Exception {
+    final File sagasFile = new File(
+      Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock-multiple-saga.json")).getFile()
+    );
+    val sagas = Arrays.asList(JsonUtil.objectMapper.readValue(sagasFile, Saga[].class));
+    for (val saga : sagas) {
+      saga.setSagaId(null);
+      saga.setSagaCompensated(false);
+      saga.setCreateDate(LocalDateTime.now());
+      saga.setUpdateDate(LocalDateTime.now());
+    }
+    this.repository.saveAll(sagas);
+    final SearchCriteria criteria = SearchCriteria.builder().key("status").operation(FilterOperation.EQUAL).value(null).valueType(ValueType.STRING).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    final List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
+    this.mockMvc.perform(get(URL.BASE_URL + URL.PAGINATED).with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_READ_SAGA"))).param("searchCriteriaList", criteriaJSON)
+      .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(0))).andExpect(jsonPath("$.totalElements", is(0)));
+  }
+
+  @Test
+  @SuppressWarnings("java:S100")
+  public void testGetSagaPaginated_givenSearchCriteria3_shouldReturnStatusOk() throws Exception {
+    final File sagasFile = new File(
+      Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock-multiple-saga.json")).getFile()
+    );
+    val sagas = Arrays.asList(JsonUtil.objectMapper.readValue(sagasFile, Saga[].class));
+    for (val saga : sagas) {
+      saga.setSagaId(null);
+      saga.setSagaCompensated(false);
+      saga.setCreateDate(LocalDateTime.now());
+      saga.setUpdateDate(LocalDateTime.now());
+    }
+    this.repository.saveAll(sagas);
+    final SearchCriteria criteria = SearchCriteria.builder().key("penRequestId").operation(FilterOperation.EQUAL).value("0a61140c-7644-1379-8176-4e15129a0001").valueType(ValueType.UUID).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    final List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
+    this.mockMvc.perform(get(URL.BASE_URL + URL.PAGINATED).with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_READ_SAGA"))).param("searchCriteriaList", criteriaJSON)
+      .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1))).andExpect(jsonPath("$.totalElements", is(1)));
   }
 
   private Saga getSaga(final String payload, final String sagaName, final String apiName, final UUID profileRequestId) {
