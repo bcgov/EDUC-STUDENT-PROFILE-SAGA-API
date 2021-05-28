@@ -305,12 +305,65 @@ public class StudentProfileSagaControllerTest extends BaseSagaApiTest {
     final SearchCriteria criteria2 = SearchCriteria.builder().condition(Condition.AND).key("status").operation(FilterOperation.EQUAL).value("COMPLETED").valueType(ValueType.STRING).build();
     final List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
+    criteriaList.add(criteria2);
     final List<Search> searches = new LinkedList<>();
     searches.add(Search.builder().searchCriteriaList(criteriaList).build());
     final ObjectMapper objectMapper = new ObjectMapper();
     final String criteriaJSON = objectMapper.writeValueAsString(searches);
     this.mockMvc.perform(get(URL.BASE_URL + URL.PAGINATED).with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_READ_SAGA"))).param("searchCriteriaList", criteriaJSON)
       .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1))).andExpect(jsonPath("$.totalElements", is(1)));
+  }
+
+  @Test
+  @SuppressWarnings("java:S100")
+  public void testGetSagaPaginated_givenSearchCriteria5_shouldReturnStatusOk() throws Exception {
+    final File sagasFile = new File(
+      Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock-multiple-saga.json")).getFile()
+    );
+    val sagas = Arrays.asList(JsonUtil.objectMapper.readValue(sagasFile, Saga[].class));
+    for (val saga : sagas) {
+      saga.setSagaId(null);
+      saga.setSagaCompensated(false);
+      saga.setCreateDate(LocalDateTime.now());
+      saga.setUpdateDate(LocalDateTime.now());
+    }
+    this.repository.saveAll(sagas);
+    final SearchCriteria criteria = SearchCriteria.builder().key("penRequestId").operation(FilterOperation.EQUAL).value("0a61140c-7644-1379-8176-4e15129a0001").valueType(ValueType.UUID).build();
+    final SearchCriteria criteria2 = SearchCriteria.builder().condition(Condition.OR).key("status").operation(FilterOperation.EQUAL).value("COMPLETED").valueType(ValueType.STRING).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    criteriaList.add(criteria2);
+    final List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
+    this.mockMvc.perform(get(URL.BASE_URL + URL.PAGINATED).with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_READ_SAGA"))).param("searchCriteriaList", criteriaJSON)
+      .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(10))).andExpect(jsonPath("$.totalElements", is(91)));
+  }
+
+  @Test
+  @SuppressWarnings("java:S100")
+  public void testGetSagaPaginated_givenSearchCriteria6_shouldReturnStatusOk() throws Exception {
+    final File sagasFile = new File(
+      Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock-multiple-saga.json")).getFile()
+    );
+    val sagas = Arrays.asList(JsonUtil.objectMapper.readValue(sagasFile, Saga[].class));
+    for (val saga : sagas) {
+      saga.setSagaId(null);
+      saga.setSagaCompensated(false);
+      saga.setCreateDate(LocalDateTime.now());
+      saga.setUpdateDate(LocalDateTime.now());
+    }
+    this.repository.saveAll(sagas);
+    final SearchCriteria criteria = SearchCriteria.builder().key("createDate").operation(FilterOperation.GREATER_THAN).value("2000-01-01T00:00:00").valueType(ValueType.DATE_TIME).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    final List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
+    this.mockMvc.perform(get(URL.BASE_URL + URL.PAGINATED).with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_READ_SAGA"))).param("searchCriteriaList", criteriaJSON)
+      .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(10))).andExpect(jsonPath("$.totalElements", is(93)));
   }
 
   private Saga getSaga(final String payload, final String sagaName, final String apiName, final UUID profileRequestId) {
