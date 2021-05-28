@@ -1,10 +1,11 @@
-package ca.bc.gov.educ.api.student.profile.saga.controller;
+package ca.bc.gov.educ.api.student.profile.saga.controller.v1;
 
 import ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome;
 import ca.bc.gov.educ.api.student.profile.saga.constants.EventType;
-import ca.bc.gov.educ.api.student.profile.saga.endpoint.PenRequestSagaEndpoint;
+import ca.bc.gov.educ.api.student.profile.saga.controller.BaseController;
+import ca.bc.gov.educ.api.student.profile.saga.endpoint.v1.PenRequestSagaEndpoint;
 import ca.bc.gov.educ.api.student.profile.saga.exception.SagaRuntimeException;
-import ca.bc.gov.educ.api.student.profile.saga.model.Saga;
+import ca.bc.gov.educ.api.student.profile.saga.model.v1.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.orchestrator.gmp.*;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;

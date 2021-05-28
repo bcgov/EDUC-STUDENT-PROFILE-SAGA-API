@@ -1,4 +1,4 @@
-package ca.bc.gov.educ.api.student.profile.saga.model;
+package ca.bc.gov.educ.api.student.profile.saga.model.v1;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

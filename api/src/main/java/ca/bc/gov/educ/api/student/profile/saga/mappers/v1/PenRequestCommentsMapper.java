@@ -1,6 +1,7 @@
-package ca.bc.gov.educ.api.student.profile.saga.mappers;
+package ca.bc.gov.educ.api.student.profile.saga.mappers.v1;
 
 
+import ca.bc.gov.educ.api.student.profile.saga.mappers.UUIDMapper;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestComments;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestCommentsSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestReturnSagaData;

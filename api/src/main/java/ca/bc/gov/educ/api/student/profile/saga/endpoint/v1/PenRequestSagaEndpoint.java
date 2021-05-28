@@ -1,5 +1,6 @@
-package ca.bc.gov.educ.api.student.profile.saga.endpoint;
+package ca.bc.gov.educ.api.student.profile.saga.endpoint.v1;
 
+import ca.bc.gov.educ.api.student.profile.saga.constants.v1.URL;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.*;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
@@ -13,11 +14,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-@RequestMapping("/")
+@RequestMapping(URL.BASE_URL)
 @OpenAPIDefinition(info = @Info(title = "API for Pen Requests SAGA.", description = "This SAGA API is for Pen Requests, to handle distributed transactions.", version = "1"), security = {@SecurityRequirement(name = "OAUTH2", scopes = {"READ_PEN_REQUEST", "WRITE_PEN_REQUEST"})})
 public interface PenRequestSagaEndpoint {
 
-  @PostMapping("/pen-request-complete-saga")
+  @PostMapping(URL.PEN_REQUEST_COMPLETE_SAGA)
   @PreAuthorize("hasAuthority('SCOPE_PEN_REQUEST_COMPLETE_SAGA')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK.")})
   ResponseEntity<String> completePENRequest(@Validated @RequestBody PenRequestCompleteSagaData penRequestCompleteSagaData);
@@ -25,17 +26,17 @@ public interface PenRequestSagaEndpoint {
   /**
    * this is for student making a comment and returning to staff, flow.
    */
-  @PostMapping("/pen-request-comment-saga")
+  @PostMapping(URL.PEN_REQUEST_COMMENT_SAGA)
   @PreAuthorize("hasAuthority('SCOPE_PEN_REQUEST_COMMENT_SAGA')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK.")})
   ResponseEntity<String> updatePenRequestAndAddComment(@Validated @RequestBody PenRequestCommentsSagaData penRequestCommentsSagaData);
 
-  @PostMapping("/pen-request-return-saga")
+  @PostMapping(URL.PEN_REQUEST_RETURN_SAGA)
   @PreAuthorize("hasAuthority('SCOPE_PEN_REQUEST_RETURN_SAGA')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK.")})
   ResponseEntity<String> returnPENRequest(@Validated @RequestBody PenRequestReturnSagaData penRequestReturnSagaData);
 
-  @PostMapping("/pen-request-reject-saga")
+  @PostMapping(URL.PEN_REQUEST_REJECT_SAGA)
   @PreAuthorize("hasAuthority('SCOPE_PEN_REQUEST_REJECT_SAGA')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK.")})
   ResponseEntity<String> rejectPENRequest(@Validated @RequestBody PenRequestRejectSagaData penRequestRejectSagaData);
@@ -47,7 +48,7 @@ public interface PenRequestSagaEndpoint {
    * @param penRequestUnlinkSagaData the payload which will be processed by this saga.
    * @return String the saga Id
    */
-  @PostMapping("/pen-request-unlink-saga")
+  @PostMapping(URL.PEN_REQUEST_UNLINK_SAGA)
   @PreAuthorize("hasAuthority('SCOPE_PEN_REQUEST_UNLINK_SAGA')")
   @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "OK.")})
   ResponseEntity<String> unlinkPenRequest(@Validated @RequestBody PenRequestUnlinkSagaData penRequestUnlinkSagaData);
