@@ -1,6 +1,6 @@
 package ca.bc.gov.educ.api.student.profile.saga.service;
 
-import ca.bc.gov.educ.api.student.profile.saga.exception.SagaRuntimeException;
+import ca.bc.gov.educ.api.student.profile.saga.exception.InvalidParameterException;
 import ca.bc.gov.educ.api.student.profile.saga.filter.FilterOperation;
 import ca.bc.gov.educ.api.student.profile.saga.filter.SagaFilterSpecs;
 import ca.bc.gov.educ.api.student.profile.saga.model.v1.Saga;
@@ -61,7 +61,7 @@ public class SagaSearchService {
           studentSpecs = this.getSpecificationPerGroup(studentSpecs, i, criteria, typeSpecification);
           i++;
         } else {
-          throw new SagaRuntimeException("Search Criteria can not contain null values for key, value and operation type");
+          throw new InvalidParameterException("Search Criteria can not contain null values for key, value type and operation type");
         }
       }
     }
@@ -140,7 +140,7 @@ public class SagaSearchService {
         }
       }
     } catch (final JsonProcessingException e) {
-      throw new SagaRuntimeException(e.getMessage());
+      throw new InvalidParameterException(e.getMessage());
     }
     return studentSpecs;
   }
