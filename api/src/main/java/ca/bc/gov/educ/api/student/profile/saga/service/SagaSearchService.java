@@ -99,15 +99,6 @@ public class SagaSearchService {
       case DATE_TIME:
         studentEntitySpecification = this.sagaFilterSpecs.getDateTimeTypeSpecification(key, value, filterOperation);
         break;
-      case LONG:
-        studentEntitySpecification = this.sagaFilterSpecs.getLongTypeSpecification(key, value, filterOperation);
-        break;
-      case INTEGER:
-        studentEntitySpecification = this.sagaFilterSpecs.getIntegerTypeSpecification(key, value, filterOperation);
-        break;
-      case DATE:
-        studentEntitySpecification = this.sagaFilterSpecs.getDateTypeSpecification(key, value, filterOperation);
-        break;
       case UUID:
         studentEntitySpecification = this.sagaFilterSpecs.getUUIDTypeSpecification(key, value, filterOperation);
         break;

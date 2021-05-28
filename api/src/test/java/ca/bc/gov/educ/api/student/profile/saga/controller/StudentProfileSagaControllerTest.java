@@ -7,6 +7,7 @@ import ca.bc.gov.educ.api.student.profile.saga.model.v1.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.model.v1.SagaEvent;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaEventRepository;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
+import ca.bc.gov.educ.api.student.profile.saga.struct.Condition;
 import ca.bc.gov.educ.api.student.profile.saga.struct.Search;
 import ca.bc.gov.educ.api.student.profile.saga.struct.SearchCriteria;
 import ca.bc.gov.educ.api.student.profile.saga.struct.ValueType;
@@ -276,6 +277,32 @@ public class StudentProfileSagaControllerTest extends BaseSagaApiTest {
     }
     this.repository.saveAll(sagas);
     final SearchCriteria criteria = SearchCriteria.builder().key("penRequestId").operation(FilterOperation.EQUAL).value("0a61140c-7644-1379-8176-4e15129a0001").valueType(ValueType.UUID).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+    final List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
+    this.mockMvc.perform(get(URL.BASE_URL + URL.PAGINATED).with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_READ_SAGA"))).param("searchCriteriaList", criteriaJSON)
+      .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(1))).andExpect(jsonPath("$.totalElements", is(1)));
+  }
+
+  @Test
+  @SuppressWarnings("java:S100")
+  public void testGetSagaPaginated_givenSearchCriteria4_shouldReturnStatusOk() throws Exception {
+    final File sagasFile = new File(
+      Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock-multiple-saga.json")).getFile()
+    );
+    val sagas = Arrays.asList(JsonUtil.objectMapper.readValue(sagasFile, Saga[].class));
+    for (val saga : sagas) {
+      saga.setSagaId(null);
+      saga.setSagaCompensated(false);
+      saga.setCreateDate(LocalDateTime.now());
+      saga.setUpdateDate(LocalDateTime.now());
+    }
+    this.repository.saveAll(sagas);
+    final SearchCriteria criteria = SearchCriteria.builder().key("penRequestId").operation(FilterOperation.EQUAL).value("0a61140c-7644-1379-8176-4e15129a0001").valueType(ValueType.UUID).build();
+    final SearchCriteria criteria2 = SearchCriteria.builder().condition(Condition.AND).key("status").operation(FilterOperation.EQUAL).value("COMPLETED").valueType(ValueType.STRING).build();
     final List<SearchCriteria> criteriaList = new ArrayList<>();
     criteriaList.add(criteria);
     final List<Search> searches = new LinkedList<>();
