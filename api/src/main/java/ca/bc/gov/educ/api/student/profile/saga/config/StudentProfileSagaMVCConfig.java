@@ -21,22 +21,22 @@ import java.util.concurrent.Executor;
 public class StudentProfileSagaMVCConfig implements WebMvcConfigurer {
 
   @Getter(AccessLevel.PRIVATE)
-  private final StudentProfileSagaInterceptor studentProfileSagaInterceptor;
+  private final RequestResponseInterceptor requestResponseInterceptor;
 
   @Autowired
-  public StudentProfileSagaMVCConfig(final StudentProfileSagaInterceptor studentProfileSagaInterceptor) {
-    this.studentProfileSagaInterceptor = studentProfileSagaInterceptor;
+  public StudentProfileSagaMVCConfig(final RequestResponseInterceptor requestResponseInterceptor) {
+    this.requestResponseInterceptor = requestResponseInterceptor;
   }
 
   @Override
   public void addInterceptors(final InterceptorRegistry registry) {
-    registry.addInterceptor(this.studentProfileSagaInterceptor).addPathPatterns("/**");
+    registry.addInterceptor(this.requestResponseInterceptor).addPathPatterns("/**");
   }
 
   @Bean("async-task-executor")
   public Executor taskExecutor() {
     return new EnhancedQueueExecutor.Builder()
-        .setThreadFactory(new ThreadFactoryBuilder().setNameFormat("async-task-%d").build())
-        .setCorePoolSize(2).setMaximumPoolSize(50).setKeepAliveTime(Duration.ofSeconds(60)).build();
+      .setThreadFactory(new ThreadFactoryBuilder().setNameFormat("async-task-%d").build())
+      .setCorePoolSize(2).setMaximumPoolSize(50).setKeepAliveTime(Duration.ofSeconds(60)).build();
   }
 }

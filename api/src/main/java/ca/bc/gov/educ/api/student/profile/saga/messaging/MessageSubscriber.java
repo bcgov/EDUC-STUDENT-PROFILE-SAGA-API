@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.profile.saga.messaging;
 
+import ca.bc.gov.educ.api.student.profile.saga.helpers.LogHelper;
 import ca.bc.gov.educ.api.student.profile.saga.orchestrator.base.SagaEventHandler;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @Component
 @Slf4j
+@SuppressWarnings("java:S2142")
 public class MessageSubscriber {
 
 
@@ -42,6 +44,7 @@ public class MessageSubscriber {
       if (message != null) {
         try {
           final var eventString = new String(message.getData());
+          LogHelper.logMessagingEventDetails(eventString);
           final var event = JsonUtil.getJsonObjectFromString(Event.class, eventString);
           eventHandler.executeSagaEvent(event);
         } catch (final Exception e) {
