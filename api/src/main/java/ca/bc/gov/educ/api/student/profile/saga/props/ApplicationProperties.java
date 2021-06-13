@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Getter
 public class ApplicationProperties {
+  public static final String CORRELATION_ID = "correlationID";
   @Value("${nats.server}")
   private String server;
 
