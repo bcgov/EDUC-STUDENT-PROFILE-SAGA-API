@@ -13,6 +13,7 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
+@ToString(callSuper = true)
 public class StudentProfileCompleteSagaData extends StudentProfileRequestActionSagaData {
   //Student Api/Digitalid Api
   private String studentID;
