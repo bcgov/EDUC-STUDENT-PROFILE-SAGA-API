@@ -197,6 +197,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     val studentSagaData = studentSagaDataMapper.toStudentSaga(penRequestCompleteSagaData);
     studentSagaData.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_GMP); // always GMP
+    studentSagaData.setStatusCode("A"); // Always active pen is provided to the student upon GMP completion.
     if (penRequestCompleteSagaData.getIsDocumentReviewed() != null && penRequestCompleteSagaData.getIsDocumentReviewed()) {
       studentSagaData.setDemogCode(DEMOG_CODE_CONFIRMED);
     }

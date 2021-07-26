@@ -9,9 +9,11 @@ import ca.bc.gov.educ.api.student.profile.saga.repository.SagaEventRepository;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
+import ca.bc.gov.educ.api.student.profile.saga.struct.base.StudentSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileCompleteSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import lombok.val;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -88,15 +90,17 @@ public class StudentProfileCompleteSagaOrchestratorTest extends BaseSagaApiTest 
   @Test
   public void testExecuteCreateStudent_givenEventAndSagaData_shouldPostEventToStudentApi() throws IOException, InterruptedException, TimeoutException {
     final var event = Event.builder()
-        .eventType(EventType.GET_STUDENT)
-        .eventOutcome(EventOutcome.STUDENT_NOT_FOUND)
-        .eventPayload(this.getPayload())
-        .sagaId(this.saga.getSagaId())
-        .build();
+      .eventType(EventType.GET_STUDENT)
+      .eventOutcome(EventOutcome.STUDENT_NOT_FOUND)
+      .eventPayload(this.getPayload())
+      .sagaId(this.saga.getSagaId())
+      .build();
     this.orchestrator.executeCreateStudent(event, this.saga, this.sagaData);
     verify(this.messagePublisher, atLeastOnce()).dispatchMessage(eq(STUDENT_API_TOPIC.toString()), this.eventCaptor.capture());
     final var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(this.eventCaptor.getValue()));
     assertThat(newEvent.getEventType()).isEqualTo(CREATE_STUDENT);
+    val studentCreate = JsonUtil.getJsonObjectFromString(StudentSagaData.class, newEvent.getEventPayload());
+    assertThat(studentCreate.getStatusCode()).isEqualTo("A");
     final var sagaFromDB = this.sagaService.findSagaById(this.saga.getSagaId()).orElseThrow();
     assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");

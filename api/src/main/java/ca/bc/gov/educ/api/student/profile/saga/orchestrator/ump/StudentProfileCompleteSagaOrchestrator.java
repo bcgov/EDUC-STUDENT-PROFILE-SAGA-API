@@ -155,6 +155,7 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
     studentSagaData.setUpdateUser(studentProfileCompleteSagaData.getUpdateUser());
     studentSagaData.setCreateUser(studentProfileCompleteSagaData.getCreateUser());
     studentSagaData.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_UMP); // always UMP
+    studentSagaData.setStatusCode("A"); // Always active pen is updated upon UMP complete.
     if (studentProfileCompleteSagaData.getIsDocumentReviewed() != null && studentProfileCompleteSagaData.getIsDocumentReviewed()) {
       studentSagaData.setDemogCode(DEMOG_CODE_CONFIRMED);
     }
