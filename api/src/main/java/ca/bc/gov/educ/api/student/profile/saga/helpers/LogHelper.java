@@ -37,6 +37,7 @@ public final class LogHelper {
       httpMap.put("server_http_request_processing_time_ms", totalTime);
       httpMap.put("server_http_request_payload", String.valueOf(request.getAttribute("payload")));
       httpMap.put("server_http_request_remote_address", request.getRemoteAddr());
+      httpMap.put("server_http_request_client_name", request.getHeader("X-Client-Name"));
       MDC.putCloseable("httpEvent", mapper.writeValueAsString(httpMap));
       log.info("");
       MDC.clear();
