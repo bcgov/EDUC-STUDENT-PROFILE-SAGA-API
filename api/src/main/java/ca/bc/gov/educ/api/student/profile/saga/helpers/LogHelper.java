@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.profile.saga.helpers;
 
+import ca.bc.gov.educ.api.student.profile.saga.model.v1.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.props.ApplicationProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import java.util.Map;
 @Slf4j
 public final class LogHelper {
   private static final ObjectMapper mapper = new ObjectMapper();
+  private static final String EXCEPTION = "Exception ";
 
   private LogHelper() {
 
@@ -42,7 +44,7 @@ public final class LogHelper {
       log.info("");
       MDC.clear();
     } catch (final Exception exception) {
-      log.error("Exception ", exception);
+      log.error(EXCEPTION, exception);
     }
   }
 
@@ -57,7 +59,19 @@ public final class LogHelper {
       log.info("");
       MDC.clear();
     } catch (final Exception exception) {
-      log.error("Exception ", exception);
+      log.error(EXCEPTION, exception);
+    }
+  }
+
+  public static void logSagaRetry(final Saga saga) {
+    final Map<String, Object> retrySagaMap = new HashMap<>();
+    try {
+      retrySagaMap.put("sagaName", saga.getSagaName());
+      retrySagaMap.put("sagaId", saga.getSagaId());
+      retrySagaMap.put("retryCount", saga.getRetryCount());
+      log.info(mapper.writeValueAsString(retrySagaMap));
+    } catch (final Exception ex) {
+      log.error(EXCEPTION, ex);
     }
   }
 }

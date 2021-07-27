@@ -13,4 +13,5 @@ public class Saga {
   private Boolean sagaCompensated;
   private String profileRequestId;
   private String penRequestId;
+  private Integer retryCount;
 }
