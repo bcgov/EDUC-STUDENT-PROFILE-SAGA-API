@@ -5,6 +5,7 @@ import ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum;
 import ca.bc.gov.educ.api.student.profile.saga.model.v1.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaEventRepository;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
+import lombok.val;
 import net.javacrumbs.shedlock.core.LockAssert;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,6 +57,10 @@ public class EventTaskSchedulerTest extends BaseSagaApiTest {
     this.repository.save(placeHolderRecord);
     LockAssert.TestHelper.makeAllAssertsPass(true);
     this.eventTaskScheduler.pollEventTableAndPublish();
+    val sagaId = placeHolderRecord.getSagaId();
+    val updatedRecordFromDB = this.repository.findById(sagaId);
+    assertThat(updatedRecordFromDB).isPresent();
+    assertThat(updatedRecordFromDB.get().getRetryCount()).isNotNull().isPositive();
     final var eventStates = this.sagaEventRepository.findBySaga(placeHolderRecord);
     assertThat(eventStates).isNotEmpty();
   }
@@ -69,6 +74,10 @@ public class EventTaskSchedulerTest extends BaseSagaApiTest {
     this.repository.save(placeHolderRecord);
     LockAssert.TestHelper.makeAllAssertsPass(true);
     this.eventTaskScheduler.pollEventTableAndPublish();
+    val sagaId = placeHolderRecord.getSagaId();
+    val updatedRecordFromDB = this.repository.findById(sagaId);
+    assertThat(updatedRecordFromDB).isPresent();
+    assertThat(updatedRecordFromDB.get().getRetryCount()).isNotNull().isPositive();
     final var eventStates = this.sagaEventRepository.findBySaga(placeHolderRecord);
     assertThat(eventStates).isNotEmpty();
   }
@@ -82,6 +91,10 @@ public class EventTaskSchedulerTest extends BaseSagaApiTest {
     this.repository.save(placeHolderRecord);
     LockAssert.TestHelper.makeAllAssertsPass(true);
     this.eventTaskScheduler.pollEventTableAndPublish();
+    val sagaId = placeHolderRecord.getSagaId();
+    val updatedRecordFromDB = this.repository.findById(sagaId);
+    assertThat(updatedRecordFromDB).isPresent();
+    assertThat(updatedRecordFromDB.get().getRetryCount()).isNotNull().isPositive();
     final var eventStates = this.sagaEventRepository.findBySaga(placeHolderRecord);
     assertThat(eventStates).isNotEmpty();
 

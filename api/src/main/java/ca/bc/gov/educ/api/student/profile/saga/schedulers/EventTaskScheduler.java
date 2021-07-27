@@ -1,6 +1,8 @@
 package ca.bc.gov.educ.api.student.profile.saga.schedulers;
 
 import ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum;
+import ca.bc.gov.educ.api.student.profile.saga.helpers.LogHelper;
+import ca.bc.gov.educ.api.student.profile.saga.model.v1.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.orchestrator.base.Orchestrator;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
 import lombok.Getter;
@@ -69,8 +71,8 @@ public class EventTaskScheduler {
 //Run the job every minute to check how many records are in IN_PROGRESS or STARTED status and has not been updated in last 5 minutes.
   @Scheduled(cron = "${scheduled.jobs.poll.uncompleted.saga.records.cron}")
   @SchedulerLock(name = "ProfileRequestSagaTablePoller",
-      lockAtLeastFor = "${scheduled.jobs.poll.uncompleted.saga.records.cron.lockAtLeastFor}", lockAtMostFor = "$" +
-      "{scheduled.jobs.poll.uncompleted.saga.records.cron.lockAtMostFor}")
+    lockAtLeastFor = "${scheduled.jobs.poll.uncompleted.saga.records.cron.lockAtLeastFor}", lockAtMostFor = "$" +
+    "{scheduled.jobs.poll.uncompleted.saga.records.cron.lockAtMostFor}")
   public void pollEventTableAndPublish() throws InterruptedException, IOException, TimeoutException {
     LockAssert.assertLocked();
     final var sagas = this.getSagaRepository().findAllByStatusIn(this.getStatusFilters());
@@ -78,10 +80,23 @@ public class EventTaskScheduler {
       for (val saga : sagas) {
         if (saga.getCreateDate().isBefore(LocalDateTime.now().minusMinutes(1))
           && this.getSagaOrchestrators().containsKey(saga.getSagaName())) {
+          this.setRetryCountAndLog(saga);
           this.getSagaOrchestrators().get(saga.getSagaName()).replaySaga(saga);
         }
       }
     }
+  }
+
+  private void setRetryCountAndLog(final Saga saga) {
+    Integer retryCount = saga.getRetryCount();
+    if (retryCount == null || retryCount == 0) {
+      retryCount = 1;
+    } else {
+      retryCount += 1;
+    }
+    saga.setRetryCount(retryCount);
+    this.sagaRepository.save(saga);
+    LogHelper.logSagaRetry(saga);
   }
 
   /**

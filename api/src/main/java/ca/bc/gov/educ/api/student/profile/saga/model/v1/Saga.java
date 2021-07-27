@@ -74,4 +74,7 @@ public class Saga {
 
   @Column(name = "PEN_REQUEST_ID", columnDefinition = "BINARY(16)")
   private UUID penRequestId;
+
+  @Column(name = "RETRY_COUNT")
+  private Integer retryCount;
 }
