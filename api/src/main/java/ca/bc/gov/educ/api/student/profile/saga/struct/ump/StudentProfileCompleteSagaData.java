@@ -44,7 +44,7 @@ public class StudentProfileCompleteSagaData extends StudentProfileRequestActionS
   private String emailVerified;
   //Student Profile Request
   private String completeComment;
-  @Size(max = 6)
+  @Size(max = 7)
   String postalCode;
   @Size(max = 2)
   String gradeCode;

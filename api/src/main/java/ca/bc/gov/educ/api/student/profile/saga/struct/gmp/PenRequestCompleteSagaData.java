@@ -47,7 +47,7 @@ public class PenRequestCompleteSagaData {
   String usualLastName;
   @Size(max = 12)
   String localID;
-  @Size(max = 6)
+  @Size(max = 7)
   String postalCode;
   @Size(max = 2)
   String gradeCode;
