@@ -91,6 +91,14 @@ curl -sX POST "https://$SOAM_KC/auth/admin/realms/$SOAM_KC_REALM_ID/client-scope
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TKN" \
   -d "{\"description\": \"Scope to READ a SAGA record by its ID\",\"id\": \"STUDENT_PROFILE_READ_SAGA\",\"name\": \"STUDENT_PROFILE_READ_SAGA\",\"protocol\": \"openid-connect\",\"attributes\" : {\"include.in.token.scope\" : \"true\",\"display.on.consent.screen\" : \"false\"}}"
+
+echo
+echo Writing scope STUDENT_PROFILE_WRITE_SAGA
+curl -sX POST "https://$SOAM_KC/auth/admin/realms/$SOAM_KC_REALM_ID/client-scopes" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TKN" \
+  -d "{\"description\": \"Scope to WRITE to a SAGA record by its ID\",\"id\": \"STUDENT_PROFILE_WRITE_SAGA\",\"name\": \"STUDENT_PROFILE_WRITE_SAGA\",\"protocol\": \"openid-connect\",\"attributes\" : {\"include.in.token.scope\" : \"true\",\"display.on.consent.screen\" : \"false\"}}"
+
 ###########################################################
 #Setup for config-map
 ###########################################################

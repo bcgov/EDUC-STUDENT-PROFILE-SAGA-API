@@ -28,8 +28,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -170,5 +172,30 @@ public class StudentProfileSagaController extends BaseController implements Stud
     return this.sagaService.findAll(specs, pageNumber, pageSize, sorts).map(SagaMapper.mapper::toStruct);
   }
 
+  /**
+   * Update saga
+   *
+   * @param saga    - the saga
+   * @return        - the updated saga
+   */
+  @Override
+  @Transactional
+  public ResponseEntity<ca.bc.gov.educ.api.student.profile.saga.struct.Saga> updateSaga(ca.bc.gov.educ.api.student.profile.saga.struct.Saga saga, UUID sagaID) {
+    var sagaOptional = getSagaService().findSagaById(sagaID);
+    if(sagaOptional.isPresent()) {
+      val sagaFromDB = sagaOptional.get();
+      if(!SagaMapper.mapper.toStruct(sagaFromDB).getUpdateDate().equals(saga.getUpdateDate())) {
+        log.error("Updating saga failed. The saga has already been updated by another process :: " + saga.getSagaId());
+        return ResponseEntity.status(HttpStatus.CONFLICT).build();
+      }
+      sagaFromDB.setPayload(saga.getPayload());
+      sagaFromDB.setUpdateDate(LocalDateTime.now());
+      this.getSagaService().updateSagaRecord(sagaFromDB);
+      return ResponseEntity.ok(SagaMapper.mapper.toStruct(sagaFromDB));
+    } else {
+      log.error("Error attempting to get saga. Saga id does not exist :: " + saga.getSagaId());
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+  }
 }
 
