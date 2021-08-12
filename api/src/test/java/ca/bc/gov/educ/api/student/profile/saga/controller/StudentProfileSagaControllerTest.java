@@ -21,7 +21,6 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -169,17 +168,10 @@ public class StudentProfileSagaControllerTest extends BaseSagaApiTest {
 
   @Test
   @SuppressWarnings("java:S100")
-  public void testGetSagaBySagaID_whenSagaIDIsValid_shouldReturnStatusNoContent() throws Exception {
-    final String payload = "{\n" +
-      PAYLOAD_STR +
-      "  \"staffMemberIDIRGUID\": \"AC335214725219468172589E58000004\",\n" +
-      "  \"staffMemberName\": \"om\",\n" +
-      "  \"commentContent\": \"please upload recent govt ID.\",\n" +
-      "  \"commentTimestamp\": \"2020-06-10T09:52:00\"\n" +
-      "}";
-    final var entity = this.getSaga(payload, "STUDENT_PROFILE_RETURN_SAGA", "STUDENT_PROFILE_SAGA_API", UUID.fromString("ac335214-7252-1946-8172-589e58000004"));
-    this.repository.save(entity);
-    this.mockMvc.perform(get(URL.BASE_URL + URL.SAGA_ID, entity.getSagaId()).with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_READ_SAGA")))).andDo(print()).andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$.sagaId").value(entity.getSagaId().toString()));
+  public void testGetSagaBySagaID_whenSagaIDIsInValid_shouldReturnStatusNotFound() throws Exception {
+    this.mockMvc.perform(get(URL.BASE_URL + URL.SAGA_ID, UUID.randomUUID())
+      .with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_READ_SAGA"))))
+      .andDo(print()).andExpect(status().isNotFound());
   }
 
   @Test
