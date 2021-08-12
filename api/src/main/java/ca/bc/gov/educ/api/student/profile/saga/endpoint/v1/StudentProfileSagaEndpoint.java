@@ -55,7 +55,7 @@ public interface StudentProfileSagaEndpoint {
   @GetMapping(URL.SAGA_ID + URL.SAGA_EVENTS)
   @PreAuthorize("hasAuthority('SCOPE_STUDENT_PROFILE_READ_SAGA')")
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK."), @ApiResponse(responseCode = "404", description = "NOT FOUND.")})
-  List<SagaEvent> getSagaEventsBySagaID(@PathVariable UUID sagaID);
+  ResponseEntity<List<SagaEvent>> getSagaEventsBySagaID(@PathVariable UUID sagaID);
 
   @PutMapping(URL.SAGA_ID)
   @PreAuthorize("hasAuthority('SCOPE_STUDENT_PROFILE_WRITE_SAGA')")
