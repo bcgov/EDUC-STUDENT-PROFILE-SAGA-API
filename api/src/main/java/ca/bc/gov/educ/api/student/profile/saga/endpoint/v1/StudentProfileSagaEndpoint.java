@@ -57,6 +57,13 @@ public interface StudentProfileSagaEndpoint {
   @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK."), @ApiResponse(responseCode = "404", description = "NOT FOUND.")})
   List<SagaEvent> getSagaEventsBySagaID(@PathVariable UUID sagaID);
 
+  @PutMapping(URL.SAGA_ID)
+  @PreAuthorize("hasAuthority('SCOPE_STUDENT_PROFILE_WRITE_SAGA')")
+  @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "OK."), @ApiResponse(responseCode = "404", description = "Not Found."), @ApiResponse(responseCode = "409", description = "Conflict.")})
+  @Transactional
+  @Tag(name = "Endpoint to update saga by its ID.", description = "Endpoint to update saga by its ID.")
+  ResponseEntity<Saga> updateSaga(@RequestBody Saga saga, @PathVariable UUID sagaID);
+
   /**
    * Find all completable future.
    *

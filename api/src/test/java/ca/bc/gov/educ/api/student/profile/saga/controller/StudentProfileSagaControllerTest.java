@@ -3,14 +3,17 @@ package ca.bc.gov.educ.api.student.profile.saga.controller;
 import ca.bc.gov.educ.api.student.profile.saga.BaseSagaApiTest;
 import ca.bc.gov.educ.api.student.profile.saga.constants.v1.URL;
 import ca.bc.gov.educ.api.student.profile.saga.filter.FilterOperation;
+import ca.bc.gov.educ.api.student.profile.saga.mappers.v1.SagaMapper;
 import ca.bc.gov.educ.api.student.profile.saga.model.v1.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.model.v1.SagaEvent;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaEventRepository;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
+import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.Condition;
 import ca.bc.gov.educ.api.student.profile.saga.struct.Search;
 import ca.bc.gov.educ.api.student.profile.saga.struct.SearchCriteria;
 import ca.bc.gov.educ.api.student.profile.saga.struct.ValueType;
+import ca.bc.gov.educ.api.student.profile.saga.struct.ump.StudentProfileCommentsSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.val;
@@ -25,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventType.INITIATED;
+import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaEnum.STUDENT_PROFILE_COMMENTS_SAGA;
 import static ca.bc.gov.educ.api.student.profile.saga.constants.SagaStatusEnum.STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -32,8 +36,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -45,6 +49,9 @@ public class StudentProfileSagaControllerTest extends BaseSagaApiTest {
     "  \"updateUser\": \"om\",\n" +
     "  \"email\": \"omprkshmishra@gmail.com\",\n" +
     "  \"identityType\": \"BASIC\",\n";
+
+  private final String profileRequestID = UUID.randomUUID().toString();
+
   @Autowired
   private SagaRepository repository;
   @Autowired
@@ -52,6 +59,11 @@ public class StudentProfileSagaControllerTest extends BaseSagaApiTest {
 
   @Autowired
   private MockMvc mockMvc;
+
+  @Autowired
+  SagaService sagaService;
+
+  private SagaMapper mapper = SagaMapper.mapper;
 
 
   @Test
@@ -441,6 +453,56 @@ public class StudentProfileSagaControllerTest extends BaseSagaApiTest {
   public void testGetSagaPaginated_givenSearchCriteria9_shouldReturnStatus400() throws Exception {
     this.mockMvc.perform(get(URL.BASE_URL + URL.PAGINATED).with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_READ_SAGA"))).param("searchCriteriaList", "junk")
       .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
+  }
+
+  @Test
+  public void testUpdateSaga_givenNoBody_shouldReturn400() throws Exception {
+    this.mockMvc.perform(put(URL.BASE_URL + URL.SAGA_ID, UUID.randomUUID())
+      .with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_WRITE_SAGA")))
+      .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isBadRequest());
+  }
+
+  @Test
+  public void testUpdateSaga_givenInvalidID_shouldReturn404() throws Exception {
+    final var saga = this.createMockSaga();
+    this.mockMvc.perform(put(URL.BASE_URL + URL.SAGA_ID, UUID.randomUUID()).content(JsonUtil.objectMapper.writeValueAsBytes(mapper.toStruct(saga)))
+      .with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_WRITE_SAGA")))
+      .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isNotFound());
+  }
+
+  @Test
+  public void testUpdateSaga_givenPastUpdateDate_shouldReturn409() throws Exception {
+    final var sagaFromDB = this.sagaService.createProfileRequestSagaRecord(JsonUtil.getJsonObjectFromString(StudentProfileCommentsSagaData.class, this.getPayload()), STUDENT_PROFILE_COMMENTS_SAGA.toString(), "JOCOX",
+      UUID.fromString(this.profileRequestID));
+    sagaFromDB.setUpdateDate(LocalDateTime.now());
+    this.mockMvc.perform(put(URL.BASE_URL + URL.SAGA_ID, sagaFromDB.getSagaId()).content(JsonUtil.objectMapper.writeValueAsBytes(mapper.toStruct(sagaFromDB)))
+      .with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_WRITE_SAGA")))
+      .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isConflict());
+  }
+
+  @Test
+  public void testUpdateSaga_givenValidData_shouldReturnOk() throws Exception {
+    final var sagaFromDB = this.sagaService.createProfileRequestSagaRecord(JsonUtil.getJsonObjectFromString(StudentProfileCommentsSagaData.class, this.getPayload()), STUDENT_PROFILE_COMMENTS_SAGA.toString(), "JOCOX",
+      UUID.fromString(this.profileRequestID));
+    sagaFromDB.setUpdateDate(sagaFromDB.getUpdateDate().withNano((int)Math.round(sagaFromDB.getUpdateDate().getNano()/1000.00)*1000)); //db limits precision, so need to adjust
+    this.mockMvc.perform(put(URL.BASE_URL + URL.SAGA_ID, sagaFromDB.getSagaId()).content(JsonUtil.objectMapper.writeValueAsBytes(mapper.toStruct(sagaFromDB)))
+      .with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_WRITE_SAGA")))
+      .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isOk());
+  }
+
+  private Saga createMockSaga() {
+    return Saga.builder().sagaId(UUID.randomUUID()).payload("test").updateDate(LocalDateTime.now()).build();
+  }
+
+  String getPayload() {
+    return  "{\n" +
+      "  \"commentContent\": \"Hi\",\n" +
+      "  \"studentProfileRequestID\":\"" + this.profileRequestID + "\",\n" +
+      "  \"commentTimestamp\": \"2020-04-18T19:57:00\",\n" +
+      "  \"studentProfileRequestStatusCode\": \"SUBSREV\",\n" +
+      "  \"createUser\": \"JOCOX\",\n" +
+      "  \"updateUser\": \"JOCOX\"\n" +
+      "}";
   }
 
   private Saga getSaga(final String payload, final String sagaName, final String apiName, final UUID profileRequestId) {
