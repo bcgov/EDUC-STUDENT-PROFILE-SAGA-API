@@ -102,6 +102,9 @@ public class SagaSearchService {
       case UUID:
         studentEntitySpecification = this.sagaFilterSpecs.getUUIDTypeSpecification(key, value, filterOperation);
         break;
+      case INTEGER:
+        studentEntitySpecification = this.sagaFilterSpecs.getIntegerTypeSpecification(key, value, filterOperation);
+        break;
       default:
         break;
     }

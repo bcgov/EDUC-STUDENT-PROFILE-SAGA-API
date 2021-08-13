@@ -448,6 +448,33 @@ public class StudentProfileSagaControllerTest extends BaseSagaApiTest {
   }
 
   @Test
+  @SuppressWarnings("java:S100")
+  public void testGetSagaPaginated_givenSearchCriteria10_shouldReturnStatusOk() throws Exception {
+    final File sagasFile = new File(
+      Objects.requireNonNull(this.getClass().getClassLoader().getResource("mock-multiple-saga.json")).getFile()
+    );
+    val sagas = Arrays.asList(JsonUtil.objectMapper.readValue(sagasFile, Saga[].class));
+    for (val saga : sagas) {
+      saga.setSagaId(null);
+      saga.setSagaCompensated(false);
+      saga.setCreateDate(LocalDateTime.now());
+      saga.setUpdateDate(LocalDateTime.now());
+    }
+    this.repository.saveAll(sagas);
+    final SearchCriteria criteria = SearchCriteria.builder().key("retryCount").operation(FilterOperation.GREATER_THAN).value("0").valueType(ValueType.INTEGER).build();
+    final List<SearchCriteria> criteriaList = new ArrayList<>();
+    criteriaList.add(criteria);
+
+    final List<Search> searches = new LinkedList<>();
+    searches.add(Search.builder().searchCriteriaList(criteriaList).build());
+    final ObjectMapper objectMapper = new ObjectMapper();
+    final String criteriaJSON = objectMapper.writeValueAsString(searches);
+    final String sort = "{\"createDate\":\"ASC\",\"status\":\"DESC\"}";
+    this.mockMvc.perform(get(URL.BASE_URL + URL.PAGINATED).with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_READ_SAGA"))).param("searchCriteriaList", criteriaJSON).param("sort", sort)
+      .contentType(APPLICATION_JSON)).andDo(print()).andExpect(status().isOk()).andExpect(jsonPath("$.content", hasSize(0))).andExpect(jsonPath("$.totalElements", is(0)));
+  }
+
+  @Test
   public void testUpdateSaga_givenNoBody_shouldReturn400() throws Exception {
     this.mockMvc.perform(put(URL.BASE_URL + URL.SAGA_ID, UUID.randomUUID())
       .with(jwt().jwt((jwt) -> jwt.claim("scope", "STUDENT_PROFILE_WRITE_SAGA")))
