@@ -57,4 +57,5 @@ public class StudentProfileCompleteSagaData extends StudentProfileRequestActionS
   @NotNull(message = "PEN Number can not be null.")
   @Size(max = 9, min = 9)
   private String pen;
+  String documentTypeCode; // internal place-holder field
 }

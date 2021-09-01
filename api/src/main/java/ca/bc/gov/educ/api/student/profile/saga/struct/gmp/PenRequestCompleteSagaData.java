@@ -18,11 +18,11 @@ import javax.validation.constraints.Size;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PenRequestCompleteSagaData {
 
-  private String studentID;
+  String studentID;
   @NotNull(message = "digitalID can not be null.")
-  private String digitalID;
+  String digitalID;
   @NotNull(message = "penRequestID can not be null.")
-  private String penRequestID;
+  String penRequestID;
   @NotNull(message = "PEN Number can not be null.")
   @Size(max = 9, min = 9)
   String pen;
@@ -63,20 +63,20 @@ public class PenRequestCompleteSagaData {
   String createUser;
   @Size(max = 32)
   String updateUser;
-  private String bcscAutoMatchOutcome;
-  private String bcscAutoMatchDetails;
+  String bcscAutoMatchOutcome;
+  String bcscAutoMatchDetails;
   @NotNull(message = "penRequestStatusCode can not be null.")
-  private String penRequestStatusCode;
-  private String statusUpdateDate;
+  String penRequestStatusCode;
+  String statusUpdateDate;
   @Size(max = 255)
-  private String reviewer;
+  String reviewer;
   @Size(max = 1)
   @Pattern(regexp = "[YN]")
-  private String demogChanged;
-  private String completeComment;
+  String demogChanged;
+  String completeComment;
   @NotNull(message = "identityType can not be null")
-  protected String identityType;
+  String identityType;
   @NotNull(message = "History Activity Code can not be null.")
   String historyActivityCode;
-
+  String documentTypeCode; // internal place-holder field
 }

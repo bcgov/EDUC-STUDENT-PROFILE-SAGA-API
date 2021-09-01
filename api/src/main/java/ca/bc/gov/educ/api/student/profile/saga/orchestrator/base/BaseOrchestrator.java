@@ -8,7 +8,6 @@ import ca.bc.gov.educ.api.student.profile.saga.model.v1.SagaEvent;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.NotificationEvent;
-import ca.bc.gov.educ.api.student.profile.saga.struct.base.StudentSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.DocMetadata;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -23,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
@@ -392,16 +390,10 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
 
   public abstract void populateStepsToExecuteMap();
 
-  protected void updateStudentBasedOnDocumentMetadata(final StudentSagaData studentSagaData, final Saga saga, final EventType eventType, final EventOutcome eventOutcome) throws JsonProcessingException {
-    val eventFromDB = this.getSagaService().findBySagaAndEventTypeAndEventOutcome(saga, eventType, eventOutcome);
-    if (eventFromDB.isPresent()) {
-      val docMetadataString = eventFromDB.get().getSagaEventResponse();
-      final List<DocMetadata> docMetadataList = JsonUtil.objectMapper.readValue(docMetadataString, new TypeReference<>() {
-      });
-      docMetadataList.sort(Comparator.comparing(DocMetadata::getCreateDate).reversed());
-      studentSagaData.setDocumentTypeCode(docMetadataList.get(0).getDocumentTypeCode());
-      studentSagaData.setDateOfConfirmation(DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.now()));
-      studentSagaData.setDemogCode(DEMOG_CODE_CONFIRMED);
-    }
+  protected String getDocumentTypeCode(final String eventPayload) throws JsonProcessingException {
+    final List<DocMetadata> docMetadataList = JsonUtil.objectMapper.readValue(eventPayload, new TypeReference<>() {
+    });
+    docMetadataList.sort(Comparator.comparing(DocMetadata::getCreateDate).reversed());
+    return docMetadataList.get(0).getDocumentTypeCode();
   }
 }
