@@ -1,5 +1,7 @@
 package ca.bc.gov.educ.api.student.profile.saga.service;
 
+import ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome;
+import ca.bc.gov.educ.api.student.profile.saga.constants.EventType;
 import ca.bc.gov.educ.api.student.profile.saga.exception.SagaRuntimeException;
 import ca.bc.gov.educ.api.student.profile.saga.model.v1.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.model.v1.SagaEvent;
@@ -86,6 +88,10 @@ public class SagaService {
 
   public List<SagaEvent> findAllSagaStates(final Saga saga) {
     return this.getSagaEventRepository().findBySaga(saga);
+  }
+
+  public Optional<SagaEvent> findBySagaAndEventTypeAndEventOutcome(final Saga saga, final EventType eventType, final EventOutcome eventOutcome) {
+    return this.getSagaEventRepository().findBySagaAndSagaEventOutcomeAndSagaEventState(saga, eventOutcome.toString(), eventType.name());
   }
 
   private Saga getSaga(final String payload, final String sagaName, final String user) {

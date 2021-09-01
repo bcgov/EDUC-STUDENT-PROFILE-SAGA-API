@@ -132,9 +132,7 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
     studentDataFromEventResponse.setSexCode(studentProfileCompleteSagaData.getSexCode());
     studentDataFromEventResponse.setUpdateUser(studentProfileCompleteSagaData.getUpdateUser());
     studentDataFromEventResponse.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_UMP); // always UMP
-    if (studentProfileCompleteSagaData.getIsDocumentReviewed() != null && studentProfileCompleteSagaData.getIsDocumentReviewed()) {
-      studentDataFromEventResponse.setDemogCode(DEMOG_CODE_CONFIRMED);
-    }
+    this.updateStudentBasedOnDocumentMetadata(studentDataFromEventResponse, saga);
     studentProfileCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
     saga.setSagaState(UPDATE_STUDENT.toString());
     saga.setPayload(JsonUtil.getJsonStringFromObject(studentProfileCompleteSagaData));
@@ -156,9 +154,7 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
     studentSagaData.setCreateUser(studentProfileCompleteSagaData.getCreateUser());
     studentSagaData.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_UMP); // always UMP
     studentSagaData.setStatusCode("A"); // Always active pen is updated upon UMP complete.
-    if (studentProfileCompleteSagaData.getIsDocumentReviewed() != null && studentProfileCompleteSagaData.getIsDocumentReviewed()) {
-      studentSagaData.setDemogCode(DEMOG_CODE_CONFIRMED);
-    }
+    this.updateStudentBasedOnDocumentMetadata(studentSagaData, saga);
     log.info("message sent to STUDENT_API_TOPIC for CREATE_STUDENT Event.");
     this.delegateMessagePostingForStudent(saga, studentSagaData, CREATE_STUDENT);
   }
@@ -175,9 +171,6 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
 
 
   protected void executeGetStudent(final Event event, final Saga saga, final StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    if (event.getEventOutcome() == PEN_REQUEST_DOCUMENTS_FOUND) {
-      studentProfileCompleteSagaData.setIsDocumentReviewed(true);
-    }
     val eventState = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setStatus(IN_PROGRESS.toString());
     saga.setSagaState(GET_STUDENT.toString()); // set current event as saga state.
@@ -234,4 +227,6 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
       .build();
     return JsonUtil.getJsonStringFromObject(penReqEmailSagaData);
   }
+
+
 }

@@ -79,5 +79,4 @@ public class PenRequestCompleteSagaData {
   @NotNull(message = "History Activity Code can not be null.")
   String historyActivityCode;
 
-  Boolean isDocumentReviewed; // internal place holder for logic to check if Demog code should be `C` for student.
 }

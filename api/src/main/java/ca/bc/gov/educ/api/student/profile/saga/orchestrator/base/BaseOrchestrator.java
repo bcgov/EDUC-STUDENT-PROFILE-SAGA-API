@@ -8,7 +8,11 @@ import ca.bc.gov.educ.api.student.profile.saga.model.v1.SagaEvent;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.NotificationEvent;
+import ca.bc.gov.educ.api.student.profile.saga.struct.base.StudentSagaData;
+import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenReqDocMetadata;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -19,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
@@ -388,4 +393,17 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
   }
 
   public abstract void populateStepsToExecuteMap();
+
+  protected void updateStudentBasedOnDocumentMetadata(final StudentSagaData studentSagaData, final Saga saga) throws JsonProcessingException {
+    val eventFromDB = this.getSagaService().findBySagaAndEventTypeAndEventOutcome(saga, GET_PEN_REQUEST_DOCUMENT_METADATA, PEN_REQUEST_DOCUMENTS_FOUND);
+    if (eventFromDB.isPresent()) {
+      val penReqDocMetadata = eventFromDB.get().getSagaEventResponse();
+      final List<PenReqDocMetadata> penReqDocMetadataList = JsonUtil.objectMapper.readValue(penReqDocMetadata, new TypeReference<>() {
+      });
+      penReqDocMetadataList.sort(Comparator.comparing(PenReqDocMetadata::getCreateDate).reversed());
+      studentSagaData.setDocumentTypeCode(penReqDocMetadataList.get(0).getDocumentTypeCode());
+      studentSagaData.setDateOfConfirmation(DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.now()));
+      studentSagaData.setDemogCode(DEMOG_CODE_CONFIRMED);
+    }
+  }
 }

@@ -17,6 +17,7 @@ import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -169,9 +170,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     studentDataFromEventResponse.setSexCode(penRequestCompleteSagaData.getSexCode());
     studentDataFromEventResponse.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
     studentDataFromEventResponse.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_GMP); // always GMP
-    if (penRequestCompleteSagaData.getIsDocumentReviewed() != null && penRequestCompleteSagaData.getIsDocumentReviewed()) {
-      studentDataFromEventResponse.setDemogCode(DEMOG_CODE_CONFIRMED);
-    }
+    this.updateStudentBasedOnDocumentMetadata(studentDataFromEventResponse, saga);
     penRequestCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
     saga.setSagaState(UPDATE_STUDENT.toString());
     saga.setPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData));
@@ -198,8 +197,9 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     val studentSagaData = studentSagaDataMapper.toStudentSaga(penRequestCompleteSagaData);
     studentSagaData.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_GMP); // always GMP
     studentSagaData.setStatusCode("A"); // Always active pen is provided to the student upon GMP completion.
-    if (penRequestCompleteSagaData.getIsDocumentReviewed() != null && penRequestCompleteSagaData.getIsDocumentReviewed()) {
-      studentSagaData.setDemogCode(DEMOG_CODE_CONFIRMED);
+    this.updateStudentBasedOnDocumentMetadata(studentSagaData, saga);
+    if (StringUtils.isBlank(studentSagaData.getDemogCode())) {
+      studentSagaData.setDemogCode("A");
     }
     studentSagaData.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
     studentSagaData.setCreateUser(penRequestCompleteSagaData.getCreateUser());
@@ -239,9 +239,6 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws TimeoutException     if connection to messaging system times out.
    */
   protected void executeGetStudent(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    if (event.getEventOutcome() == PEN_REQUEST_DOCUMENTS_FOUND) {
-      penRequestCompleteSagaData.setIsDocumentReviewed(true);
-    }
     val eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(GET_STUDENT.toString()); // set current event as saga state.
     saga.setPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData)); // save the updated payload to DB.
