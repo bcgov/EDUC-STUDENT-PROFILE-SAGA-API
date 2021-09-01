@@ -21,6 +21,7 @@ import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
@@ -244,28 +245,32 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.PEN_REQUEST_UPDATED.toString());
   }
 
+  String studentJson = "{\"studentID\":null,\"pen\":\"123456789\",\"legalFirstName\":\"om\",\"legalMiddleNames\":\"mishra\",\"legalLastName\":\"mishra\",\"dob\":\"2000-01-01\",\"sexCode\":\"M\",\"genderCode\":\"M\",\"usualFirstName\":null,\"usualMiddleNames\":null,\"usualLastName\":null,\"email\":\"om@gmail.com\",\"deceasedDate\":null,\"createUser\":\"OMISHRA\",\"updateUser\":\"OMISHRA\",\"localID\":null,\"postalCode\":null,\"gradeCode\":null,\"mincode\":null,\"emailVerified\":null,\"historyActivityCode\":\"UMP\",\"gradeYear\":null,\"demogCode\":\"A\",\"statusCode\":\"A\",\"memo\":null,\"trueStudentID\":null,\"documentTypeCode\":\"ABC\",\"dateOfConfirmation\":\"2021-08-30T09:16:49.2208031\"}\n";
 
-  String getCompletePenRequestPayload() {
-    return "{\n" +
-        "  \"digitalID\": \"ac330603-715f-12b6-8171-6079a6270005\",\n" +
-        "  \"penRequestID\":\"" + this.penRequestID + "\",\n" +
-        "  \"pen\": \"123456789\",\n" +
-        "  \"legalFirstName\": \"om\",\n" +
-        "  \"legalMiddleNames\": \"mishra\",\n" +
-        "  \"legalLastName\": \"mishra\",\n" +
-        "  \"dob\": \"2000-01-01\",\n" +
-        "  \"sexCode\": \"M\",\n" +
-        "  \"genderCode\": \"M\",\n" +
-        "  \"email\": \"om@gmail.com\",\n" +
-        "  \"createUser\": \"om\",\n" +
-        "  \"updateUser\": \"om\",\n" +
-        "  \"bcscAutoMatchOutcome\": \"ONEMATCH\",\n" +
-        "  \"penRequestStatusCode\": \"MANUAL\",\n" +
-        "  \"statusUpdateDate\": \"2020-04-17T22:29:00\",\n" +
-        "  \"identityType\": \"BASIC\",\n" +
-        "  \"createUser\": \"OMISHRA\",\n" +
-        "  \"updateUser\": \"OMISHRA\"\n" +
-        "}";
+  @Test
+  public void testCreateStudent_givenEventAndSagaData_shouldPostEventToStudentApi() throws IOException, InterruptedException, TimeoutException {
+    final var event = Event.builder()
+      .eventType(GET_STUDENT)
+      .eventOutcome(EventOutcome.STUDENT_NOT_FOUND)
+      .eventPayload("123456789")
+      .sagaId(this.saga.getSagaId())
+      .build();
+    this.sagaData.setDocumentTypeCode("CABIRTH");
+    this.orchestrator.executeCreateStudent(event, this.saga, this.sagaData);
+    verify(this.messagePublisher, atLeastOnce()).dispatchMessage(eq(STUDENT_API_TOPIC.toString()), this.eventCaptor.capture());
+    final var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(this.eventCaptor.getValue()));
+    assertThat(newEvent.getEventType()).isEqualTo(CREATE_STUDENT);
+    val student = JsonUtil.getJsonObjectFromString(StudentSagaData.class, newEvent.getEventPayload());
+    assertThat(student.getDemogCode()).isEqualTo("C");
+    assertThat(student.getDocumentTypeCode()).isEqualTo("CABIRTH");
+    assertThat(student.getDateOfConfirmation()).isNotBlank();
+    assertThat(LocalDate.parse(student.getDateOfConfirmation().substring(0, 10))).isEqualTo(LocalDate.now());
+    final var sagaFromDB = this.sagaService.findSagaById(this.saga.getSagaId()).orElseThrow();
+    assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
+    assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
+    assertThat(sagaFromDB.getSagaState()).isEqualTo(CREATE_STUDENT.toString());
+    final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
+    assertThat(sagaStates.size()).isEqualTo(1);
   }
 
   PenRequestCompleteSagaData getSagaData(final String json) {
@@ -274,5 +279,54 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Test
+  public void testUpdateStudent_givenEventAndSagaData_shouldPostEventToStudentApi() throws IOException, InterruptedException, TimeoutException {
+    final var event = Event.builder()
+      .eventType(GET_STUDENT)
+      .eventOutcome(EventOutcome.STUDENT_FOUND)
+      .eventPayload(this.studentJson)
+      .sagaId(this.saga.getSagaId())
+      .build();
+    this.sagaData.setDocumentTypeCode("CABIRTH");
+    this.orchestrator.executeUpdateStudent(event, this.saga, this.sagaData);
+    verify(this.messagePublisher, atLeastOnce()).dispatchMessage(eq(STUDENT_API_TOPIC.toString()), this.eventCaptor.capture());
+    final var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(this.eventCaptor.getValue()));
+    assertThat(newEvent.getEventType()).isEqualTo(UPDATE_STUDENT);
+    val student = JsonUtil.getJsonObjectFromString(StudentSagaData.class, newEvent.getEventPayload());
+    assertThat(student.getDemogCode()).isEqualTo("C");
+    assertThat(student.getDocumentTypeCode()).isEqualTo("CABIRTH");
+    assertThat(student.getDateOfConfirmation()).isNotBlank();
+    assertThat(LocalDate.parse(student.getDateOfConfirmation().substring(0, 10))).isEqualTo(LocalDate.now());
+    final var sagaFromDB = this.sagaService.findSagaById(this.saga.getSagaId()).orElseThrow();
+    assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
+    assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
+    assertThat(sagaFromDB.getSagaState()).isEqualTo(UPDATE_STUDENT.toString());
+    final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
+    assertThat(sagaStates.size()).isEqualTo(1);
+  }
+
+  String getCompletePenRequestPayload() {
+    return "{\n" +
+      "  \"digitalID\": \"ac330603-715f-12b6-8171-6079a6270005\",\n" +
+      "  \"penRequestID\":\"" + this.penRequestID + "\",\n" +
+      "  \"pen\": \"123456789\",\n" +
+      "  \"legalFirstName\": \"om\",\n" +
+      "  \"legalMiddleNames\": \"mishra\",\n" +
+      "  \"legalLastName\": \"mishra\",\n" +
+      "  \"dob\": \"2000-01-01\",\n" +
+      "  \"sexCode\": \"M\",\n" +
+      "  \"genderCode\": \"M\",\n" +
+      "  \"email\": \"om@gmail.com\",\n" +
+      "  \"createUser\": \"om\",\n" +
+      "  \"updateUser\": \"om\",\n" +
+      "  \"bcscAutoMatchOutcome\": \"ONEMATCH\",\n" +
+      "  \"penRequestStatusCode\": \"MANUAL\",\n" +
+      "  \"statusUpdateDate\": \"2020-04-17T22:29:00\",\n" +
+      "  \"identityType\": \"BASIC\",\n" +
+      "  \"createUser\": \"OMISHRA\",\n" +
+      "  \"updateUser\": \"OMISHRA\"\n" +
+      "}";
   }
 }

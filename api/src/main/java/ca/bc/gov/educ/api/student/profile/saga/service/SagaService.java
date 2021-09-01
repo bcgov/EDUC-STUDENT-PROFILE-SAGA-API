@@ -88,6 +88,7 @@ public class SagaService {
     return this.getSagaEventRepository().findBySaga(saga);
   }
 
+
   private Saga getSaga(final String payload, final String sagaName, final String user) {
     return Saga
       .builder()

@@ -19,7 +19,6 @@ public class StudentProfileCompleteSagaData extends StudentProfileRequestActionS
   private String studentID;
   @NotNull(message = "digitalID can not be null.")
   private String digitalID;
-  Boolean isDocumentReviewed; // internal place holder for logic to check if Demog code should be `C` for student.
   @Size(max = 25)
   private String legalFirstName;
   @Size(max = 25)
@@ -58,4 +57,5 @@ public class StudentProfileCompleteSagaData extends StudentProfileRequestActionS
   @NotNull(message = "PEN Number can not be null.")
   @Size(max = 9, min = 9)
   private String pen;
+  String documentTypeCode; // internal place-holder field
 }

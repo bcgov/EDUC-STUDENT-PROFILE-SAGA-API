@@ -17,12 +17,14 @@ import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeoutException;
 
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.*;
@@ -169,8 +171,10 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     studentDataFromEventResponse.setSexCode(penRequestCompleteSagaData.getSexCode());
     studentDataFromEventResponse.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
     studentDataFromEventResponse.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_GMP); // always GMP
-    if (penRequestCompleteSagaData.getIsDocumentReviewed() != null && penRequestCompleteSagaData.getIsDocumentReviewed()) {
+    if (StringUtils.isNotBlank(penRequestCompleteSagaData.getDocumentTypeCode())) {
+      studentDataFromEventResponse.setDateOfConfirmation(DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.now()));
       studentDataFromEventResponse.setDemogCode(DEMOG_CODE_CONFIRMED);
+      studentDataFromEventResponse.setDocumentTypeCode(penRequestCompleteSagaData.getDocumentTypeCode());
     }
     penRequestCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
     saga.setSagaState(UPDATE_STUDENT.toString());
@@ -198,8 +202,11 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     val studentSagaData = studentSagaDataMapper.toStudentSaga(penRequestCompleteSagaData);
     studentSagaData.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_GMP); // always GMP
     studentSagaData.setStatusCode("A"); // Always active pen is provided to the student upon GMP completion.
-    if (penRequestCompleteSagaData.getIsDocumentReviewed() != null && penRequestCompleteSagaData.getIsDocumentReviewed()) {
+    studentSagaData.setDemogCode("A");
+    if (StringUtils.isNotBlank(penRequestCompleteSagaData.getDocumentTypeCode())) {
+      studentSagaData.setDateOfConfirmation(DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.now()));
       studentSagaData.setDemogCode(DEMOG_CODE_CONFIRMED);
+      studentSagaData.setDocumentTypeCode(penRequestCompleteSagaData.getDocumentTypeCode());
     }
     studentSagaData.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
     studentSagaData.setCreateUser(penRequestCompleteSagaData.getCreateUser());
@@ -240,7 +247,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    */
   protected void executeGetStudent(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
     if (event.getEventOutcome() == PEN_REQUEST_DOCUMENTS_FOUND) {
-      penRequestCompleteSagaData.setIsDocumentReviewed(true);
+      penRequestCompleteSagaData.setDocumentTypeCode(this.getDocumentTypeCode(event.getEventPayload()));
     }
     val eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(GET_STUDENT.toString()); // set current event as saga state.

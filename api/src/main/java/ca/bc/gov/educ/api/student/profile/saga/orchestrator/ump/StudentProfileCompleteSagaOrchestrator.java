@@ -16,11 +16,13 @@ import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeoutException;
 
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.*;
@@ -132,8 +134,10 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
     studentDataFromEventResponse.setSexCode(studentProfileCompleteSagaData.getSexCode());
     studentDataFromEventResponse.setUpdateUser(studentProfileCompleteSagaData.getUpdateUser());
     studentDataFromEventResponse.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_UMP); // always UMP
-    if (studentProfileCompleteSagaData.getIsDocumentReviewed() != null && studentProfileCompleteSagaData.getIsDocumentReviewed()) {
+    if (StringUtils.isNotBlank(studentProfileCompleteSagaData.getDocumentTypeCode())) {
+      studentDataFromEventResponse.setDateOfConfirmation(DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.now()));
       studentDataFromEventResponse.setDemogCode(DEMOG_CODE_CONFIRMED);
+      studentDataFromEventResponse.setDocumentTypeCode(studentProfileCompleteSagaData.getDocumentTypeCode());
     }
     studentProfileCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
     saga.setSagaState(UPDATE_STUDENT.toString());
@@ -156,8 +160,11 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
     studentSagaData.setCreateUser(studentProfileCompleteSagaData.getCreateUser());
     studentSagaData.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_UMP); // always UMP
     studentSagaData.setStatusCode("A"); // Always active pen is updated upon UMP complete.
-    if (studentProfileCompleteSagaData.getIsDocumentReviewed() != null && studentProfileCompleteSagaData.getIsDocumentReviewed()) {
+    studentSagaData.setDemogCode("A");
+    if (StringUtils.isNotBlank(studentProfileCompleteSagaData.getDocumentTypeCode())) {
+      studentSagaData.setDateOfConfirmation(DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.now()));
       studentSagaData.setDemogCode(DEMOG_CODE_CONFIRMED);
+      studentSagaData.setDocumentTypeCode(studentProfileCompleteSagaData.getDocumentTypeCode());
     }
     log.info("message sent to STUDENT_API_TOPIC for CREATE_STUDENT Event.");
     this.delegateMessagePostingForStudent(saga, studentSagaData, CREATE_STUDENT);
@@ -175,8 +182,8 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
 
 
   protected void executeGetStudent(final Event event, final Saga saga, final StudentProfileCompleteSagaData studentProfileCompleteSagaData) throws IOException, InterruptedException, TimeoutException {
-    if (event.getEventOutcome() == PEN_REQUEST_DOCUMENTS_FOUND) {
-      studentProfileCompleteSagaData.setIsDocumentReviewed(true);
+    if (event.getEventOutcome() == PROFILE_REQUEST_DOCUMENTS_FOUND) {
+      studentProfileCompleteSagaData.setDocumentTypeCode(this.getDocumentTypeCode(event.getEventPayload()));
     }
     val eventState = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setStatus(IN_PROGRESS.toString());
@@ -234,4 +241,6 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
       .build();
     return JsonUtil.getJsonStringFromObject(penReqEmailSagaData);
   }
+
+
 }

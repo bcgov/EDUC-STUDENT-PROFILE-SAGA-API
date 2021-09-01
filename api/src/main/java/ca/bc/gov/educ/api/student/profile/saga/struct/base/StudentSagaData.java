@@ -38,4 +38,6 @@ public class StudentSagaData {
   private String statusCode;
   private String memo;
   private String trueStudentID;
+  private String documentTypeCode;
+  private String dateOfConfirmation;
 }

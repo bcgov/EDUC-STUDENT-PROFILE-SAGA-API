@@ -8,7 +8,10 @@ import ca.bc.gov.educ.api.student.profile.saga.model.v1.SagaEvent;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.NotificationEvent;
+import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.DocMetadata;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -30,21 +33,19 @@ import static lombok.AccessLevel.PROTECTED;
 
 @Slf4j
 public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestrator {
+  public static final String SELF = "SELF";
   protected static final String DEMOG_CODE_CONFIRMED = "C";
   protected static final String SYSTEM_IS_GOING_TO_EXECUTE_NEXT_EVENT_FOR_CURRENT_EVENT = "system is going to execute next event :: {} for current event {}";
-  public static final String SELF = "SELF";
+  protected final Class<T> clazz;
+  protected final Map<EventType, List<SagaEventState<T>>> nextStepsToExecute = new LinkedHashMap<>();
   @Getter(PROTECTED)
   private final SagaService sagaService;
   @Getter(PROTECTED)
   private final MessagePublisher messagePublisher;
-  protected final Class<T> clazz;
-
   @Getter
   private final String sagaName;
   @Getter
   private final String topicToSubscribe;
-
-  protected final Map<EventType, List<SagaEventState<T>>> nextStepsToExecute = new LinkedHashMap<>();
 
   protected BaseOrchestrator(final SagaService sagaService, final MessagePublisher messagePublisher, final Class<T> clazz, final String sagaName, final String topicToSubscribe) {
     this.sagaService = sagaService;
@@ -377,7 +378,7 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
    * @param event          the current event.
    * @param saga           the model object.
    * @param sagaData       the payload string
-   * @param sagaEventState the next next event from {@link BaseOrchestrator#nextStepsToExecute}
+   * @param sagaEventState the next event from {@link BaseOrchestrator#nextStepsToExecute}
    * @throws InterruptedException if thread is interrupted.
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
@@ -388,4 +389,11 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
   }
 
   public abstract void populateStepsToExecuteMap();
+
+  protected String getDocumentTypeCode(final String eventPayload) throws JsonProcessingException {
+    final List<DocMetadata> docMetadataList = JsonUtil.objectMapper.readValue(eventPayload, new TypeReference<>() {
+    });
+    docMetadataList.sort(Comparator.comparing(DocMetadata::getCreateDate).reversed());
+    return docMetadataList.get(0).getDocumentTypeCode();
+  }
 }
