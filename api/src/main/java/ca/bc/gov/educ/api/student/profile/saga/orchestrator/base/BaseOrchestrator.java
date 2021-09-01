@@ -9,7 +9,7 @@ import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.NotificationEvent;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.StudentSagaData;
-import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenReqDocMetadata;
+import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.DocMetadata;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -35,21 +35,19 @@ import static lombok.AccessLevel.PROTECTED;
 
 @Slf4j
 public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestrator {
+  public static final String SELF = "SELF";
   protected static final String DEMOG_CODE_CONFIRMED = "C";
   protected static final String SYSTEM_IS_GOING_TO_EXECUTE_NEXT_EVENT_FOR_CURRENT_EVENT = "system is going to execute next event :: {} for current event {}";
-  public static final String SELF = "SELF";
+  protected final Class<T> clazz;
+  protected final Map<EventType, List<SagaEventState<T>>> nextStepsToExecute = new LinkedHashMap<>();
   @Getter(PROTECTED)
   private final SagaService sagaService;
   @Getter(PROTECTED)
   private final MessagePublisher messagePublisher;
-  protected final Class<T> clazz;
-
   @Getter
   private final String sagaName;
   @Getter
   private final String topicToSubscribe;
-
-  protected final Map<EventType, List<SagaEventState<T>>> nextStepsToExecute = new LinkedHashMap<>();
 
   protected BaseOrchestrator(final SagaService sagaService, final MessagePublisher messagePublisher, final Class<T> clazz, final String sagaName, final String topicToSubscribe) {
     this.sagaService = sagaService;
@@ -382,7 +380,7 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
    * @param event          the current event.
    * @param saga           the model object.
    * @param sagaData       the payload string
-   * @param sagaEventState the next next event from {@link BaseOrchestrator#nextStepsToExecute}
+   * @param sagaEventState the next event from {@link BaseOrchestrator#nextStepsToExecute}
    * @throws InterruptedException if thread is interrupted.
    * @throws IOException          if there is connectivity problem
    * @throws TimeoutException     if connection to messaging system times out.
@@ -394,14 +392,14 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
 
   public abstract void populateStepsToExecuteMap();
 
-  protected void updateStudentBasedOnDocumentMetadata(final StudentSagaData studentSagaData, final Saga saga) throws JsonProcessingException {
-    val eventFromDB = this.getSagaService().findBySagaAndEventTypeAndEventOutcome(saga, GET_PEN_REQUEST_DOCUMENT_METADATA, PEN_REQUEST_DOCUMENTS_FOUND);
+  protected void updateStudentBasedOnDocumentMetadata(final StudentSagaData studentSagaData, final Saga saga, final EventType eventType, final EventOutcome eventOutcome) throws JsonProcessingException {
+    val eventFromDB = this.getSagaService().findBySagaAndEventTypeAndEventOutcome(saga, eventType, eventOutcome);
     if (eventFromDB.isPresent()) {
       val penReqDocMetadata = eventFromDB.get().getSagaEventResponse();
-      final List<PenReqDocMetadata> penReqDocMetadataList = JsonUtil.objectMapper.readValue(penReqDocMetadata, new TypeReference<>() {
+      final List<DocMetadata> docMetadataList = JsonUtil.objectMapper.readValue(penReqDocMetadata, new TypeReference<>() {
       });
-      penReqDocMetadataList.sort(Comparator.comparing(PenReqDocMetadata::getCreateDate).reversed());
-      studentSagaData.setDocumentTypeCode(penReqDocMetadataList.get(0).getDocumentTypeCode());
+      docMetadataList.sort(Comparator.comparing(DocMetadata::getCreateDate).reversed());
+      studentSagaData.setDocumentTypeCode(docMetadataList.get(0).getDocumentTypeCode());
       studentSagaData.setDateOfConfirmation(DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.now()));
       studentSagaData.setDemogCode(DEMOG_CODE_CONFIRMED);
     }

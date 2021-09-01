@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PenReqDocMetadata implements Serializable {
+public class DocMetadata implements Serializable {
 
   private static final long serialVersionUID = -7471585921119777006L;
   String documentID;

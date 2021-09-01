@@ -133,7 +133,7 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
     studentDataFromEventResponse.setSexCode(studentProfileCompleteSagaData.getSexCode());
     studentDataFromEventResponse.setUpdateUser(studentProfileCompleteSagaData.getUpdateUser());
     studentDataFromEventResponse.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_UMP); // always UMP
-    this.updateStudentBasedOnDocumentMetadata(studentDataFromEventResponse, saga);
+    this.updateStudentBasedOnDocumentMetadata(studentDataFromEventResponse, saga, GET_PROFILE_REQUEST_DOCUMENT_METADATA, PROFILE_REQUEST_DOCUMENTS_FOUND);
     studentProfileCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
     saga.setSagaState(UPDATE_STUDENT.toString());
     saga.setPayload(JsonUtil.getJsonStringFromObject(studentProfileCompleteSagaData));
@@ -155,7 +155,7 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
     studentSagaData.setCreateUser(studentProfileCompleteSagaData.getCreateUser());
     studentSagaData.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_UMP); // always UMP
     studentSagaData.setStatusCode("A"); // Always active pen is updated upon UMP complete.
-    this.updateStudentBasedOnDocumentMetadata(studentSagaData, saga);
+    this.updateStudentBasedOnDocumentMetadata(studentSagaData, saga, GET_PROFILE_REQUEST_DOCUMENT_METADATA, PROFILE_REQUEST_DOCUMENTS_FOUND);
     if (StringUtils.isBlank(studentSagaData.getDemogCode())) {
       studentSagaData.setDemogCode("A");
     }

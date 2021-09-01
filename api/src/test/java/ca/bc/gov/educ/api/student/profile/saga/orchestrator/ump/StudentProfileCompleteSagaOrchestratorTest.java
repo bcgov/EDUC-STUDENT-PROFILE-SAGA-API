@@ -258,8 +258,8 @@ public class StudentProfileCompleteSagaOrchestratorTest extends BaseSagaApiTest 
       .eventPayload("123456789")
       .sagaId(this.saga.getSagaId())
       .build();
-    val sagaEvent = SagaEvent.builder().sagaEventState(GET_PEN_REQUEST_DOCUMENT_METADATA.toString())
-      .sagaEventOutcome(EventOutcome.PEN_REQUEST_DOCUMENTS_FOUND.toString())
+    val sagaEvent = SagaEvent.builder().sagaEventState(GET_PROFILE_REQUEST_DOCUMENT_METADATA.toString())
+      .sagaEventOutcome(EventOutcome.PROFILE_REQUEST_DOCUMENTS_FOUND.toString())
       .sagaEventResponse(this.sagaDocResponse)
       .sagaStepNumber(2)
       .saga(this.saga)
@@ -302,8 +302,8 @@ public class StudentProfileCompleteSagaOrchestratorTest extends BaseSagaApiTest 
       .eventPayload(this.studentJson)
       .sagaId(this.saga.getSagaId())
       .build();
-    val sagaEvent = SagaEvent.builder().sagaEventState(GET_PEN_REQUEST_DOCUMENT_METADATA.toString())
-      .sagaEventOutcome(EventOutcome.PEN_REQUEST_DOCUMENTS_FOUND.toString())
+    val sagaEvent = SagaEvent.builder().sagaEventState(GET_PROFILE_REQUEST_DOCUMENT_METADATA.toString())
+      .sagaEventOutcome(EventOutcome.PROFILE_REQUEST_DOCUMENTS_FOUND.toString())
       .sagaEventResponse(this.sagaDocResponse)
       .sagaStepNumber(2)
       .saga(this.saga)

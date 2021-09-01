@@ -170,7 +170,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     studentDataFromEventResponse.setSexCode(penRequestCompleteSagaData.getSexCode());
     studentDataFromEventResponse.setUpdateUser(penRequestCompleteSagaData.getUpdateUser());
     studentDataFromEventResponse.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_GMP); // always GMP
-    this.updateStudentBasedOnDocumentMetadata(studentDataFromEventResponse, saga);
+    this.updateStudentBasedOnDocumentMetadata(studentDataFromEventResponse, saga, GET_PEN_REQUEST_DOCUMENT_METADATA, PEN_REQUEST_DOCUMENTS_FOUND);
     penRequestCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
     saga.setSagaState(UPDATE_STUDENT.toString());
     saga.setPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData));
@@ -197,7 +197,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
     val studentSagaData = studentSagaDataMapper.toStudentSaga(penRequestCompleteSagaData);
     studentSagaData.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_GMP); // always GMP
     studentSagaData.setStatusCode("A"); // Always active pen is provided to the student upon GMP completion.
-    this.updateStudentBasedOnDocumentMetadata(studentSagaData, saga);
+    this.updateStudentBasedOnDocumentMetadata(studentSagaData, saga, GET_PEN_REQUEST_DOCUMENT_METADATA, PEN_REQUEST_DOCUMENTS_FOUND);
     if (StringUtils.isBlank(studentSagaData.getDemogCode())) {
       studentSagaData.setDemogCode("A");
     }
