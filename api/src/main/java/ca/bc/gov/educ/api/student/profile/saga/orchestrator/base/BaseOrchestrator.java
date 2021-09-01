@@ -395,8 +395,8 @@ public abstract class BaseOrchestrator<T> implements SagaEventHandler, Orchestra
   protected void updateStudentBasedOnDocumentMetadata(final StudentSagaData studentSagaData, final Saga saga, final EventType eventType, final EventOutcome eventOutcome) throws JsonProcessingException {
     val eventFromDB = this.getSagaService().findBySagaAndEventTypeAndEventOutcome(saga, eventType, eventOutcome);
     if (eventFromDB.isPresent()) {
-      val penReqDocMetadata = eventFromDB.get().getSagaEventResponse();
-      final List<DocMetadata> docMetadataList = JsonUtil.objectMapper.readValue(penReqDocMetadata, new TypeReference<>() {
+      val docMetadataString = eventFromDB.get().getSagaEventResponse();
+      final List<DocMetadata> docMetadataList = JsonUtil.objectMapper.readValue(docMetadataString, new TypeReference<>() {
       });
       docMetadataList.sort(Comparator.comparing(DocMetadata::getCreateDate).reversed());
       studentSagaData.setDocumentTypeCode(docMetadataList.get(0).getDocumentTypeCode());
