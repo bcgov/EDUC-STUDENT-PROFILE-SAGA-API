@@ -16,6 +16,7 @@ import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -155,6 +156,9 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
     studentSagaData.setHistoryActivityCode(HISTORY_ACTIVITY_CODE_UMP); // always UMP
     studentSagaData.setStatusCode("A"); // Always active pen is updated upon UMP complete.
     this.updateStudentBasedOnDocumentMetadata(studentSagaData, saga);
+    if (StringUtils.isBlank(studentSagaData.getDemogCode())) {
+      studentSagaData.setDemogCode("A");
+    }
     log.info("message sent to STUDENT_API_TOPIC for CREATE_STUDENT Event.");
     this.delegateMessagePostingForStudent(saga, studentSagaData, CREATE_STUDENT);
   }
