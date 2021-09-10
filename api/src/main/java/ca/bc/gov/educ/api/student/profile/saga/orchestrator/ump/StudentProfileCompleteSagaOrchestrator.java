@@ -188,6 +188,7 @@ public class StudentProfileCompleteSagaOrchestrator extends BaseProfileReqSagaOr
     val eventState = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setStatus(IN_PROGRESS.toString());
     saga.setSagaState(GET_STUDENT.toString()); // set current event as saga state.
+    saga.setPayload(JsonUtil.getJsonStringFromObject(studentProfileCompleteSagaData)); // save the updated payload to DB.
     this.getSagaService().updateAttachedSagaWithEvents(saga, eventState);
     val nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(GET_STUDENT)
