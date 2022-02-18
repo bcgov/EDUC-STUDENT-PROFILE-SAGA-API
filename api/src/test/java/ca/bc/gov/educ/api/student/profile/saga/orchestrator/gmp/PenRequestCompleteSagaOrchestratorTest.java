@@ -8,6 +8,7 @@ import ca.bc.gov.educ.api.student.profile.saga.model.v1.Saga;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaEventRepository;
 import ca.bc.gov.educ.api.student.profile.saga.repository.SagaRepository;
 import ca.bc.gov.educ.api.student.profile.saga.service.SagaService;
+import ca.bc.gov.educ.api.student.profile.saga.struct.base.DigitalIdSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.Event;
 import ca.bc.gov.educ.api.student.profile.saga.struct.base.StudentSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestCompleteSagaData;
@@ -22,6 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
@@ -152,6 +155,52 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     assertThat(sagaStates.size()).isEqualTo(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.GET_DIGITAL_ID.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.DIGITAL_ID_FOUND.toString());
+  }
+
+  @Test
+  public void testExecuteGetDigitalIdsStudentList_givenEventAndSagaData_shouldPostEventToDigitalIDApi() throws IOException, InterruptedException, TimeoutException {
+    final var event = Event.builder()
+      .eventType(GET_DIGITAL_ID_LIST)
+      .eventOutcome(EventOutcome.DIGITAL_ID_LIST_RETURNED)
+      .eventPayload(UUID.randomUUID().toString())
+      .sagaId(this.saga.getSagaId())
+      .build();
+    this.orchestrator.executeGetDigitalIdStudentLinks(event, this.saga, this.sagaData);
+    verify(this.messagePublisher, atLeastOnce()).dispatchMessage(eq(DIGITAL_ID_API_TOPIC.toString()), this.eventCaptor.capture());
+    final var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(this.eventCaptor.getValue()));
+    assertThat(newEvent.getEventType()).isEqualTo(GET_DIGITAL_ID_LIST);
+    final var sagaFromDB = this.sagaService.findSagaById(this.saga.getSagaId()).orElseThrow();
+    assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
+    assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
+    assertThat(sagaFromDB.getSagaState()).isEqualTo(GET_DIGITAL_ID_LIST.toString());
+    final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
+    assertThat(sagaStates.size()).isEqualTo(1);
+    assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.GET_DIGITAL_ID_LIST.toString());
+    assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.DIGITAL_ID_LIST_RETURNED.toString());
+  }
+
+  @Test
+  public void testExecuteUpdateDigitalIds_givenEventAndSagaData_shouldPostEventToDigitalIDApi() throws IOException, InterruptedException, TimeoutException {
+    List<DigitalIdSagaData> digitalIDList = new ArrayList<>();
+    digitalIDList.add(DigitalIdSagaData.builder().digitalID(UUID.randomUUID().toString()).build());
+    final var event = Event.builder()
+      .eventType(REMOVE_LINKED_STUDENTS)
+      .eventOutcome(EventOutcome.DIGITAL_ID_LINKS_REMOVED)
+      .eventPayload(JsonUtil.getJsonStringFromObject(digitalIDList))
+      .sagaId(this.saga.getSagaId())
+      .build();
+    this.orchestrator.executeRemoveDigitalIdStudentLinks(event, this.saga, this.sagaData);
+    verify(this.messagePublisher, atLeastOnce()).dispatchMessage(eq(DIGITAL_ID_API_TOPIC.toString()), this.eventCaptor.capture());
+    final var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(this.eventCaptor.getValue()));
+    assertThat(newEvent.getEventType()).isEqualTo(REMOVE_LINKED_STUDENTS);
+    final var sagaFromDB = this.sagaService.findSagaById(this.saga.getSagaId()).orElseThrow();
+    assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
+    assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
+    assertThat(sagaFromDB.getSagaState()).isEqualTo(REMOVE_LINKED_STUDENTS.toString());
+    final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
+    assertThat(sagaStates.size()).isEqualTo(1);
+    assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.REMOVE_LINKED_STUDENTS.toString());
+    assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.DIGITAL_ID_LINKS_REMOVED.toString());
   }
 
   @Test

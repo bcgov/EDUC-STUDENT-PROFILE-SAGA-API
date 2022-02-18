@@ -15,6 +15,8 @@ import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestCompleteSaga
 import ca.bc.gov.educ.api.student.profile.saga.struct.gmp.PenRequestSagaData;
 import ca.bc.gov.educ.api.student.profile.saga.utils.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import static ca.bc.gov.educ.api.student.profile.saga.constants.EventOutcome.*;
@@ -41,7 +44,10 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
   private static final StudentSagaDataMapper studentSagaDataMapper = StudentSagaDataMapper.mapper;
   private static final String HISTORY_ACTIVITY_CODE_GMP = "GMP";
 
-
+  /**
+   * The Ob mapper.
+   */
+  private final ObjectMapper obMapper = new ObjectMapper();
   @Autowired
   public PenRequestCompleteSagaOrchestrator(final SagaService sagaService, final MessagePublisher messagePublisher) {
     super(sagaService, messagePublisher, PenRequestCompleteSagaData.class, PEN_REQUEST_COMPLETE_SAGA.toString(), PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString());
@@ -58,8 +64,12 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
       .step(GET_PEN_REQUEST_DOCUMENT_METADATA, PEN_REQUEST_DOCUMENTS_NOT_FOUND, GET_STUDENT, this::executeGetStudent)
       .step(GET_STUDENT, STUDENT_FOUND, UPDATE_STUDENT, this::executeUpdateStudent)
       .step(GET_STUDENT, STUDENT_NOT_FOUND, CREATE_STUDENT, this::executeCreateStudent)
-      .step(CREATE_STUDENT, STUDENT_CREATED, GET_DIGITAL_ID, this::executeGetDigitalId)
-      .step(UPDATE_STUDENT, STUDENT_UPDATED, GET_DIGITAL_ID, this::executeGetDigitalId)
+      .step(CREATE_STUDENT, STUDENT_CREATED, GET_DIGITAL_ID_LIST, this::executeGetDigitalIdStudentLinks)
+      .step(UPDATE_STUDENT, STUDENT_UPDATED, GET_DIGITAL_ID_LIST, this::executeGetDigitalIdStudentLinks)
+
+      .step(GET_DIGITAL_ID_LIST, DIGITAL_ID_LIST_RETURNED, REMOVE_LINKED_STUDENTS, this::executeRemoveDigitalIdStudentLinks)
+      .step(REMOVE_LINKED_STUDENTS, DIGITAL_ID_LINKS_REMOVED, GET_DIGITAL_ID, this::executeGetDigitalId)
+
       .step(GET_DIGITAL_ID, DIGITAL_ID_FOUND, UPDATE_DIGITAL_ID, this::executeUpdateDigitalId)
       .step(UPDATE_DIGITAL_ID, DIGITAL_ID_UPDATED, GET_PEN_REQUEST, this::executeGetPenRequest)
       .step(GET_PEN_REQUEST, PEN_REQUEST_FOUND, UPDATE_PEN_REQUEST, this::executeUpdatePenRequest)
@@ -125,12 +135,6 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    * @throws TimeoutException     if connection to messaging system times out.
    */
   protected void executeGetDigitalId(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws InterruptedException, TimeoutException, IOException {
-
-    if (event.getEventType() == CREATE_STUDENT) {
-      val studentDataFromEventResponse = JsonUtil.getJsonObjectFromString(StudentSagaData.class, event.getEventPayload());
-      penRequestCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
-      saga.setPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData));
-    }
     val eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
     saga.setSagaState(GET_DIGITAL_ID.toString()); // set current event as saga state.
     this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
@@ -141,6 +145,63 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
       .build();
     this.postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
     log.info("message sent to DIGITAL_ID_API_TOPIC for GET_DIGITAL_ID Event.");
+  }
+
+  /**
+   * this is called after either create student or update student.
+   * at this point we use the student id to fetch other digital IDs with the same
+   *
+   * @param event                      current event
+   * @param saga                       the model object.
+   * @param penRequestCompleteSagaData the payload as object.
+   * @throws InterruptedException if thread is interrupted.
+   * @throws IOException          if there is connectivity problem
+   * @throws TimeoutException     if connection to messaging system times out.
+   */
+  protected void executeGetDigitalIdStudentLinks(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws InterruptedException, TimeoutException, IOException {
+    if (event.getEventType() == CREATE_STUDENT) {
+      val studentDataFromEventResponse = JsonUtil.getJsonObjectFromString(StudentSagaData.class, event.getEventPayload());
+      penRequestCompleteSagaData.setStudentID(studentDataFromEventResponse.getStudentID()); //update the payload of the original event request with student id.
+      saga.setPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData));
+    }
+    val eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    saga.setSagaState(GET_DIGITAL_ID_LIST.toString()); // set current event as saga state.
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
+    val nextEvent = Event.builder().sagaId(saga.getSagaId())
+      .eventType(GET_DIGITAL_ID_LIST)
+      .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
+      .eventPayload(penRequestCompleteSagaData.getStudentID())
+      .build();
+    this.postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
+    log.info("message sent to DIGITAL_ID_API_TOPIC for GET_DIGITAL_ID_LIST Event.");
+  }
+
+  /**
+   * this is called after either create student or update student.
+   * at this point we use the student id to fetch other digital IDs with the same
+   *
+   * @param event                      current event
+   * @param saga                       the model object.
+   * @param penRequestCompleteSagaData the payload as object.
+   * @throws InterruptedException if thread is interrupted.
+   * @throws IOException          if there is connectivity problem
+   * @throws TimeoutException     if connection to messaging system times out.
+   */
+  protected void executeRemoveDigitalIdStudentLinks(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws InterruptedException, TimeoutException, IOException {
+    final List<DigitalIdSagaData> digitalIDList = this.obMapper.readValue(event.getEventPayload(), new TypeReference<>() { });
+    penRequestCompleteSagaData.setDigitalIdLinkedStudents(digitalIDList); //update the payload of the original event request with digital id list.
+    saga.setPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData));
+
+    val eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
+    saga.setSagaState(REMOVE_LINKED_STUDENTS.toString()); // set current event as saga state.
+    this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
+    val nextEvent = Event.builder().sagaId(saga.getSagaId())
+      .eventType(REMOVE_LINKED_STUDENTS)
+      .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
+      .eventPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData.getDigitalIdLinkedStudents()))
+      .build();
+    this.postMessageToTopic(DIGITAL_ID_API_TOPIC.toString(), nextEvent);
+    log.info("message sent to DIGITAL_ID_API_TOPIC for REMOVE_LINKED_STUDENTS Event.");
   }
 
   /**
