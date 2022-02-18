@@ -87,7 +87,7 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(GET_PEN_REQUEST.toString());
     final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
-    assertThat(sagaStates.size()).isEqualTo(1);
+    assertThat(sagaStates).hasSize(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.UPDATE_DIGITAL_ID.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.DIGITAL_ID_UPDATED.toString());
   }
@@ -109,7 +109,7 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(UPDATE_PEN_REQUEST.toString());
     final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
-    assertThat(sagaStates.size()).isEqualTo(1);
+    assertThat(sagaStates).hasSize(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.GET_PEN_REQUEST.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.PEN_REQUEST_FOUND.toString());
   }
@@ -131,7 +131,7 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(GET_DIGITAL_ID.toString());
     final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
-    assertThat(sagaStates.size()).isEqualTo(1);
+    assertThat(sagaStates).hasSize(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.CREATE_STUDENT.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.STUDENT_CREATED.toString());
   }
@@ -152,7 +152,7 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(UPDATE_DIGITAL_ID.toString());
     final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
-    assertThat(sagaStates.size()).isEqualTo(1);
+    assertThat(sagaStates).hasSize(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.GET_DIGITAL_ID.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.DIGITAL_ID_FOUND.toString());
   }
@@ -174,7 +174,7 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(GET_DIGITAL_ID_LIST.toString());
     final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
-    assertThat(sagaStates.size()).isEqualTo(1);
+    assertThat(sagaStates).hasSize(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.GET_DIGITAL_ID_LIST.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.DIGITAL_ID_LIST_RETURNED.toString());
   }
@@ -198,7 +198,7 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(REMOVE_LINKED_STUDENTS.toString());
     final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
-    assertThat(sagaStates.size()).isEqualTo(1);
+    assertThat(sagaStates).hasSize(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.REMOVE_LINKED_STUDENTS.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.DIGITAL_ID_LINKS_REMOVED.toString());
   }
@@ -220,7 +220,7 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(GET_STUDENT.toString());
     final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
-    assertThat(sagaStates.size()).isEqualTo(1);
+    assertThat(sagaStates).hasSize(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.INITIATED.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.INITIATE_SUCCESS.toString());
   }
@@ -245,7 +245,7 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(CREATE_STUDENT.toString());
     final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
-    assertThat(sagaStates.size()).isEqualTo(1);
+    assertThat(sagaStates).hasSize(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.GET_STUDENT.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.STUDENT_NOT_FOUND.toString());
   }
@@ -267,7 +267,7 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(UPDATE_STUDENT.toString());
     final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
-    assertThat(sagaStates.size()).isEqualTo(1);
+    assertThat(sagaStates).hasSize(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.GET_STUDENT.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.STUDENT_FOUND.toString());
   }
@@ -289,7 +289,7 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(NOTIFY_STUDENT_PEN_REQUEST_COMPLETE.toString());
     final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
-    assertThat(sagaStates.size()).isEqualTo(1);
+    assertThat(sagaStates).hasSize(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.UPDATE_PEN_REQUEST.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.PEN_REQUEST_UPDATED.toString());
   }
@@ -319,7 +319,7 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(CREATE_STUDENT.toString());
     final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
-    assertThat(sagaStates.size()).isEqualTo(1);
+    assertThat(sagaStates).hasSize(1);
   }
 
   PenRequestCompleteSagaData getSagaData(final String json) {
@@ -353,7 +353,7 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getSagaState()).isEqualTo(UPDATE_STUDENT.toString());
     final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
-    assertThat(sagaStates.size()).isEqualTo(1);
+    assertThat(sagaStates).hasSize(1);
   }
 
   String getCompletePenRequestPayload() {
