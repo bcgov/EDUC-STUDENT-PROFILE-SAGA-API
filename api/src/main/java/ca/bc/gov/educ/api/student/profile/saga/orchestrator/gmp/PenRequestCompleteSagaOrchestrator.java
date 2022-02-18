@@ -192,6 +192,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
 
     for(var digitalID : digitalIDList) {
       digitalID.setStudentID(null);
+      digitalID.setAutoMatched("N");
     }
 
     penRequestCompleteSagaData.setDigitalIdLinkedStudents(digitalIDList); //update the payload of the original event request with digital id list.
