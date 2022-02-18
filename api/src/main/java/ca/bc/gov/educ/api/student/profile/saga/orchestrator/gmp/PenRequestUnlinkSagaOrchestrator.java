@@ -94,6 +94,7 @@ public class PenRequestUnlinkSagaOrchestrator extends BasePenReqSagaOrchestrator
     this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     final var digitalIdSagaData = JsonUtil.getJsonObjectFromString(DigitalIdSagaData.class, event.getEventPayload());
     digitalIdSagaData.setStudentID(null);
+    digitalIdSagaData.setAutoMatched("N");
     digitalIdSagaData.setUpdateUser(penRequestUnlinkSagaData.getUpdateUser());
     final var nextEvent = Event.builder().sagaId(saga.getSagaId())
       .eventType(UPDATE_DIGITAL_ID)

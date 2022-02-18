@@ -1,5 +1,6 @@
 package ca.bc.gov.educ.api.student.profile.saga.struct.gmp;
 
+import ca.bc.gov.educ.api.student.profile.saga.struct.base.DigitalIdSagaData;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,6 +11,7 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -79,4 +81,5 @@ public class PenRequestCompleteSagaData {
   @NotNull(message = "History Activity Code can not be null.")
   String historyActivityCode;
   String documentTypeCode; // internal place-holder field
+  List<DigitalIdSagaData> digitalIdLinkedStudents;
 }
