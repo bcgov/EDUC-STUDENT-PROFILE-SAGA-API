@@ -189,6 +189,11 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
    */
   protected void executeRemoveDigitalIdStudentLinks(final Event event, final Saga saga, final PenRequestCompleteSagaData penRequestCompleteSagaData) throws InterruptedException, TimeoutException, IOException {
     final List<DigitalIdSagaData> digitalIDList = this.obMapper.readValue(event.getEventPayload(), new TypeReference<>() { });
+
+    for(var digitalID : digitalIDList) {
+      digitalID.setStudentID(null);
+    }
+
     penRequestCompleteSagaData.setDigitalIdLinkedStudents(digitalIDList); //update the payload of the original event request with digital id list.
     saga.setPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData));
 
