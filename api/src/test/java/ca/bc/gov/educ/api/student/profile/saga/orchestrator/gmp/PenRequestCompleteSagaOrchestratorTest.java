@@ -184,7 +184,7 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     List<DigitalIdSagaData> digitalIDList = new ArrayList<>();
     digitalIDList.add(DigitalIdSagaData.builder().digitalID(UUID.randomUUID().toString()).build());
     final var event = Event.builder()
-      .eventType(REMOVE_LINKED_STUDENTS)
+      .eventType(UPDATE_DIGITAL_ID_LIST)
       .eventOutcome(EventOutcome.DIGITAL_ID_LINKS_REMOVED)
       .eventPayload(JsonUtil.getJsonStringFromObject(digitalIDList))
       .sagaId(this.saga.getSagaId())
@@ -192,14 +192,14 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     this.orchestrator.executeRemoveDigitalIdStudentLinks(event, this.saga, this.sagaData);
     verify(this.messagePublisher, atLeastOnce()).dispatchMessage(eq(DIGITAL_ID_API_TOPIC.toString()), this.eventCaptor.capture());
     final var newEvent = JsonUtil.getJsonObjectFromString(Event.class, new String(this.eventCaptor.getValue()));
-    assertThat(newEvent.getEventType()).isEqualTo(REMOVE_LINKED_STUDENTS);
+    assertThat(newEvent.getEventType()).isEqualTo(UPDATE_DIGITAL_ID_LIST);
     final var sagaFromDB = this.sagaService.findSagaById(this.saga.getSagaId()).orElseThrow();
     assertThat(sagaFromDB.getCreateUser()).isEqualTo("OMISHRA");
     assertThat(sagaFromDB.getUpdateUser()).isEqualTo("OMISHRA");
-    assertThat(sagaFromDB.getSagaState()).isEqualTo(REMOVE_LINKED_STUDENTS.toString());
+    assertThat(sagaFromDB.getSagaState()).isEqualTo(UPDATE_DIGITAL_ID_LIST.toString());
     final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
     assertThat(sagaStates).hasSize(1);
-    assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.REMOVE_LINKED_STUDENTS.toString());
+    assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.UPDATE_DIGITAL_ID_LIST.toString());
     assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.DIGITAL_ID_LINKS_REMOVED.toString());
   }
 
