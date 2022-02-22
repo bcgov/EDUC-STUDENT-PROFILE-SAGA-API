@@ -67,8 +67,8 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
       .step(CREATE_STUDENT, STUDENT_CREATED, GET_DIGITAL_ID_LIST, this::executeGetDigitalIdStudentLinks)
       .step(UPDATE_STUDENT, STUDENT_UPDATED, GET_DIGITAL_ID_LIST, this::executeGetDigitalIdStudentLinks)
 
-      .step(GET_DIGITAL_ID_LIST, DIGITAL_ID_LIST_RETURNED, REMOVE_LINKED_STUDENTS, this::executeRemoveDigitalIdStudentLinks)
-      .step(REMOVE_LINKED_STUDENTS, DIGITAL_ID_LINKS_REMOVED, GET_DIGITAL_ID, this::executeGetDigitalId)
+      .step(GET_DIGITAL_ID_LIST, DIGITAL_ID_LIST_RETURNED, UPDATE_DIGITAL_ID_LIST, this::executeRemoveDigitalIdStudentLinks)
+      .step(UPDATE_DIGITAL_ID_LIST, DIGITAL_ID_LINKS_REMOVED, GET_DIGITAL_ID, this::executeGetDigitalId)
 
       .step(GET_DIGITAL_ID, DIGITAL_ID_FOUND, UPDATE_DIGITAL_ID, this::executeUpdateDigitalId)
       .step(UPDATE_DIGITAL_ID, DIGITAL_ID_UPDATED, GET_PEN_REQUEST, this::executeGetPenRequest)
@@ -192,17 +192,17 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
 
     for(var digitalID : digitalIDList) {
       digitalID.setStudentID(null);
-      digitalID.setAutoMatched("N");
+      digitalID.setAutoMatchedDate(null);
     }
 
     penRequestCompleteSagaData.setDigitalIdLinkedStudents(digitalIDList); //update the payload of the original event request with digital id list.
     saga.setPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData));
 
     val eventStates = this.createEventState(saga, event.getEventType(), event.getEventOutcome(), event.getEventPayload());
-    saga.setSagaState(REMOVE_LINKED_STUDENTS.toString()); // set current event as saga state.
+    saga.setSagaState(UPDATE_DIGITAL_ID_LIST.toString()); // set current event as saga state.
     this.getSagaService().updateAttachedSagaWithEvents(saga, eventStates);
     val nextEvent = Event.builder().sagaId(saga.getSagaId())
-      .eventType(REMOVE_LINKED_STUDENTS)
+      .eventType(UPDATE_DIGITAL_ID_LIST)
       .replyTo(PEN_REQUEST_COMPLETE_SAGA_TOPIC.toString())
       .eventPayload(JsonUtil.getJsonStringFromObject(penRequestCompleteSagaData.getDigitalIdLinkedStudents()))
       .build();

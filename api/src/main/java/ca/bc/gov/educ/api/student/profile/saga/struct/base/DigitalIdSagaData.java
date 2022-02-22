@@ -15,7 +15,7 @@ public class DigitalIdSagaData {
   private String digitalID;
   private String studentID;
   private String updateUser;
-  private String autoMatched;
+  private String autoMatchedDate;
   private String identityTypeCode;
   private String identityValue;
   private String lastAccessDate;
