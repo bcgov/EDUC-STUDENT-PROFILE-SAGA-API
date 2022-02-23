@@ -185,7 +185,7 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     digitalIDList.add(DigitalIdSagaData.builder().digitalID(UUID.randomUUID().toString()).build());
     final var event = Event.builder()
       .eventType(UPDATE_DIGITAL_ID_LIST)
-      .eventOutcome(EventOutcome.DIGITAL_ID_LINKS_REMOVED)
+      .eventOutcome(EventOutcome.DIGITAL_ID_LIST_UPDATED)
       .eventPayload(JsonUtil.getJsonStringFromObject(digitalIDList))
       .sagaId(this.saga.getSagaId())
       .build();
@@ -200,7 +200,7 @@ public class PenRequestCompleteSagaOrchestratorTest extends BaseSagaApiTest {
     final var sagaStates = this.sagaService.findAllSagaStates(this.saga);
     assertThat(sagaStates).hasSize(1);
     assertThat(sagaStates.get(0).getSagaEventState()).isEqualTo(EventType.UPDATE_DIGITAL_ID_LIST.toString());
-    assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.DIGITAL_ID_LINKS_REMOVED.toString());
+    assertThat(sagaStates.get(0).getSagaEventOutcome()).isEqualTo(EventOutcome.DIGITAL_ID_LIST_UPDATED.toString());
   }
 
   @Test

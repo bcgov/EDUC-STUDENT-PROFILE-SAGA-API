@@ -68,7 +68,7 @@ public class PenRequestCompleteSagaOrchestrator extends BasePenReqSagaOrchestrat
       .step(UPDATE_STUDENT, STUDENT_UPDATED, GET_DIGITAL_ID_LIST, this::executeGetDigitalIdStudentLinks)
 
       .step(GET_DIGITAL_ID_LIST, DIGITAL_ID_LIST_RETURNED, UPDATE_DIGITAL_ID_LIST, this::executeRemoveDigitalIdStudentLinks)
-      .step(UPDATE_DIGITAL_ID_LIST, DIGITAL_ID_LINKS_REMOVED, GET_DIGITAL_ID, this::executeGetDigitalId)
+      .step(UPDATE_DIGITAL_ID_LIST, DIGITAL_ID_LIST_UPDATED, GET_DIGITAL_ID, this::executeGetDigitalId)
 
       .step(GET_DIGITAL_ID, DIGITAL_ID_FOUND, UPDATE_DIGITAL_ID, this::executeUpdateDigitalId)
       .step(UPDATE_DIGITAL_ID, DIGITAL_ID_UPDATED, GET_PEN_REQUEST, this::executeGetPenRequest)
