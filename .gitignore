@@ -23,6 +23,7 @@
 hs_err_pid*
 /api/target/
 /api/penrequest-saga-api.iml
+api/src/main/resources/application-local.properties
 
 #VS Code
 .settings/

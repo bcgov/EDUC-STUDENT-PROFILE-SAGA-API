@@ -49,16 +49,10 @@ public class PurgeOldSagaRecordsScheduler {
   @Transactional
   public void pollSagaTableAndPurgeOldRecords() {
     LockAssert.assertLocked();
-    val createDateToCompare = this.calculateCreateDateBasedOnStaleSagaRecordInDays();
-    final List<SagaEvent> sagaEventList = new CopyOnWriteArrayList<>();
-    final var sagas = this.getSagaRepository().findAllByCreateDateBefore(createDateToCompare);
-    if (!sagas.isEmpty()) {
-      for (val saga : sagas) {
-        sagaEventList.addAll(this.getSagaEventRepository().findBySaga(saga));
-      }
-    }
-    this.sagaEventRepository.deleteAll(sagaEventList);
-    this.sagaRepository.deleteAll(sagas);
+    final LocalDateTime createDateToCompare = this.calculateCreateDateBasedOnStaleSagaRecordInDays();
+    this.sagaEventRepository.deleteBySagaCreateDateBefore(createDateToCompare);
+    this.sagaRepository.deleteByCreateDateBefore(createDateToCompare);
+    log.info("Purged old saga and event records EDUC-STUDENT-PROFILE-SAGA-API");
   }
 
   private LocalDateTime calculateCreateDateBasedOnStaleSagaRecordInDays() {
