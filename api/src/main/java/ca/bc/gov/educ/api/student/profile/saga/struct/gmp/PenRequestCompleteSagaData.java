@@ -61,9 +61,9 @@ public class PenRequestCompleteSagaData {
   @Email(message = "Email must be valid email address.")
   String email;
   String deceasedDate;
-  @Size(max = 32)
+  @Size(max = 100)
   String createUser;
-  @Size(max = 32)
+  @Size(max = 100)
   String updateUser;
   String bcscAutoMatchOutcome;
   String bcscAutoMatchDetails;

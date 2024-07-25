@@ -51,12 +51,12 @@ public class SagaEvent {
 
   @NotNull(message = "create user cannot be null")
   @Column(name = "CREATE_USER", updatable = false)
-  @Size(max = 32)
+  @Size(max = 100)
   private String createUser;
 
   @NotNull(message = "update user cannot be null")
   @Column(name = "UPDATE_USER")
-  @Size(max = 32)
+  @Size(max = 100)
   private String updateUser;
 
   @PastOrPresent
