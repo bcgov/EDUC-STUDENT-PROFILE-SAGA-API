@@ -3,6 +3,7 @@ APP_NAME=$2
 PEN_NAMESPACE=$3
 COMMON_NAMESPACE=$4
 SPLUNK_TOKEN=$5
+BRANCH=$6
 
 TZVALUE="America/Vancouver"
 SOAM_KC_REALM_ID="master"
@@ -10,8 +11,8 @@ SOAM_KC=soam-$envValue.apps.silver.devops.gov.bc.ca
 NATS_CLUSTER=educ_nats_cluster
 NATS_URL="nats://nats.${COMMON_NAMESPACE}-${envValue}.svc.cluster.local:4222"
 
-SOAM_KC_LOAD_USER_ADMIN=$(oc -n $COMMON_NAMESPACE-$envValue -o json get secret sso-admin-${envValue} | sed -n 's/.*"username": "\(.*\)"/\1/p' | base64 --decode)
-SOAM_KC_LOAD_USER_PASS=$(oc -n $COMMON_NAMESPACE-$envValue -o json get secret sso-admin-${envValue} | sed -n 's/.*"password": "\(.*\)",/\1/p' | base64 --decode)
+SOAM_KC_LOAD_USER_ADMIN=$(oc -n "$COMMON_NAMESPACE-$envValue" -o json get secret "sso-admin-$envValue" | sed -n 's/.*"username": "\(.*\)"/\1/p' | base64 --decode)
+SOAM_KC_LOAD_USER_PASS=$(oc -n "$COMMON_NAMESPACE-$envValue" -o json get secret "sso-admin-$envValue" | sed -n 's/.*"password": "\(.*\)",/\1/p' | base64 --decode)
 
 echo Fetching SOAM token
 TKN=$(curl -s \
@@ -142,14 +143,33 @@ PARSER_CONFIG="
     Format      json
 "
 echo
-echo Creating config map "$APP_NAME"-config-map
-oc create -n "$PEN_NAMESPACE"-"$envValue" configmap "$APP_NAME"-config-map --from-literal=TZ=$TZVALUE --from-literal=NATS_URL="$NATS_URL" --from-literal=NATS_CLUSTER="$NATS_CLUSTER" --from-literal=SPRING_SECURITY_LOG_LEVEL=INFO --from-literal=SPRING_WEB_LOG_LEVEL=INFO --from-literal=APP_LOG_LEVEL=INFO --from-literal=SPRING_BOOT_AUTOCONFIG_LOG_LEVEL=INFO --from-literal=SPRING_SHOW_REQUEST_DETAILS=false --from-literal=PURGE_RECORDS_SAGA_AFTER_DAYS=365 --from-literal=SCHEDULED_JOBS_PURGE_OLD_SAGA_RECORDS_CRON="@midnight" --from-literal=NATS_MAX_RECONNECT=60 --from-literal=TOKEN_ISSUER_URL="https://$SOAM_KC/auth/realms/$SOAM_KC_REALM_ID" --dry-run -o yaml | oc apply -f -
+echo Creating config map "$APP_NAME-config-map"
+oc create -n "$PEN_NAMESPACE"-"$envValue" configmap "$APP_NAME"-config-map \
+  --from-literal=TZ=$TZVALUE \
+  --from-literal=NATS_URL="$NATS_URL" \
+  --from-literal=NATS_CLUSTER="$NATS_CLUSTER" \
+  --from-literal=SPRING_SECURITY_LOG_LEVEL=INFO \
+  --from-literal=SPRING_WEB_LOG_LEVEL=INFO \
+  --from-literal=APP_LOG_LEVEL=INFO \
+  --from-literal=SPRING_BOOT_AUTOCONFIG_LOG_LEVEL=INFO \
+  --from-literal=SPRING_SHOW_REQUEST_DETAILS=false \
+  --from-literal=PURGE_RECORDS_SAGA_AFTER_DAYS=365 \
+  --from-literal=SCHEDULED_JOBS_PURGE_OLD_SAGA_RECORDS_CRON="@midnight" \
+  --from-literal=NATS_MAX_RECONNECT=60 \
+  --from-literal=TOKEN_ISSUER_URL="https://$SOAM_KC/auth/realms/$SOAM_KC_REALM_ID" \
+  --dry-run -o yaml | oc apply -f -
+
 echo
-echo Setting environment variables for "$APP_NAME"-$SOAM_KC_REALM_ID application
-oc -n "$PEN_NAMESPACE"-"$envValue" set env --from=configmap/"$APP_NAME"-config-map dc/"$APP_NAME"-$SOAM_KC_REALM_ID
+echo Setting environment variables for "$APP_NAME-$BRANCH" application
+oc -n "$PEN_NAMESPACE-$envValue" set env \
+  --from="configmap/$APP_NAME-config-map" "deployment/$APP_NAME-$BRANCH"
 
 echo Creating config map "$APP_NAME"-flb-sc-config-map
-oc create -n "$PEN_NAMESPACE"-"$envValue" configmap "$APP_NAME"-flb-sc-config-map --from-literal=fluent-bit.conf="$FLB_CONFIG" --from-literal=parsers.conf="$PARSER_CONFIG" --dry-run -o yaml | oc apply -f -
+oc create -n "$PEN_NAMESPACE-$envValue" configmap "$APP_NAME"-flb-sc-config-map \
+  --from-literal=fluent-bit.conf="$FLB_CONFIG" \
+  --from-literal=parsers.conf="$PARSER_CONFIG" \
+  --dry-run -o yaml | oc apply -f -
 
 echo Removing un-needed config entries
-oc -n "$PEN_NAMESPACE"-"$envValue" set env dc/"$APP_NAME"-$SOAM_KC_REALM_ID KEYCLOAK_PUBLIC_KEY-
+oc -n "$PEN_NAMESPACE"-"$envValue" set env \
+  deployment/"$APP_NAME-$BRANCH" KEYCLOAK_PUBLIC_KEY-
